@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.config;
 
 import com.epam.gym.config.AppConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;

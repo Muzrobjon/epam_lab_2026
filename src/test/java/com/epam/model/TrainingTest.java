@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.model;
 
 import com.epam.gym.model.Training;
 import com.epam.gym.model.TrainingType;

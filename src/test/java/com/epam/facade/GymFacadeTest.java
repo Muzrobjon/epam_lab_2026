@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.facade;
 
 import com.epam.gym.facade.GymFacade;
 import com.epam.gym.model.Trainee;
