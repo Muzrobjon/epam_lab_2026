@@ -14,6 +14,9 @@ public class User {
     private String firstName;
     private String lastName;
     private String userName;
+    // TODO:
+    //  Password field and generation logic are not implemented.
+    //  We need to handle it according to the task requirements.
     private boolean isActive;
 }
 

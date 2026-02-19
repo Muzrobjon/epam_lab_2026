@@ -115,6 +115,12 @@ class TraineeServiceTest {
         List<Trainee> result = traineeService.findAll();
 
         assertEquals(1, result.size());
+        // TODO:
+        //  [Optional]
+        //  Since Java 21 we can use SequencedCollection API list.getFirst()
+        //  Also you should be warned about this and other things by your IDE
+        //  It's a good practice to pay attention to such warnings as they can help you write cleaner and more efficient code
+        //  You can run `Inspect Code` in IntelliJ IDEA to find all warnings in the project
         assertEquals(testTrainee, result.get(0));
     }
 
