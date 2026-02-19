@@ -1,0 +1,16 @@
+com\epam\TrainingTest.class
+com\epam\AppConfigTest.class
+com\epam\TrainerServiceTest.class
+com\epam\TraineeDAOTest.class
+com\epam\UserTest.class
+com\epam\GymCrmApplicationTest.class
+com\epam\TraineeTest.class
+com\epam\TraineeServiceTest.class
+com\epam\GymFacadeTest.class
+com\epam\TrainingDAOTest.class
+com\epam\TrainerTest.class
+com\epam\StorageTest.class
+com\epam\TrainingTypeTest.class
+com\epam\DataInitializerTest.class
+com\epam\TrainerDAOTest.class
+com\epam\TrainingServiceTest.class
