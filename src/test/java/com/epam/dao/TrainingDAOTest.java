@@ -39,7 +39,7 @@ class TrainingDAOTest {
                 .trainingName("Morning Fitness")
                 .trainingType(TrainingType.builder().trainingTypeName("Fitness").build())
                 .trainingDate(LocalDate.of(2024, 1, 15))
-                .trainingDuration(60)
+                .trainingDurationMinutes(60)
                 .build();
     }
 

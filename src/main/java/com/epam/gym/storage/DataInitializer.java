@@ -131,7 +131,7 @@ public class DataInitializer {
                     .trainingName(trainingNode.path("trainingName").asText())
                     .trainingType(type)
                     .trainingDate(date)
-                    .trainingDuration(trainingNode.path("trainingDuration").asInt())
+                    .trainingDurationMinutes(trainingNode.path("trainingDuration").asInt())
                     .build();
 
             Long id = storage.generateId("trainings");

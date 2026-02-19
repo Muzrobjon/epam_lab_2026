@@ -16,7 +16,10 @@ public class TrainerService {
 
     @Setter(onMethod_ = @Autowired)
     private TrainerDAO trainerDAO;
-
+    @Setter(onMethod_ = @Autowired)
+    private UsernameGenerator usernameGenerator;
+    @Setter(onMethod_ = @Autowired)
+    private PasswordGenerator passwordGenerator;
     public Trainer createProfile(String firstName, String lastName, String specialization) {
         log.info("Creating trainer profile for {} {}", firstName, lastName);
 
@@ -27,7 +30,11 @@ public class TrainerService {
                 .isActive(true)
                 .specialization(specialization)
                 .build();
-
+        String username = usernameGenerator.generateUsername(
+                trainer, name -> trainerDAO.findByUsername(name).isPresent()
+        );
+        trainer.setUserName(username);
+        trainer.setPassword(passwordGenerator.generatePassword(10));
         return trainerDAO.save(trainer);
     }
 

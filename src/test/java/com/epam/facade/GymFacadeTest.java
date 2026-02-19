@@ -107,11 +107,8 @@ class GymFacadeTest {
 
     @Test
     void getAllTrainees_ShouldDelegateToService() {
-        // TODO:
-        //  Prefer List.of() in modern Java (9+): it returns an immutable list.
-        //  Arrays.asList() creates a fixed-size list 'wrapper' of the original array,
-        //  meaning element replacement is allowed and changes affect the original.
-        List<Trainee> trainees = Arrays.asList(testTrainee);
+        // Using List.of() instead of Arrays.asList() for creating an immutable list.
+        List<Trainee> trainees = List.of(testTrainee);  // preferred modern Java approach
         when(traineeService.findAll()).thenReturn(trainees);
 
         List<Trainee> result = gymFacade.getAllTrainees();
@@ -119,6 +116,7 @@ class GymFacadeTest {
         assertEquals(1, result.size());
         verify(traineeService).findAll();
     }
+
 
     // Trainer Tests
     @Test

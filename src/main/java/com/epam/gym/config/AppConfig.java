@@ -14,14 +14,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @PropertySource("classpath:application.properties")
 public class AppConfig {
 
-    //TODO:
-    // Since version 4.3 Spring automatically registers it when @PropertySource is present
-    // Even though this can still be used for granular control
-    // You most likely won't need it for our use cases
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer propertyConfigurer() {
-        return new PropertySourcesPlaceholderConfigurer();
-    }
 
     @Bean
     public ObjectMapper objectMapper() {

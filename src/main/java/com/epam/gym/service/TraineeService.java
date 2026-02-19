@@ -17,7 +17,10 @@ public class TraineeService {
 
     @Setter(onMethod_ = @Autowired)
     private TraineeDAO traineeDAO;
-
+    @Setter(onMethod_ = @Autowired)
+    private UsernameGenerator usernameGenerator;
+    @Setter(onMethod_ = @Autowired)
+    private PasswordGenerator passwordGenerator;
     public Trainee createProfile(String firstName, String lastName,
                                  LocalDate dateOfBirth, String address) {
         log.info("Creating trainee profile for {} {}", firstName, lastName);
@@ -25,12 +28,16 @@ public class TraineeService {
         Trainee trainee = Trainee.builder()
                 .firstName(firstName)
                 .lastName(lastName)
-                .userName(generateUsername(firstName, lastName))
                 .isActive(true)
                 .dateOfBirth(dateOfBirth)
                 .address(address)
                 .build();
+        String username = usernameGenerator.generateUsername(
+                trainee, name -> traineeDAO.findByUsername(name).isPresent()
+        );
+        trainee.setUserName(username);
 
+        trainee.setPassword(passwordGenerator.generatePassword(10));
         return traineeDAO.save(trainee);
     }
 
@@ -55,13 +62,6 @@ public class TraineeService {
         return traineeDAO.findAll();
     }
 
-    // TODO:
-    //  1. This method is duplicated in 3 places. Better to have centralized logic and reuse throughout the app.
-    //  2. Is there an existing username check? We need to handle it according to the task.
-    //   Also this is not stated clearly in the task, but will be important later in the course:
-    //   Since both Trainer and Trainee extend User class we should check both Trainer & Trainee
-    //   collections at once for the existing username.
-    private String generateUsername(String firstName, String lastName) {
-        return (firstName + "." + lastName).toLowerCase();
-    }
+
+
 }

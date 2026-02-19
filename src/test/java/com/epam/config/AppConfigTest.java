@@ -1,36 +1,47 @@
-package com.epam.config;
+package com.epam.gym.config;
 
-import com.epam.gym.config.AppConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AppConfigTest {
 
-    private final AppConfig appConfig = new AppConfig();
-
-    @Test
-    void propertyConfigurer_ShouldReturnNonNullConfigurer() {
-        PropertySourcesPlaceholderConfigurer configurer = AppConfig.propertyConfigurer();
-        assertNotNull(configurer);
-    }
-
+    // Test the ObjectMapper bean from AppConfig
     @Test
     void objectMapper_ShouldRegisterJavaTimeModule() {
-        ObjectMapper mapper = appConfig.objectMapper();
+        // Create a Spring Application Context using the AppConfig class
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
 
+        // Retrieve the ObjectMapper bean
+        ObjectMapper mapper = context.getBean(ObjectMapper.class);
+
+        // Ensure the ObjectMapper is not null
         assertNotNull(mapper);
+
+        // Verify that the JavaTimeModule is registered
         assertTrue(mapper.getRegisteredModuleIds().contains(new JavaTimeModule().getTypeId()));
+
+        // Close the context to release resources
+        context.close();
     }
 
     @Test
     void objectMapper_ShouldHandleJavaTimeTypes() {
-        ObjectMapper mapper = appConfig.objectMapper();
+        // Create a Spring Application Context using the AppConfig class
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
 
+        // Retrieve the ObjectMapper bean
+        ObjectMapper mapper = context.getBean(ObjectMapper.class);
+
+        // Ensure it can serialize Java Time types
         assertTrue(mapper.canSerialize(java.time.LocalDate.class));
         assertTrue(mapper.canSerialize(java.time.LocalDateTime.class));
+
+        // Close the context to release resources
+        context.close();
     }
 }

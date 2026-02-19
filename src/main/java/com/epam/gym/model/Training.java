@@ -18,8 +18,6 @@ public class Training {
     private String trainingName;
     private TrainingType trainingType;
     private LocalDate trainingDate;
-    //TODO:
-    // Is it in minutes, hours, seconds, etc.? You can for example leave a comment or give a field more descriptive name
-    private Integer trainingDuration;
+    private Integer trainingDurationMinutes;
 }
 

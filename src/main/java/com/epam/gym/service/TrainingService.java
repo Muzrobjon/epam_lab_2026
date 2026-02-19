@@ -31,7 +31,7 @@ public class TrainingService {
                 .trainingName(trainingName)
                 .trainingType(trainingType)
                 .trainingDate(trainingDate)
-                .trainingDuration(duration)
+                .trainingDurationMinutes(duration)
                 .build();
 
         return trainingDAO.save(training);
