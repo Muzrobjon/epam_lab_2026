@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.model;
 
 import com.epam.gym.model.Training;
 import com.epam.gym.model.TrainingType;
@@ -22,7 +22,7 @@ class TrainingTest {
                 .trainingName("Morning Fitness")
                 .trainingType(type)
                 .trainingDate(date)
-                .trainingDuration(60)
+                .trainingDurationMinutes(60)
                 .build();
 
         assertEquals(1L, training.getTrainingId());
@@ -31,7 +31,7 @@ class TrainingTest {
         assertEquals("Morning Fitness", training.getTrainingName());
         assertEquals(type, training.getTrainingType());
         assertEquals(date, training.getTrainingDate());
-        assertEquals(60, training.getTrainingDuration());
+        assertEquals(60, training.getTrainingDurationMinutes());
     }
 
     @Test
@@ -51,6 +51,6 @@ class TrainingTest {
 
         assertEquals(1L, training.getTrainingId());
         assertEquals("Yoga", training.getTrainingName());
-        assertEquals(45, training.getTrainingDuration());
+        assertEquals(45, training.getTrainingDurationMinutes());
     }
 }

@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.storage;
 
 import com.epam.gym.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;

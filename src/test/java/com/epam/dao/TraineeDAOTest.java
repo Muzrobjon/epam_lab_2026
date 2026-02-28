@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.dao;
 
 import com.epam.gym.dao.TraineeDAO;
 import com.epam.gym.model.Trainee;

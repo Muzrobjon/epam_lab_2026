@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.service;
 
 import com.epam.gym.dao.TrainingDAO;
 import com.epam.gym.model.Training;
@@ -39,7 +39,7 @@ class TrainingServiceTest {
                 .trainingName("Morning Fitness")
                 .trainingType(TrainingType.builder().trainingTypeName("Fitness").build())
                 .trainingDate(LocalDate.of(2024, 1, 15))
-                .trainingDuration(60)
+                .trainingDurationMinutes(60)
                 .build();
     }
 
@@ -58,7 +58,7 @@ class TrainingServiceTest {
         assertEquals("Evening Cardio", result.getTrainingName());
         assertEquals(type, result.getTrainingType());
         assertEquals(date, result.getTrainingDate());
-        assertEquals(45, result.getTrainingDuration());
+        assertEquals(45, result.getTrainingDurationMinutes());
         verify(trainingDAO).save(any(Training.class));
     }
 

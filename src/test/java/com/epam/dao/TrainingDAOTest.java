@@ -1,4 +1,4 @@
-package com.epam;
+package com.epam.dao;
 import com.epam.gym.dao.TrainingDAO;
 import com.epam.gym.model.Training;
 import com.epam.gym.model.TrainingType;
@@ -39,7 +39,7 @@ class TrainingDAOTest {
                 .trainingName("Morning Fitness")
                 .trainingType(TrainingType.builder().trainingTypeName("Fitness").build())
                 .trainingDate(LocalDate.of(2024, 1, 15))
-                .trainingDuration(60)
+                .trainingDurationMinutes(60)
                 .build();
     }
 

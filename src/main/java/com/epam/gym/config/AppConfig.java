@@ -14,10 +14,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @PropertySource("classpath:application.properties")
 public class AppConfig {
 
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer propertyConfigurer() {
-        return new PropertySourcesPlaceholderConfigurer();
-    }
 
     @Bean
     public ObjectMapper objectMapper() {
