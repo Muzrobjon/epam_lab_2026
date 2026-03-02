@@ -1,16 +1,23 @@
 package com.epam.gym.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "training_types")
 public class TrainingType {
-    private Long id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long trainingTypeId;
+
+    @NotBlank(message = "Training type name is required")
+    @Column(name = "training_type_name", nullable = false, unique = true)
     private String trainingTypeName;
 }
-

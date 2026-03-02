@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 
 @Service
 public class UsernameGenerator {
+
     public String generateUsername(User user, Predicate<String> usernameExists) {
         String base = normalize(user.getFirstName()) + "." + normalize(user.getLastName());
         int counter = 0;
