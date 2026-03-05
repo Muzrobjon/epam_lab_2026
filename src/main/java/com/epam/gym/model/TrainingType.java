@@ -17,6 +17,10 @@ public class TrainingType {
     @Column(name = "id")
     private Long trainingTypeId;
 
+    // TODO:
+    //  From the task notes:
+    //  12. Training Types table include constant list of values and could not be updated from the application.
+    //  How can we achieve that?
     @NotBlank(message = "Training type name is required")
     @Column(name = "training_type_name", nullable = false, unique = true)
     private String trainingTypeName;
