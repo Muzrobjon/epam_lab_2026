@@ -6,6 +6,12 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// TODO:
+//  In the entire test/model package there is little value in testing Lombok-generated functionality
+//  as this logic is already tested by the Lombok library creators:)
+//  If the goal was to verify how the entity relationships behave, let's involve the database in the test. For example:
+//  create/update/delete entities or modify relations -> save entity -> query it by id -> verify that the relationships
+//  were persisted correctly.
 class TraineeTest {
 
     @Test

@@ -19,6 +19,10 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+// TODO:
+//  Having mockito in the project we can use @Mock + @InjectMocks to mock dependencies of the service being tested.
+//  This allows us to write more concise tests without manually setting up mocks and the service instance.
+//  Simple example: if service constructor changes - do you want to update all tests that use it?
 class TraineeServiceTest {
 
     private TraineeRepository traineeRepository;
