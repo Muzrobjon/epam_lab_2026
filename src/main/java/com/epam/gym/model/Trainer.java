@@ -1,5 +1,6 @@
 package com.epam.gym.model;
 
+import com.epam.gym.enums.TrainingTypeName;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -8,22 +9,21 @@ import lombok.experimental.SuperBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true, exclude = {"trainings", "trainees"})
+@Getter
+@Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "trainers")
-@PrimaryKeyJoinColumn(name = "user_id")
+@PrimaryKeyJoinColumn(name = "id")
 @DiscriminatorValue("TRAINER")
 public class Trainer extends User {
 
     @NotNull(message = "Specialization is required")
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "specialization_id", nullable = false)
-    private TrainingType specialization;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "specialization", nullable = false)
+    private TrainingTypeName specialization;
 
     @OneToMany(mappedBy = "trainer", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @Builder.Default
@@ -42,5 +42,30 @@ public class Trainer extends User {
     public void removeTraining(Training training) {
         trainings.remove(training);
         training.setTrainer(null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Trainer)) return false;
+        Trainer trainer = (Trainer) o;
+        return getId() != null && getId().equals(trainer.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Trainer{" +
+                "id=" + getId() +
+                ", firstName='" + getFirstName() + '\'' +
+                ", lastName='" + getLastName() + '\'' +
+                ", userName='" + getUserName() + '\'' +
+                ", isActive=" + getIsActive() +
+                ", specialization=" + specialization +
+                '}';
     }
 }

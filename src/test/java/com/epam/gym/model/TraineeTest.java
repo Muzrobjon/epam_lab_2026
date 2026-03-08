@@ -6,86 +6,81 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// TODO:
-//  In the entire test/model package there is little value in testing Lombok-generated functionality
-//  as this logic is already tested by the Lombok library creators:)
-//  If the goal was to verify how the entity relationships behave, let's involve the database in the test. For example:
-//  create/update/delete entities or modify relations -> save entity -> query it by id -> verify that the relationships
-//  were persisted correctly.
 class TraineeTest {
 
     @Test
-    void shouldCreateTraineeUsingBuilder() {
-        LocalDate birthDate = LocalDate.of(2000, 1, 1);
-
-        Trainee trainee = Trainee.builder()
-                .dateOfBirth(birthDate)
-                .address("New York")
+    void testEqualsAndHashCode() {
+        Trainee t1 = Trainee.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .userName("johndoe")
+                .isActive(true)
+                .dateOfBirth(LocalDate.of(2000, 1, 1))
+                .address("Address 1")
                 .build();
 
-        assertNotNull(trainee);
-        assertEquals(birthDate, trainee.getDateOfBirth());
-        assertEquals("New York", trainee.getAddress());
-        assertNotNull(trainee.getTrainings());
-        assertNotNull(trainee.getTrainers());
-        assertTrue(trainee.getTrainings().isEmpty());
-        assertTrue(trainee.getTrainers().isEmpty());
+        Trainee t2 = Trainee.builder()
+                .id(1L)
+                .firstName("Jane")
+                .lastName("Smith")
+                .userName("janesmith")
+                .isActive(false)
+                .dateOfBirth(LocalDate.of(1999, 2, 2))
+                .address("Address 2")
+                .build();
+
+        Trainee t3 = Trainee.builder()
+                .id(2L)
+                .firstName("John")
+                .lastName("Doe")
+                .userName("johndoe")
+                .isActive(true)
+                .dateOfBirth(LocalDate.of(2000, 1, 1))
+                .address("Address 1")
+                .build();
+
+        assertEquals(t1, t2, "Trainees with same id should be equal");
+        assertEquals(t1.hashCode(), t2.hashCode(), "Hash codes should match for same id");
+        assertNotEquals(t1, t3, "Trainees with different ids should not be equal");
     }
 
     @Test
-    void shouldAddTrainerBidirectionally() {
-        Trainee trainee = new Trainee();
-        Trainer trainer = new Trainer();
+    void testToString() {
+        Trainee t = Trainee.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .userName("johndoe")
+                .isActive(true)
+                .dateOfBirth(LocalDate.of(2000, 1, 1))
+                .address("Address 1")
+                .build();
 
-        trainee.addTrainer(trainer);
-
-        assertTrue(trainee.getTrainers().contains(trainer));
-        assertTrue(trainer.getTrainees().contains(trainee));
+        String toString = t.toString();
+        assertTrue(toString.contains("Trainee{"));
+        assertTrue(toString.contains("id=1"));
+        assertTrue(toString.contains("firstName='John'"));
+        assertTrue(toString.contains("dateOfBirth=2000-01-01"));
     }
 
     @Test
-    void shouldNotDuplicateTrainer() {
-        Trainee trainee = new Trainee();
-        Trainer trainer = new Trainer();
+    void testNoArgsConstructorAndSetters() {
+        Trainee t = new Trainee();
+        t.setId(5L);
+        t.setFirstName("Alice");
+        t.setLastName("Wonderland");
+        t.setUserName("alice");
+        t.setIsActive(false);
+        t.setDateOfBirth(LocalDate.of(1995, 5, 5));
+        t.setAddress("Wonderland");
 
-        trainee.addTrainer(trainer);
-        trainee.addTrainer(trainer);
-
-        assertEquals(1, trainee.getTrainers().size());
-    }
-
-    @Test
-    void shouldRemoveTrainerBidirectionally() {
-        Trainee trainee = new Trainee();
-        Trainer trainer = new Trainer();
-
-        trainee.addTrainer(trainer);
-        trainee.removeTrainer(trainer);
-
-        assertFalse(trainee.getTrainers().contains(trainer));
-        assertFalse(trainer.getTrainees().contains(trainee));
-    }
-
-    @Test
-    void shouldAddTrainingAndSetBackReference() {
-        Trainee trainee = new Trainee();
-        Training training = new Training();
-
-        trainee.addTraining(training);
-
-        assertTrue(trainee.getTrainings().contains(training));
-        assertEquals(trainee, training.getTrainee());
-    }
-
-    @Test
-    void shouldRemoveTrainingAndClearBackReference() {
-        Trainee trainee = new Trainee();
-        Training training = new Training();
-
-        trainee.addTraining(training);
-        trainee.removeTraining(training);
-
-        assertFalse(trainee.getTrainings().contains(training));
-        assertNull(training.getTrainee());
+        assertEquals(5L, t.getId());
+        assertEquals("Alice", t.getFirstName());
+        assertEquals("Wonderland", t.getLastName());
+        assertEquals("alice", t.getUserName());
+        assertFalse(t.getIsActive());
+        assertEquals(LocalDate.of(1995, 5, 5), t.getDateOfBirth());
+        assertEquals("Wonderland", t.getAddress());
     }
 }

@@ -8,15 +8,14 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true, exclude = {"trainings", "trainers"})
+@Getter
+@Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "trainees")
-@PrimaryKeyJoinColumn(name = "user_id")
+@PrimaryKeyJoinColumn(name = "id")
 @DiscriminatorValue("TRAINEE")
 public class Trainee extends User {
 
@@ -39,26 +38,29 @@ public class Trainee extends User {
     @Builder.Default
     private List<Trainer> trainers = new ArrayList<>();
 
-    // Helper methods for bidirectional relationships
-    public void addTrainer(Trainer trainer) {
-        if (!this.trainers.contains(trainer)) {
-            this.trainers.add(trainer);
-            trainer.getTrainees().add(this);
-        }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Trainee)) return false;
+        Trainee trainee = (Trainee) o;
+        return getId() != null && getId().equals(trainee.getId());
     }
 
-    public void removeTrainer(Trainer trainer) {
-        this.trainers.remove(trainer);
-        trainer.getTrainees().remove(this);
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 
-    public void addTraining(Training training) {
-        trainings.add(training);
-        training.setTrainee(this);
-    }
-
-    public void removeTraining(Training training) {
-        trainings.remove(training);
-        training.setTrainee(null);
+    @Override
+    public String toString() {
+        return "Trainee{" +
+                "id=" + getId() +
+                ", firstName='" + getFirstName() + '\'' +
+                ", lastName='" + getLastName() + '\'' +
+                ", userName='" + getUserName() + '\'' +
+                ", isActive=" + getIsActive() +
+                ", dateOfBirth=" + dateOfBirth +
+                ", address='" + address + '\'' +
+                '}';
     }
 }

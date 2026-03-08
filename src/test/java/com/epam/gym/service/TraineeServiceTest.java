@@ -11,7 +11,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -19,10 +18,6 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-// TODO:
-//  Having mockito in the project we can use @Mock + @InjectMocks to mock dependencies of the service being tested.
-//  This allows us to write more concise tests without manually setting up mocks and the service instance.
-//  Simple example: if service constructor changes - do you want to update all tests that use it?
 class TraineeServiceTest {
 
     private TraineeRepository traineeRepository;
@@ -30,7 +25,6 @@ class TraineeServiceTest {
     private UsernameGenerator usernameGenerator;
     private PasswordGenerator passwordGenerator;
     private Validator validator;
-
     private TraineeService traineeService;
 
     @BeforeEach
@@ -51,86 +45,151 @@ class TraineeServiceTest {
     }
 
     @Test
-    void createProfile_shouldCreateAndSaveTrainee() {
-        String firstName = "John";
-        String lastName = "Doe";
-        LocalDate dob = LocalDate.of(1990, 1, 1);
-        String address = "123 Street";
-
-        Trainee trainee = Trainee.builder().build();
+    void testCreateProfile_Success() {
         when(usernameGenerator.generateUsername(any(), any())).thenReturn("johndoe");
-        when(passwordGenerator.generatePassword(10)).thenReturn("pass123456");
+        when(passwordGenerator.generatePassword(anyInt())).thenReturn("password123");
+        when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
+        when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> {
+            Trainee t = invocation.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+
+        Trainee result = traineeService.createProfile("John", "Doe", LocalDate.of(1990, 1, 1), "Address");
+        assertEquals("johndoe", result.getUserName());
+        assertEquals("password123", result.getPassword());
+        assertEquals("John", result.getFirstName());
+        assertEquals("Doe", result.getLastName());
+        assertEquals("Address", result.getAddress());
+        assertTrue(result.getIsActive());
+        assertNotNull(result.getId());
+    }
+
+    @Test
+    void testCreateProfile_ValidationFails() {
+        when(usernameGenerator.generateUsername(any(), any())).thenReturn("johndoe");
+        when(passwordGenerator.generatePassword(anyInt())).thenReturn("password123");
+        ConstraintViolation<Trainee> violation = mock(ConstraintViolation.class);
+        when(violation.getMessage()).thenReturn("First name required");
+        Set<ConstraintViolation<Trainee>> violations = Set.of(violation);
+        when(validator.validate(any(Trainee.class))).thenReturn(violations);
+
+        ValidationException ex = assertThrows(ValidationException.class, () ->
+                traineeService.createProfile("John", "Doe", LocalDate.of(1990, 1, 1), "Address"));
+        assertTrue(ex.getMessage().contains("First name required"));
+    }
+
+    @Test
+    void testAuthenticate_Success() {
+        Trainee trainee = Trainee.builder().userName("johndoe").password("pass").build();
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(trainee));
+        assertDoesNotThrow(() -> traineeService.authenticate("johndoe", "pass"));
+    }
+
+    @Test
+    void testAuthenticate_NotFound() {
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.empty());
+        assertThrows(AuthenticationException.class, () -> traineeService.authenticate("johndoe", "pass"));
+    }
+
+    @Test
+    void testAuthenticate_WrongPassword() {
+        Trainee trainee = Trainee.builder().userName("johndoe").password("pass").build();
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(trainee));
+        assertThrows(AuthenticationException.class, () -> traineeService.authenticate("johndoe", "wrong"));
+    }
+
+    @Test
+    void testSelectByUsername_Success() {
+        Trainee trainee = Trainee.builder().userName("johndoe").build();
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(trainee));
+        assertEquals(trainee, traineeService.selectByUsername("johndoe"));
+    }
+
+    @Test
+    void testSelectByUsername_NotFound() {
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class, () -> traineeService.selectByUsername("johndoe"));
+    }
+
+    @Test
+    void testChangePassword_Success() {
+        Trainee trainee = Trainee.builder().userName("johndoe").password("old").build();
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        // authenticate will pass
+        assertDoesNotThrow(() -> traineeService.changePassword("johndoe", "old", "new"));
+        verify(traineeRepository, times(1)).save(any(Trainee.class));
+    }
+
+    @Test
+    void testUpdateProfile_Success() {
+        Trainee existing = Trainee.builder()
+                .userName("johndoe")
+                .firstName("John")
+                .lastName("Doe")
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .address("Old Address")
+                .password("pass") // Set password to avoid NPE
+                .build();
+        Trainee updated = Trainee.builder()
+                .firstName("Johnny")
+                .address("New Address")
+                .build();
+
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(existing));
         when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
 
-        Trainee created = traineeService.createProfile(firstName, lastName, dob, address);
-
-        assertEquals("johndoe", created.getUserName());
-        assertEquals("pass123456", created.getPassword());
-        assertEquals(firstName, created.getFirstName());
-        assertEquals(lastName, created.getLastName());
-        assertEquals(dob, created.getDateOfBirth());
-        assertEquals(address, created.getAddress());
-        assertTrue(created.getIsActive());
-
-        verify(traineeRepository).save(any(Trainee.class));
+        Trainee result = traineeService.updateProfile("johndoe", "pass", updated);
+        assertEquals("Johnny", result.getFirstName());
+        assertEquals("New Address", result.getAddress());
     }
 
     @Test
-    void authenticate_shouldThrowException_whenUserNotFound() {
-        when(traineeRepository.findByUserName("unknown")).thenReturn(Optional.empty());
-        assertThrows(AuthenticationException.class, () -> traineeService.authenticate("unknown", "pass"));
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenPasswordIncorrect() {
-        Trainee trainee = Trainee.builder().userName("john").password("correct").build();
-        when(traineeRepository.findByUserName("john")).thenReturn(Optional.of(trainee));
-
-        assertThrows(AuthenticationException.class, () -> traineeService.authenticate("john", "wrong"));
-    }
-
-    @Test
-    void changePassword_shouldUpdatePassword() {
-        Trainee trainee = Trainee.builder().userName("john").password("oldPass").build();
-        when(traineeRepository.findByUserName("john")).thenReturn(Optional.of(trainee));
+    void testToggleActiveStatus() {
+        Trainee trainee = Trainee.builder().userName("johndoe").password("pass").isActive(true).build();
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(trainee));
         when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        traineeService.changePassword("john", "oldPass", "newPass");
-
-        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
-        verify(traineeRepository).save(captor.capture());
-
-        assertEquals("newPass", captor.getValue().getPassword());
+        assertDoesNotThrow(() -> traineeService.toggleActiveStatus("johndoe", "pass"));
+        assertFalse(trainee.getIsActive());
     }
 
     @Test
-    void updateTrainersList_shouldUpdateTraineeTrainers() {
-        Trainee trainee = Trainee.builder().userName("john").password("pass").trainers(new ArrayList<>()).build();
-        Trainer trainer1 = Trainer.builder().userName("trainer1").build();
-        Trainer trainer2 = Trainer.builder().userName("trainer2").build();
-
-        when(traineeRepository.findByUserName("john")).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUserName("trainer1")).thenReturn(Optional.of(trainer1));
-        when(trainerRepository.findByUserName("trainer2")).thenReturn(Optional.of(trainer2));
-
-        traineeService.updateTrainersList("john", "pass", Arrays.asList("trainer1", "trainer2"));
-
-        assertEquals(2, trainee.getTrainers().size());
-        assertTrue(trainee.getTrainers().contains(trainer1));
-        assertTrue(trainee.getTrainers().contains(trainer2));
+    void testDeleteByUsername() {
+        Trainee trainee = Trainee.builder().userName("johndoe").password("pass").build();
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(trainee));
+        doNothing().when(traineeRepository).delete(any(Trainee.class));
+        assertDoesNotThrow(() -> traineeService.deleteByUsername("johndoe", "pass"));
+        verify(traineeRepository, times(1)).delete(trainee);
     }
 
     @Test
-    void createProfile_shouldThrowValidationException_whenInvalid() {
-        when(usernameGenerator.generateUsername(any(), any())).thenReturn("johndoe");
-        when(passwordGenerator.generatePassword(10)).thenReturn("pass123456");
+    void testUpdateTrainersList() {
+        Trainee trainee = Trainee.builder().userName("johndoe").password("pass").trainers(new ArrayList<>()).build();
+        Trainer trainer = Trainer.builder().userName("trainer1").build();
+        when(traineeRepository.findByUserName("johndoe")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserName("trainer1")).thenReturn(Optional.of(trainer));
+        when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        assertDoesNotThrow(() -> traineeService.updateTrainersList("johndoe", "pass", List.of("trainer1")));
+        assertEquals(1, trainee.getTrainers().size());
+        assertEquals(trainer, trainee.getTrainers().get(0));
+    }
 
-        ConstraintViolation<Trainee> violation = mock(ConstraintViolation.class);
-        when(violation.getMessage()).thenReturn("Invalid name");
-        when(validator.validate(any(Trainee.class))).thenReturn(Set.of(violation));
+    @Test
+    void testSelectProfileById() {
+        Trainee trainee = Trainee.builder().id(1L).build();
+        when(traineeRepository.findById(1L)).thenReturn(Optional.of(trainee));
+        assertEquals(trainee, traineeService.selectProfile(1L));
+    }
 
-        assertThrows(ValidationException.class, () ->
-                traineeService.createProfile("John", "Doe", LocalDate.now(), "Address"));
+    @Test
+    void testFindAll() {
+        List<Trainee> trainees = List.of(
+                Trainee.builder().userName("a").build(),
+                Trainee.builder().userName("b").build()
+        );
+        when(traineeRepository.findAll()).thenReturn(trainees);
+        assertEquals(trainees, traineeService.findAll());
     }
 }

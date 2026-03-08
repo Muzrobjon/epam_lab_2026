@@ -18,7 +18,7 @@ CREATE DATABASE gymdb
 \c gymdb;
 
 -- Create schema (optional, Hibernate will create tables)
-CREATE SCHEMA IF NOT EXISTS gym;
+CREATE SCHEMA IF NOT EXISTS gymdb;
 
 -- Add comment
 COMMENT ON DATABASE gymdb IS 'Gym CRM Database for Hibernate Project';

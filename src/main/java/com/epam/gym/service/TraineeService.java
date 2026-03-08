@@ -1,5 +1,6 @@
 package com.epam.gym.service;
 
+
 import com.epam.gym.exception.AuthenticationException;
 import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.exception.ValidationException;
@@ -57,7 +58,7 @@ public class TraineeService {
         Trainee saved = traineeRepository.save(trainee);
 
         log.info("Created trainee: {} with username: {}",
-                saved.getUserId(), saved.getUserName());
+                saved.getId(), saved.getUserName());
 
         return saved;
     }

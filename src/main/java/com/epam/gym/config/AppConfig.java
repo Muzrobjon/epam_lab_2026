@@ -1,12 +1,14 @@
 package com.epam.gym.config;
 
 import jakarta.persistence.EntityManagerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -15,67 +17,29 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-
 import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
-@ComponentScan(basePackages = "com.epam.gym")
-@PropertySource("classpath:application.properties")
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "com.epam.gym.repository")
+@ComponentScan(basePackages = "com.epam.gym")
+@PropertySource("classpath:application.properties")
 public class AppConfig {
 
-    @Value("${jdbc.url}")
-    private String jdbcUrl;
+    private final Environment env;
 
-    @Value("${jdbc.username}")
-    private String jdbcUsername;
-
-    @Value("${jdbc.password}")
-    private String jdbcPassword;
-
-    @Value("${jdbc.driver}")
-    private String jdbcDriver;
-
-    @Value("${hibernate.dialect}")
-    private String hibernateDialect;
-
-    @Value("${hibernate.hbm2ddl.auto}")
-    private String hbm2ddlAuto;
-
-    @Value("${hibernate.show_sql}")
-    private String showSql;
-
-    @Value("${hibernate.format_sql}")
-    private String formatSql;
-
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        return new PropertySourcesPlaceholderConfigurer();
-    }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return mapper;
+    public AppConfig(Environment env) {
+        this.env = env;
     }
 
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(jdbcDriver);
-        dataSource.setUrl(jdbcUrl);
-        dataSource.setUsername(jdbcUsername);
-        dataSource.setPassword(jdbcPassword);
+        dataSource.setDriverClassName(env.getProperty("jdbc.driver"));
+        dataSource.setUrl(env.getProperty("jdbc.url"));
+        dataSource.setUsername(env.getProperty("jdbc.username"));
+        dataSource.setPassword(env.getProperty("jdbc.password"));
         return dataSource;
     }
 
@@ -85,21 +49,10 @@ public class AppConfig {
         em.setDataSource(dataSource());
         em.setPackagesToScan("com.epam.gym.model");
 
-        // Fix for Spring 7 + Hibernate 6 compatibility
-        em.setEntityManagerFactoryInterface(jakarta.persistence.EntityManagerFactory.class);
-
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
+        em.setJpaProperties(hibernateProperties());
 
-        Properties jpaProperties = new Properties();
-        jpaProperties.put("hibernate.dialect", hibernateDialect);
-        jpaProperties.put("hibernate.hbm2ddl.auto", hbm2ddlAuto);
-        jpaProperties.put("hibernate.show_sql", showSql);
-        jpaProperties.put("hibernate.format_sql", formatSql);
-        jpaProperties.put("hibernate.use_sql_comments", "true");
-        jpaProperties.put("hibernate.connection.pool_size", "10");
-
-        em.setJpaProperties(jpaProperties);
         return em;
     }
 
@@ -114,5 +67,20 @@ public class AppConfig {
     public Validator validator() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         return factory.getValidator();
+    }
+
+    private Properties hibernateProperties() {
+        Properties properties = new Properties();
+        properties.put("hibernate.dialect", env.getProperty("hibernate.dialect"));
+        properties.put("hibernate.hbm2ddl.auto", env.getProperty("hibernate.hbm2ddl.auto"));
+        properties.put("hibernate.show_sql", env.getProperty("hibernate.show_sql"));
+        properties.put("hibernate.format_sql", env.getProperty("hibernate.format_sql"));
+        properties.put("hibernate.use_sql_comments", env.getProperty("hibernate.use_sql_comments"));
+
+
+        properties.put("hibernate.query.mutation_strategy",
+                "org.hibernate.query.sqm.mutation.internal.inline.InlineMutationStrategy");
+
+        return properties;
     }
 }

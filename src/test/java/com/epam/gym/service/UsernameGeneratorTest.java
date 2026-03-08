@@ -1,6 +1,6 @@
 package com.epam.gym.service;
 
-import com.epam.gym.model.Trainee;
+import com.epam.gym.model.User;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -8,70 +8,63 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class UsernameGeneratorTest {
 
     private final UsernameGenerator usernameGenerator = new UsernameGenerator();
 
+    static class TestUser extends User {}
+
     @Test
-    void generateUsername_shouldReturnNormalizedUsername_whenAvailable() {
-        Trainee user = new Trainee();
+    void testGenerateUsername_Basic() {
+        TestUser user = new TestUser();
         user.setFirstName("John");
         user.setLastName("Doe");
 
-        Predicate<String> usernameExists = username -> false;
-
+        Predicate<String> usernameExists = name -> false;
         String username = usernameGenerator.generateUsername(user, usernameExists);
 
         assertEquals("John.Doe", username);
     }
 
     @Test
-    void generateUsername_shouldAppendNumber_whenUsernameTaken() {
-        Trainee user = new Trainee();
+    void testGenerateUsername_WithWhitespace() {
+        TestUser user = new TestUser();
+        user.setFirstName("  John  ");
+        user.setLastName("  Doe  ");
+
+        Predicate<String> usernameExists = name -> false;
+        String username = usernameGenerator.generateUsername(user, usernameExists);
+
+        assertEquals("John.Doe", username);
+    }
+
+    @Test
+    void testGenerateUsername_Uniqueness() {
+        TestUser user = new TestUser();
         user.setFirstName("Jane");
         user.setLastName("Smith");
 
-        Set<String> existingUsernames = new HashSet<>();
-        existingUsernames.add("Jane.Smith");
-        existingUsernames.add("Jane.Smith1");
+        Set<String> existing = new HashSet<>();
+        existing.add("Jane.Smith");
+        existing.add("Jane.Smith1");
 
-        Predicate<String> usernameExists = existingUsernames::contains;
-
+        Predicate<String> usernameExists = existing::contains;
         String username = usernameGenerator.generateUsername(user, usernameExists);
 
         assertEquals("Jane.Smith2", username);
     }
 
     @Test
-    void generateUsername_shouldTrimAndRemoveSpaces() {
-        Trainee user = new Trainee();
-        user.setFirstName("  Alice  ");
-        user.setLastName("  Johnson  ");
+    void testGenerateUsername_EmptyNames() {
+        TestUser user = new TestUser();
+        user.setFirstName(" ");
+        user.setLastName(" ");
 
-        Predicate<String> usernameExists = username -> false;
-
+        Predicate<String> usernameExists = name -> false;
         String username = usernameGenerator.generateUsername(user, usernameExists);
 
-        assertEquals("Alice.Johnson", username);
-    }
-
-    @Test
-    void generateUsername_shouldHandleMultipleCollisions() {
-        Trainee user = new Trainee();
-        user.setFirstName("Bob");
-        user.setLastName("Brown");
-
-        Set<String> existingUsernames = new HashSet<>();
-        existingUsernames.add("Bob.Brown");
-        existingUsernames.add("Bob.Brown1");
-        existingUsernames.add("Bob.Brown2");
-        existingUsernames.add("Bob.Brown3");
-
-        Predicate<String> usernameExists = existingUsernames::contains;
-
-        String username = usernameGenerator.generateUsername(user, usernameExists);
-
-        assertEquals("Bob.Brown4", username);
+        assertEquals(".", username);
     }
 }

@@ -1,27 +1,44 @@
 package com.epam.gym.model;
 
+import com.epam.gym.enums.TrainingTypeName;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.Immutable;
 
-@Data
-@Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "training_types")
+@Immutable
 public class TrainingType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long trainingTypeId;
+    private Long id;
 
-    // TODO:
-    //  From the task notes:
-    //  12. Training Types table include constant list of values and could not be updated from the application.
-    //  How can we achieve that?
-    @NotBlank(message = "Training type name is required")
-    @Column(name = "training_type_name", nullable = false, unique = true)
-    private String trainingTypeName;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "training_type_name", nullable = false, unique = true, updatable = false)
+    private TrainingTypeName trainingTypeName;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TrainingType)) return false;
+        TrainingType that = (TrainingType) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "TrainingType{" +
+                "id=" + id +
+                ", trainingTypeName='" + trainingTypeName + '\'' +
+                '}';
+    }
 }

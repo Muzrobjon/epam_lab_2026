@@ -1,57 +1,104 @@
 package com.epam.gym.model;
 
+import com.epam.gym.enums.TrainingTypeName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class TrainerTest {
 
     @Test
-    void shouldCreateTrainerUsingBuilder() {
-        TrainingType specialization = new TrainingType();
-
-        Trainer trainer = Trainer.builder()
-                .specialization(specialization)
+    void testEqualsAndHashCode() {
+        Trainer t1 = Trainer.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .userName("johndoe")
+                .isActive(true)
+                .specialization(TrainingTypeName.CARDIO)
                 .build();
 
-        assertNotNull(trainer);
-        assertEquals(specialization, trainer.getSpecialization());
-        assertNotNull(trainer.getTrainings());
-        assertNotNull(trainer.getTrainees());
+        Trainer t2 = Trainer.builder()
+                .id(1L)
+                .firstName("Jane")
+                .lastName("Smith")
+                .userName("janesmith")
+                .isActive(false)
+                .specialization(TrainingTypeName.STRENGTH)
+                .build();
+
+        Trainer t3 = Trainer.builder()
+                .id(2L)
+                .firstName("John")
+                .lastName("Doe")
+                .userName("johndoe")
+                .isActive(true)
+                .specialization(TrainingTypeName.CARDIO)
+                .build();
+
+        assertEquals(t1, t2, "Trainers with same id should be equal");
+        assertEquals(t1.hashCode(), t2.hashCode(), "Hash codes should match for same id");
+        assertNotEquals(t1, t3, "Trainers with different ids should not be equal");
+    }
+
+    @Test
+    void testToString() {
+        Trainer t = Trainer.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .userName("johndoe")
+                .isActive(true)
+                .specialization(TrainingTypeName.CARDIO)
+                .build();
+
+        String toString = t.toString();
+        assertTrue(toString.contains("Trainer{"));
+        assertTrue(toString.contains("id=1"));
+        assertTrue(toString.contains("firstName='John'"));
+        assertTrue(toString.contains("specialization=CARDIO"));
+    }
+
+    @Test
+    void testNoArgsConstructorAndSetters() {
+        Trainer t = new Trainer();
+        t.setId(5L);
+        t.setFirstName("Alice");
+        t.setLastName("Wonderland");
+        t.setUserName("alice");
+        t.setIsActive(false);
+        t.setSpecialization(TrainingTypeName.STRENGTH);
+
+        assertEquals(5L, t.getId());
+        assertEquals("Alice", t.getFirstName());
+        assertEquals("Wonderland", t.getLastName());
+        assertEquals("alice", t.getUserName());
+        assertFalse(t.getIsActive());
+        assertEquals(TrainingTypeName.STRENGTH, t.getSpecialization());
+    }
+
+    @Test
+    void testAddAndRemoveTraining() {
+        Trainer trainer = Trainer.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .userName("johndoe")
+                .isActive(true)
+                .specialization(TrainingTypeName.CARDIO)
+                .build();
+
+        Training training = new Training();
         assertTrue(trainer.getTrainings().isEmpty());
-        assertTrue(trainer.getTrainees().isEmpty());
-    }
-
-    @Test
-    void shouldAddTrainingAndSetBackReference() {
-        Trainer trainer = new Trainer();
-        Training training = new Training();
 
         trainer.addTraining(training);
+        assertEquals(1, trainer.getTrainings().size());
+        assertSame(trainer, training.getTrainer());
 
-        assertTrue(trainer.getTrainings().contains(training));
-        assertEquals(trainer, training.getTrainer());
-    }
-
-    @Test
-    void shouldRemoveTrainingAndClearBackReference() {
-        Trainer trainer = new Trainer();
-        Training training = new Training();
-
-        trainer.addTraining(training);
         trainer.removeTraining(training);
-
-        assertFalse(trainer.getTrainings().contains(training));
+        assertTrue(trainer.getTrainings().isEmpty());
         assertNull(training.getTrainer());
-    }
-
-    @Test
-    void shouldSetAndGetSpecialization() {
-        TrainingType specialization = new TrainingType();
-        Trainer trainer = new Trainer();
-
-        trainer.setSpecialization(specialization);
-
-        assertEquals(specialization, trainer.getSpecialization());
     }
 }

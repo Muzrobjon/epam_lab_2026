@@ -1,6 +1,7 @@
 package com.epam;
 
 import com.epam.gym.config.AppConfig;
+import com.epam.gym.enums.TrainingTypeName;
 import com.epam.gym.facade.GymFacade;
 import com.epam.gym.model.Trainee;
 import com.epam.gym.model.Trainer;
@@ -36,10 +37,10 @@ public class GymCrmApplication {
 
         // 2. Create Trainer profile
         System.out.println("\n2. Creating Trainer Profile:");
-        Trainer trainer = facade.createTrainer("Alice", "Fitness", "Cardio");
+        Trainer trainer = facade.createTrainer("Alice", "Fitness", TrainingTypeName.CARDIO);
         System.out.println("   Created: " + trainer.getUserName() + " (Password: " + trainer.getPassword() + ")");
 
-        Trainer trainer2 = facade.createTrainer("Bob", "Strong", "Strength");
+        Trainer trainer2 = facade.createTrainer("Bob", "Strong", TrainingTypeName.STRENGTH);
         System.out.println("   Created: " + trainer2.getUserName() + " (Password: " + trainer2.getPassword() + ")");
 
         // 3 & 4. Authentication
@@ -77,28 +78,29 @@ public class GymCrmApplication {
         facade.toggleTraineeStatus(trainee.getUserName(), newPassword);
         System.out.println("   Trainee status toggled!");
 
+
         // 16. Add training
         System.out.println("\n16. Add Training:");
         Training training = facade.createTraining(
                 trainee.getUserName(), newPassword,
                 trainer.getUserName(), trainer.getPassword(),
                 "Morning Cardio Blast",
-                "Cardio",
+                TrainingTypeName.CARDIO,
                 LocalDate.now(),
                 45
         );
-        System.out.println("   Created Training: " + training.getTrainingName() + " (ID: " + training.getTrainingId() + ")");
+        System.out.println("   Created Training: " + training.getTrainingName() + " (ID: " + training.getId() + ")");
 
         // Add another training for criteria testing
         Training training2 = facade.createTraining(
                 trainee.getUserName(), newPassword,
                 trainer2.getUserName(), trainer2.getPassword(),
                 "Evening Strength",
-                "Strength",
+                TrainingTypeName.STRENGTH,
                 LocalDate.now().minusDays(1),
                 60
         );
-        System.out.println("   Created Training: " + training2.getTrainingName() + " (ID: " + training2.getTrainingId() + ")");
+        System.out.println("   Created Training: " + training2.getTrainingName() + " (ID: " + training2.getId() + ")");
 
         // 14. Get Trainee Trainings by Criteria
         System.out.println("\n14. Get Trainee Trainings by Criteria:");
@@ -108,10 +110,11 @@ public class GymCrmApplication {
                 null, null
         );
         System.out.println("   Found " + traineeTrainings.size() + " trainings:");
-        traineeTrainings.forEach(t -> System.out.println("     - " + t.getTrainingName() + " (" + t.getTrainingType().getTrainingTypeName() + ")"));
+        traineeTrainings.forEach(t -> System.out.println("     - " + t.getTrainingName() + " (" + t.getTrainingType() + ")"));
 
         // 15. Get Trainer Trainings by Criteria
         System.out.println("\n15. Get Trainer Trainings by Criteria:");
+
         List<Training> trainerTrainings = facade.getTrainerTrainingsByCriteria(
                 trainer.getUserName(), trainer.getPassword(),
                 LocalDate.now().minusDays(7), LocalDate.now().plusDays(7),

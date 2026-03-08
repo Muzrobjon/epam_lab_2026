@@ -16,10 +16,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
     boolean existsByUserName(String username);
 
-    @Query("SELECT COUNT(t) FROM Trainer t WHERE t.userName LIKE :pattern")
-    long countByUserNamePattern(@Param("pattern") String pattern);
-
-    @Query("SELECT t FROM Trainer t WHERE t.userId NOT IN " +
-            "(SELECT tr.userId FROM Trainee te JOIN te.trainers tr WHERE te.userName = :traineeUsername)")
+    @Query("SELECT t FROM Trainer t WHERE t.id NOT IN " +
+            "(SELECT tr.id FROM Trainee te JOIN te.trainers tr WHERE te.userName = :traineeUsername)")
     List<Trainer> findUnassignedTrainersByTraineeUsername(@Param("traineeUsername") String traineeUsername);
 }
