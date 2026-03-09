@@ -20,6 +20,10 @@ import java.util.List;
 @DiscriminatorValue("TRAINER")
 public class Trainer extends User {
 
+    // TODO:
+    //  Since TrainingType is a separate entity, Training should reference TrainingType via association,
+    //  not store TrainingTypeName enum directly. Right now the entity exists, but the mapping still uses the enum,
+    //  so the database model is not fully aligned with the app - the approaches are mixed
     @NotNull(message = "Specialization is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "specialization", nullable = false)

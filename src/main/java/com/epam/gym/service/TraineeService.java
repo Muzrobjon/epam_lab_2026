@@ -63,6 +63,9 @@ public class TraineeService {
         return saved;
     }
 
+    // TODO:
+    //  Both Trainer and Trainee are users and username+password we store in "users" table
+    //  Consider extracting duplicated authentication logic and to use UserRepository instead.
     @Transactional(readOnly = true)
     public void authenticate(String username, String password) {
         log.info("Authenticating trainee: {}", username);
@@ -172,6 +175,12 @@ public class TraineeService {
 
         trainee.getTrainers().clear();
 
+        // TODO:
+        //  N+1 problem!
+        //  For large collections it can become very inefficient to load each trainer in a loop.
+        //  trainerRepository.findByUserNameIn(usernames) does the work in a single query.
+        //  If you want/need to validate that all usernames exist, you can compare the result size
+        //  with the input list size and only if they don't match find missing ones and throw
         List<Trainer> trainers = trainerUsernames.stream()
                 .map(username -> trainerRepository.findByUserName(username)
                         .orElseThrow(() -> new NotFoundException("Trainer not found: " + username)))

@@ -8,6 +8,12 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+
+// TODO:
+//  [Optional]
+//  The entities are placed in the model package. While this works, the name model is quite generic and
+//  can be confusing in larger projects. In many Spring/JPA applications entities are typically placed
+//  in a package named 'entity', which makes their purpose clearer.
 @Getter
 @Setter
 @SuperBuilder

@@ -4,6 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// TODO:
+//  The tests are correct and well structured. However, most of them verify the built-in behavior of Java enums
+//  rather than application logic. For a simple enum without additional fields or methods, a large number of tests
+//  usually brings limited value. In such cases one small test verifying expected values is typically enough:
+//  shouldContainAllExpectedTrainingTypes - that's it.
 class TrainingTypeNameTest {
 
     @Test

@@ -9,6 +9,12 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO:
+//  The overall approach with Specification is good and fits dynamic filtering well.
+//  The code is readable and optional criteria are handled correctly.
+//  Things that I would consider improving:
+//  - extract duplicated filters for dates and name match
+//  - when working with strings remember to trim() and for username double check if it is case sensitive
 public class TrainingSpecification {
 
     private TrainingSpecification() {}

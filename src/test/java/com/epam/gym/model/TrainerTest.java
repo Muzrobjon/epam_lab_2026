@@ -7,6 +7,11 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// TODO:
+//  Here and for other entity tests as well:
+//  The tests for equals/hashCode and relationship helper methods are useful.
+//  However, the test verifying getters and setters does not provide much value, since it only tests Lombok-generated
+//  code rather than application logic. Tests for toString are also unnecessary unless the method contains important logic.
 class TrainerTest {
 
     @Test

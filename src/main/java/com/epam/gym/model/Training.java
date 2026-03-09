@@ -37,6 +37,10 @@ public class Training {
     @Column(name = "training_name", nullable = false)
     private String trainingName;
 
+    // TODO:
+    //  Since TrainingType is a separate entity, Training should reference TrainingType via association,
+    //  not store TrainingTypeName enum directly. Right now the entity exists, but the mapping still uses the enum,
+    //  so the database model is not fully aligned with the app - the approaches are mixed
     @NotNull(message = "Training type is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "training_type", nullable = false)
