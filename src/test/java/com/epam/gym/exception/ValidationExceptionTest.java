@@ -1,34 +1,44 @@
 package com.epam.gym.exception;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link ValidationException}.
+ */
+@DisplayName("ValidationException Tests")
 class ValidationExceptionTest {
 
-    @Test
-    void constructor_WithMessage_ShouldSetMessageCorrectly() {
-        // Given
-        String expectedMessage = "Validation failed";
+    private static final String TEST_MESSAGE = "Validation failed";
+    private static final String NULL_MESSAGE = null;
 
+    @Test
+    @DisplayName("Should create exception with message")
+    void shouldCreateExceptionWithMessage() {
         // When
-        ValidationException exception = new ValidationException(expectedMessage);
+        ValidationException exception = new ValidationException(TEST_MESSAGE);
 
         // Then
-        assertEquals(expectedMessage, exception.getMessage());
+        assertNotNull(exception);
+        assertEquals(TEST_MESSAGE, exception.getMessage());
     }
 
     @Test
-    void constructor_WithNullMessage_ShouldAllowNullMessage() {
+    @DisplayName("Should create exception with null message")
+    void shouldCreateExceptionWithNullMessage() {
         // When
-        ValidationException exception = new ValidationException(null);
+        ValidationException exception = new ValidationException(NULL_MESSAGE);
 
         // Then
+        assertNotNull(exception);
         assertNull(exception.getMessage());
     }
 
     @Test
-    void constructor_WithEmptyMessage_ShouldAllowEmptyMessage() {
+    @DisplayName("Should create exception with empty message")
+    void shouldCreateExceptionWithEmptyMessage() {
         // Given
         String emptyMessage = "";
 
@@ -36,187 +46,144 @@ class ValidationExceptionTest {
         ValidationException exception = new ValidationException(emptyMessage);
 
         // Then
+        assertNotNull(exception);
         assertEquals(emptyMessage, exception.getMessage());
     }
 
     @Test
-    void exception_ShouldExtendRuntimeException() {
+    @DisplayName("Should be instance of RuntimeException")
+    void shouldBeInstanceOfRuntimeException() {
         // When
-        ValidationException exception = new ValidationException("test");
+        ValidationException exception = new ValidationException(TEST_MESSAGE);
 
         // Then
-        assertTrue(exception instanceof RuntimeException);
+        assertInstanceOf(RuntimeException.class, exception);
     }
 
     @Test
-    void exception_ShouldBeThrowable() {
+    @DisplayName("Should be instance of Exception")
+    void shouldBeInstanceOfException() {
         // When
-        ValidationException exception = new ValidationException("test");
+        ValidationException exception = new ValidationException(TEST_MESSAGE);
 
         // Then
-        assertTrue(exception instanceof Throwable);
+        assertInstanceOf(Exception.class, exception);
     }
 
     @Test
-    void exception_ShouldPreserveMessageDetail() {
+    @DisplayName("Should be instance of Throwable")
+    void shouldBeInstanceOfThrowable() {
+        // When
+        ValidationException exception = new ValidationException(TEST_MESSAGE);
+
+        // Then
+        assertInstanceOf(Throwable.class, exception);
+    }
+
+    @Test
+    @DisplayName("Should preserve message exactly as provided")
+    void shouldPreserveMessageExactly() {
         // Given
-        String detailedMessage = "Field 'email' must be a valid email address";
+        String messageWithSpecialChars = "Validation failed: field 'email' must match pattern ^[A-Za-z0-9+_.-]+@(.+)$";
 
         // When
-        ValidationException exception = new ValidationException(detailedMessage);
+        ValidationException exception = new ValidationException(messageWithSpecialChars);
 
         // Then
-        assertEquals(detailedMessage, exception.getMessage());
-        assertTrue(exception.getMessage().contains("email"));
-        assertTrue(exception.getMessage().contains("valid"));
+        assertEquals(messageWithSpecialChars, exception.getMessage());
     }
 
     @Test
-    void getCause_ShouldReturnNullWhenNoCauseProvided() {
+    @DisplayName("Should have no cause when only message is provided")
+    void shouldHaveNoCause() {
         // When
-        ValidationException exception = new ValidationException("test");
+        ValidationException exception = new ValidationException(TEST_MESSAGE);
 
         // Then
         assertNull(exception.getCause());
     }
 
     @Test
-    void exception_CanBeThrownAndCaught() {
-        // Given
-        String message = "Invalid input";
+    @DisplayName("Should support stack trace")
+    void shouldSupportStackTrace() {
+        // When
+        ValidationException exception = new ValidationException(TEST_MESSAGE);
 
-        // When & Then
+        // Then
+        assertNotNull(exception.getStackTrace());
+        assertTrue(exception.getStackTrace().length > 0);
+    }
+
+    @Test
+    @DisplayName("Should be throwable and catchable")
+    void shouldBeThrowableAndCatchable() {
+        // Given
+        ValidationException exception = new ValidationException(TEST_MESSAGE);
+
+        // When & Then - verify it can be thrown and caught
         try {
-            throw new ValidationException(message);
-        } catch (ValidationException e) {
-            assertEquals(message, e.getMessage());
+            throw exception;
+        } catch (ValidationException caught) {
+            assertEquals(TEST_MESSAGE, caught.getMessage());
         }
     }
 
     @Test
-    void exception_CanBeCaughtAsRuntimeException() {
+    @DisplayName("Should catch as RuntimeException")
+    void shouldCatchAsRuntimeException() {
         // Given
-        String message = "Invalid input";
+        ValidationException thrownException = new ValidationException(TEST_MESSAGE);
 
         // When & Then
-        try {
-            throw new ValidationException(message);
-        } catch (RuntimeException e) {
-            assertEquals(message, e.getMessage());
-            assertTrue(e instanceof ValidationException);
-        }
-    }
-
-    @Test
-    void toString_ShouldContainExceptionNameAndMessage() {
-        // Given
-        String message = "Password is too short";
-
-        // When
-        ValidationException exception = new ValidationException(message);
-
-        // Then
-        String toString = exception.toString();
-        assertTrue(toString.contains("ValidationException"));
-        assertTrue(toString.contains(message));
-    }
-
-    @Test
-    void stackTrace_ShouldBePopulatedUponCreation() {
-        // When
-        ValidationException exception = new ValidationException("test");
-
-        // Then
-        StackTraceElement[] stackTrace = exception.getStackTrace();
-        assertNotNull(stackTrace);
-        assertTrue(stackTrace.length > 0);
-    }
-
-    @Test
-    void exception_IsUncheckedException() {
-        // When & Then - we can throw it without declaring in method signature
-        assertThrows(ValidationException.class, () -> {
-            throwUnchecked();
+        RuntimeException caught = assertThrows(RuntimeException.class, () -> {
+            throw thrownException;
         });
-    }
-
-    // This helper method does not declare "throws" - proving it's unchecked
-    private void throwUnchecked() {
-        throw new ValidationException("unchecked");
+        assertEquals(TEST_MESSAGE, caught.getMessage());
+        assertInstanceOf(ValidationException.class, caught);
     }
 
     @Test
-    void exception_CanBeThrownWithoutThrowsDeclaration() {
-        // When
-        RuntimeException thrown = assertThrows(RuntimeException.class, this::throwUnchecked);
-
-        // Then
-        assertTrue(thrown instanceof ValidationException);
-        assertEquals("unchecked", thrown.getMessage());
+    @DisplayName("Should catch as ValidationException specifically")
+    void shouldCatchAsValidationException() {
+        // When & Then
+        ValidationException caught = assertThrows(ValidationException.class, () -> {
+            throw new ValidationException(TEST_MESSAGE);
+        });
+        assertEquals(TEST_MESSAGE, caught.getMessage());
     }
 
     @Test
-    void exception_MessageCanContainFieldNameAndConstraint() {
+    @DisplayName("Should work with try-catch block")
+    void shouldWorkWithTryCatchBlock() {
         // Given
-        String fieldName = "username";
-        String constraint = "must be between 3 and 20 characters";
-        String message = String.format("Field '%s' %s", fieldName, constraint);
+        String caughtMessage;
 
         // When
-        ValidationException exception = new ValidationException(message);
-
-        // Then
-        assertEquals("Field 'username' must be between 3 and 20 characters", exception.getMessage());
-    }
-
-    @Test
-    void exception_IsDistinctTypeFromOtherCustomExceptions() {
-        // Given
-        ValidationException validation = new ValidationException("validation failed");
-        NotFoundException notFound = new NotFoundException("not found");
-        AuthenticationException auth = new AuthenticationException("auth failed");
-
-        // Then - verify they are different types by checking class equality
-        assertNotEquals(validation.getClass(), notFound.getClass());
-        assertNotEquals(validation.getClass(), auth.getClass());
-
-        // All extend RuntimeException
-        assertTrue(validation instanceof RuntimeException);
-        assertTrue(notFound instanceof RuntimeException);
-        assertTrue(auth instanceof RuntimeException);
-    }
-
-    @Test
-    void exception_CatchBlockIsDistinctFromOthers() {
-        // Given
-        RuntimeException validation = new ValidationException("validation failed");
-
-        // Then - verify catch block behavior
-        boolean validationCaught = false;
-
         try {
-            throw validation;
+            throw new ValidationException(TEST_MESSAGE);
         } catch (ValidationException e) {
-            validationCaught = true;
-        } catch (NotFoundException | AuthenticationException e) {
-            // Should not happen
+            caughtMessage = e.getMessage();
         }
 
-        assertTrue(validationCaught, "ValidationException should be caught by its own catch block");
+        // Then
+        assertEquals(TEST_MESSAGE, caughtMessage);
     }
 
     @Test
-    void exception_CanBeUsedForMultipleValidationErrors() {
+    @DisplayName("Should allow subclassing")
+    void shouldAllowSubclassing() {
         // Given
-        String error1 = "Username is required";
-        String error2 = "Email format is invalid";
-        String combinedMessage = error1 + "; " + error2;
+        class SpecificValidationException extends ValidationException {
+            SpecificValidationException() {
+                super(ValidationExceptionTest.TEST_MESSAGE);
+            }
+        }
 
         // When
-        ValidationException exception = new ValidationException(combinedMessage);
+        SpecificValidationException exception = new SpecificValidationException();
 
         // Then
-        assertTrue(exception.getMessage().contains("Username"));
-        assertTrue(exception.getMessage().contains("Email"));
+        assertEquals(TEST_MESSAGE, exception.getMessage());
+        assertInstanceOf(ValidationException.class, exception);
     }
 }

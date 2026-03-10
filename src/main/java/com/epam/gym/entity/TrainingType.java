@@ -1,4 +1,4 @@
-package com.epam.gym.model;
+package com.epam.gym.entity;
 
 import com.epam.gym.enums.TrainingTypeName;
 import jakarta.persistence.*;
@@ -24,8 +24,7 @@ public class TrainingType {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof TrainingType)) return false;
-        TrainingType that = (TrainingType) o;
+        if (!(o instanceof TrainingType that)) return false;
         return id != null && id.equals(that.id);
     }
 
@@ -38,7 +37,7 @@ public class TrainingType {
     public String toString() {
         return "TrainingType{" +
                 "id=" + id +
-                ", trainingTypeName='" + trainingTypeName + '\'' +
+                ", trainingTypeName=" + trainingTypeName +
                 '}';
     }
 }

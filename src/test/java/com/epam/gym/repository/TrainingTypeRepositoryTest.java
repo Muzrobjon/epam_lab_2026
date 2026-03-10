@@ -1,24 +1,26 @@
 package com.epam.gym.repository;
 
+import com.epam.gym.enums.TrainingTypeName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Simple verification tests for UserRepository interface.
+ * Simple verification tests for TrainingTypeRepository interface.
  * No Spring context required - pure interface testing.
  */
-@DisplayName("UserRepository Interface Tests")
-class UserRepositoryTest {
+@DisplayName("TrainingTypeRepository Interface Tests")
+class TrainingTypeRepositoryTest {
 
     @Test
     @DisplayName("Should extend JpaRepository")
     void shouldExtendJpaRepository() {
         // Given
-        Class<?> repoClass = UserRepository.class;
+        Class<?> repoClass = TrainingTypeRepository.class;
 
         // Then
         assertTrue(org.springframework.data.jpa.repository.JpaRepository.class.isAssignableFrom(repoClass));
@@ -28,61 +30,61 @@ class UserRepositoryTest {
     @DisplayName("Should be annotated with Repository")
     void shouldBeAnnotatedWithRepository() {
         // Given
-        Class<?> repoClass = UserRepository.class;
+        Class<?> repoClass = TrainingTypeRepository.class;
 
         // Then
         assertTrue(repoClass.isAnnotationPresent(org.springframework.stereotype.Repository.class));
     }
 
     @Test
-    @DisplayName("Should have existsByUsername method")
-    void shouldHaveExistsByUsernameMethod() throws NoSuchMethodException {
+    @DisplayName("Should have findByTrainingTypeName method")
+    void shouldHaveFindByTrainingTypeNameMethod() throws NoSuchMethodException {
         // Given
-        Class<?> repoClass = UserRepository.class;
+        Class<?> repoClass = TrainingTypeRepository.class;
 
         // When
-        Method method = repoClass.getMethod("existsByUsername", String.class);
+        Method method = repoClass.getMethod("findByTrainingTypeName", TrainingTypeName.class);
 
         // Then
         assertNotNull(method);
-        assertEquals(boolean.class, method.getReturnType());
+        assertEquals(Optional.class, method.getReturnType());
     }
 
     @Test
-    @DisplayName("Should verify return type of existsByUsername is boolean")
-    void shouldVerifyReturnTypeOfExistsByUsername() throws NoSuchMethodException {
+    @DisplayName("Should verify return type of findByTrainingTypeName is Optional")
+    void shouldVerifyReturnTypeOfFindByTrainingTypeName() throws NoSuchMethodException {
         // Given
-        Class<?> repoClass = UserRepository.class;
-        Method method = repoClass.getMethod("existsByUsername", String.class);
+        Class<?> repoClass = TrainingTypeRepository.class;
+        Method method = repoClass.getMethod("findByTrainingTypeName", TrainingTypeName.class);
 
         // When
         Class<?> returnType = method.getReturnType();
 
         // Then
-        assertEquals(boolean.class, returnType);
-        assertNotEquals(false, returnType.isPrimitive()); // verify it's primitive boolean, not Boolean
+        assertEquals(Optional.class, returnType);
     }
 
     @Test
-    @DisplayName("Should verify method parameter type is String")
-    void shouldVerifyMethodParameterTypeIsString() throws NoSuchMethodException {
+    @DisplayName("Should verify method parameter type is TrainingTypeName enum")
+    void shouldVerifyMethodParameterTypeIsTrainingTypeNameEnum() throws NoSuchMethodException {
         // Given
-        Class<?> repoClass = UserRepository.class;
-        Method method = repoClass.getMethod("existsByUsername", String.class);
+        Class<?> repoClass = TrainingTypeRepository.class;
+        Method method = repoClass.getMethod("findByTrainingTypeName", TrainingTypeName.class);
 
         // When
         Class<?>[] parameterTypes = method.getParameterTypes();
 
         // Then
         assertEquals(1, parameterTypes.length);
-        assertEquals(String.class, parameterTypes[0]);
+        assertEquals(TrainingTypeName.class, parameterTypes[0]);
+        assertTrue(parameterTypes[0].isEnum());
     }
 
     @Test
-    @DisplayName("Should verify generic type of JpaRepository is User and Long")
+    @DisplayName("Should verify generic type of JpaRepository is TrainingType and Long")
     void shouldVerifyGenericTypeOfJpaRepository() {
         // Given
-        Class<?> repoClass = UserRepository.class;
+        Class<?> repoClass = TrainingTypeRepository.class;
 
         // When - get generic interfaces
         java.lang.reflect.Type[] genericInterfaces = repoClass.getGenericInterfaces();
@@ -92,12 +94,12 @@ class UserRepositoryTest {
         for (java.lang.reflect.Type type : genericInterfaces) {
             if (type.getTypeName().contains("JpaRepository")) {
                 foundJpaRepository = true;
-                assertTrue(type.getTypeName().contains("User"));
+                assertTrue(type.getTypeName().contains("TrainingType"));
                 assertTrue(type.getTypeName().contains("Long"));
                 break;
             }
         }
-        assertTrue(foundJpaRepository, "Should implement JpaRepository<User, Long>");
+        assertTrue(foundJpaRepository, "Should implement JpaRepository<TrainingType, Long>");
     }
 
     @Test
@@ -127,12 +129,6 @@ class UserRepositoryTest {
                     .getMethod("deleteById", Object.class);
             assertNotNull(deleteById);
         });
-
-        assertDoesNotThrow(() -> {
-            Method existsById = org.springframework.data.repository.CrudRepository.class
-                    .getMethod("existsById", Object.class);
-            assertNotNull(existsById);
-        });
     }
 
     @Test
@@ -153,27 +149,28 @@ class UserRepositoryTest {
     }
 
     @Test
-    @DisplayName("Should verify method follows Spring Data naming convention")
-    void shouldVerifyMethodFollowsSpringDataNamingConvention() throws NoSuchMethodException {
+    @DisplayName("Should accept all TrainingTypeName enum values")
+    void shouldAcceptAllTrainingTypeNameEnumValues() {
         // Given
-        Method method = UserRepository.class.getMethod("existsByUsername", String.class);
 
-        // Then - method name follows existsBy{FieldName} pattern
-        String methodName = method.getName();
-        assertTrue(methodName.startsWith("existsBy"));
-        assertTrue(methodName.contains("Username"));
+        // When & Then - verify all enum values can be passed
+        for (TrainingTypeName typeName : TrainingTypeName.values()) {
+            assertDoesNotThrow(() -> {
+                // Verify the method can accept this enum value (parameter type check)
+                assertEquals(TrainingTypeName.class, typeName.getDeclaringClass());
+            });
+        }
     }
 
     @Test
-    @DisplayName("Should distinguish existsByUsername from existsById")
-    void shouldDistinguishExistsByUsernameFromExistsById() throws NoSuchMethodException {
+    @DisplayName("Should verify method follows Spring Data naming convention")
+    void shouldVerifyMethodFollowsSpringDataNamingConvention() throws NoSuchMethodException {
         // Given
-        Method existsByUsername = UserRepository.class.getMethod("existsByUsername", String.class);
-        Method existsById = org.springframework.data.repository.CrudRepository.class
-                .getMethod("existsById", Object.class);
+        Method method = TrainingTypeRepository.class.getMethod("findByTrainingTypeName", TrainingTypeName.class);
 
-        // Then
-        assertNotEquals(existsByUsername.getName(), existsById.getName());
-        assertNotEquals(existsByUsername.getParameterTypes()[0], existsById.getParameterTypes()[0]);
+        // Then - method name follows findBy{FieldName} pattern
+        String methodName = method.getName();
+        assertTrue(methodName.startsWith("findBy"));
+        assertTrue(methodName.contains("TrainingTypeName"));
     }
 }

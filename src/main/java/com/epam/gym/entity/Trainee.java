@@ -1,23 +1,30 @@
-package com.epam.gym.model;
+package com.epam.gym.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 @Getter
 @Setter
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
+
 @Table(name = "trainees")
-@PrimaryKeyJoinColumn(name = "id")
-@DiscriminatorValue("TRAINEE")
-public class Trainee extends User {
+public class Trainee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @MapsId
+    @JoinColumn(name = "id")
+    private User user;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
@@ -41,9 +48,8 @@ public class Trainee extends User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Trainee)) return false;
-        Trainee trainee = (Trainee) o;
-        return getId() != null && getId().equals(trainee.getId());
+        if (!(o instanceof Trainee trainee)) return false;
+        return id != null && id.equals(trainee.id);
     }
 
     @Override
@@ -54,11 +60,7 @@ public class Trainee extends User {
     @Override
     public String toString() {
         return "Trainee{" +
-                "id=" + getId() +
-                ", firstName='" + getFirstName() + '\'' +
-                ", lastName='" + getLastName() + '\'' +
-                ", userName='" + getUserName() + '\'' +
-                ", isActive=" + getIsActive() +
+                "id=" + id +
                 ", dateOfBirth=" + dateOfBirth +
                 ", address='" + address + '\'' +
                 '}';

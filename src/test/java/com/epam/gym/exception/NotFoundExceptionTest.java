@@ -1,217 +1,135 @@
 package com.epam.gym.exception;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class NotFoundExceptionTest {
 
     @Test
-    void constructor_WithMessage_ShouldSetMessageCorrectly() {
-        // Given
-        String expectedMessage = "Resource not found";
+    @DisplayName("Exception should be created with message")
+    void shouldCreateExceptionWithMessage() {
+        String expectedMessage = "Entity not found";
 
-        // When
         NotFoundException exception = new NotFoundException(expectedMessage);
 
-        // Then
-        assertEquals(expectedMessage, exception.getMessage());
+        assertEquals(expectedMessage, exception.getMessage(),
+                "Exception message should match provided message");
     }
 
     @Test
-    void constructor_WithNullMessage_ShouldAllowNullMessage() {
-        // When
+    @DisplayName("Exception should extend RuntimeException")
+    void shouldExtendRuntimeException() {
+        NotFoundException exception = new NotFoundException("test");
+
+        assertInstanceOf(RuntimeException.class, exception, "NotFoundException should extend RuntimeException");
+    }
+
+    @Test
+    @DisplayName("Exception message should not be null")
+    void messageShouldNotBeNull() {
+        NotFoundException exception = new NotFoundException("test message");
+
+        assertNotNull(exception.getMessage(),
+                "Exception message should not be null");
+    }
+
+    @Test
+    @DisplayName("Exception should be throwable")
+    void shouldBeThrowable() {
+        assertThrows(NotFoundException.class, () -> {
+            throw new NotFoundException("Not found");
+        }, "NotFoundException should be throwable");
+    }
+
+    @Test
+    @DisplayName("Exception message should contain entity context")
+    void messageShouldContainContext() {
+        String contextMessage = "Trainee not found: John.Doe";
+
+        NotFoundException exception = new NotFoundException(contextMessage);
+
+        assertTrue(exception.getMessage().contains("Trainee"),
+                "Exception message should contain entity type");
+        assertTrue(exception.getMessage().contains("John.Doe"),
+                "Exception message should contain identifier");
+    }
+
+    @Test
+    @DisplayName("Exception should preserve exact message")
+    void shouldPreserveExactMessage() {
+        String exactMessage = "Trainer not found: Alice.Fitness";
+
+        NotFoundException exception = new NotFoundException(exactMessage);
+
+        assertEquals(exactMessage, exception.getMessage(),
+                "Exception should preserve exact message without modification");
+    }
+
+    @Test
+    @DisplayName("Exception type should be RuntimeException")
+    void shouldBeUncheckedException() {
+        NotFoundException exception = new NotFoundException("test");
+
+        assertInstanceOf(RuntimeException.class, exception, "Should be unchecked exception (RuntimeException)");
+    }
+
+    @Test
+    @DisplayName("Multiple exceptions should have independent messages")
+    void multipleExceptionsShouldHaveIndependentMessages() {
+        NotFoundException exception1 = new NotFoundException("User not found");
+        NotFoundException exception2 = new NotFoundException("Training not found");
+
+        assertNotEquals(exception1.getMessage(), exception2.getMessage(),
+                "Different exceptions should have different messages");
+    }
+
+    @Test
+    @DisplayName("Exception with empty message should be creatable")
+    void shouldAllowEmptyMessage() {
+        NotFoundException exception = new NotFoundException("");
+
+        assertEquals("", exception.getMessage(),
+                "Exception should allow empty message");
+    }
+
+    @Test
+    @DisplayName("Exception with null message should be creatable")
+    void shouldAllowNullMessage() {
         NotFoundException exception = new NotFoundException(null);
 
-        // Then
-        assertNull(exception.getMessage());
+        assertNull(exception.getMessage(),
+                "Exception should allow null message (delegates to super)");
     }
 
     @Test
-    void constructor_WithEmptyMessage_ShouldAllowEmptyMessage() {
-        // Given
-        String emptyMessage = "";
+    @DisplayName("Exception should work with different entity types")
+    void shouldWorkWithDifferentEntityTypes() {
+        NotFoundException traineeException = new NotFoundException("Trainee not found");
+        NotFoundException trainerException = new NotFoundException("Trainer not found");
+        NotFoundException trainingException = new NotFoundException("Training not found");
 
-        // When
-        NotFoundException exception = new NotFoundException(emptyMessage);
-
-        // Then
-        assertEquals(emptyMessage, exception.getMessage());
+        assertAll("All entity types",
+                () -> assertTrue(traineeException.getMessage().contains("Trainee")),
+                () -> assertTrue(trainerException.getMessage().contains("Trainer")),
+                () -> assertTrue(trainingException.getMessage().contains("Training"))
+        );
     }
 
     @Test
-    void exception_ShouldExtendRuntimeException() {
-        // When
-        NotFoundException exception = new NotFoundException("test");
+    @DisplayName("Exception can be caught as RuntimeException")
+    void canBeCaughtAsRuntimeException() {
+        RuntimeException caught;
 
-        // Then
-        assertTrue(exception instanceof RuntimeException);
-    }
-
-    @Test
-    void exception_ShouldBeThrowable() {
-        // When
-        NotFoundException exception = new NotFoundException("test");
-
-        // Then
-        assertTrue(exception instanceof Throwable);
-    }
-
-    @Test
-    void exception_ShouldPreserveMessageDetail() {
-        // Given
-        String detailedMessage = "User with id '12345' not found in database";
-
-        // When
-        NotFoundException exception = new NotFoundException(detailedMessage);
-
-        // Then
-        assertEquals(detailedMessage, exception.getMessage());
-        assertTrue(exception.getMessage().contains("12345"));
-        assertTrue(exception.getMessage().contains("not found"));
-    }
-
-    @Test
-    void getCause_ShouldReturnNullWhenNoCauseProvided() {
-        // When
-        NotFoundException exception = new NotFoundException("test");
-
-        // Then
-        assertNull(exception.getCause());
-    }
-
-    @Test
-    void exception_CanBeThrownAndCaught() {
-        // Given
-        String message = "Entity not found";
-
-        // When & Then
         try {
-            throw new NotFoundException(message);
-        } catch (NotFoundException e) {
-            assertEquals(message, e.getMessage());
-        }
-    }
-
-    @Test
-    void exception_CanBeCaughtAsRuntimeException() {
-        // Given
-        String message = "Entity not found";
-
-        // When & Then
-        try {
-            throw new NotFoundException(message);
+            throw new NotFoundException("Test message");
         } catch (RuntimeException e) {
-            assertEquals(message, e.getMessage());
-            assertTrue(e instanceof NotFoundException);
-        }
-    }
-
-    @Test
-    void toString_ShouldContainExceptionNameAndMessage() {
-        // Given
-        String message = "Training not found";
-
-        // When
-        NotFoundException exception = new NotFoundException(message);
-
-        // Then
-        String toString = exception.toString();
-        assertTrue(toString.contains("NotFoundException"));
-        assertTrue(toString.contains(message));
-    }
-
-    @Test
-    void stackTrace_ShouldBePopulatedUponCreation() {
-        // When
-        NotFoundException exception = new NotFoundException("test");
-
-        // Then
-        StackTraceElement[] stackTrace = exception.getStackTrace();
-        assertNotNull(stackTrace);
-        assertTrue(stackTrace.length > 0);
-    }
-
-    @Test
-    void exception_IsUncheckedException() {
-        // When & Then - we can throw it without declaring in method signature
-        assertThrows(NotFoundException.class, () -> {
-            throwUnchecked();
-        });
-    }
-
-    // This helper method does not declare "throws" - proving it's unchecked
-    private void throwUnchecked() {
-        throw new NotFoundException("unchecked");
-    }
-
-    @Test
-    void exception_CanBeThrownWithoutThrowsDeclaration() {
-        // When
-        RuntimeException thrown = assertThrows(RuntimeException.class, this::throwUnchecked);
-
-        // Then
-        assertTrue(thrown instanceof NotFoundException);
-        assertEquals("unchecked", thrown.getMessage());
-    }
-
-    @Test
-    void exception_MessageCanContainEntityTypeAndIdentifier() {
-        // Given
-        String entityType = "Trainer";
-        String identifier = "john.doe";
-        String message = String.format("%s with username '%s' not found", entityType, identifier);
-
-        // When
-        NotFoundException exception = new NotFoundException(message);
-
-        // Then
-        assertEquals("Trainer with username 'john.doe' not found", exception.getMessage());
-    }
-
-    @Test
-    void exception_IsDistinctTypeFromAuthenticationException() {
-        // Given
-        NotFoundException notFound = new NotFoundException("not found");
-        AuthenticationException auth = new AuthenticationException("auth failed");
-
-        // Then - verify they are different types by checking class equality
-        assertNotEquals(notFound.getClass(), auth.getClass());
-        assertEquals(NotFoundException.class, notFound.getClass());
-        assertEquals(AuthenticationException.class, auth.getClass());
-
-        // Both extend RuntimeException but are not assignable to each other
-        assertTrue(notFound instanceof RuntimeException);
-        assertTrue(auth instanceof RuntimeException);
-    }
-
-    @Test
-    void exception_CatchBlocksAreDistinct() {
-        // Given
-        RuntimeException notFound = new NotFoundException("not found");
-        RuntimeException auth = new AuthenticationException("auth failed");
-
-        // Then - verify catch block behavior
-        boolean notFoundCaughtAsNotFound = false;
-        boolean authCaughtAsAuth = false;
-
-        try {
-            throw notFound;
-        } catch (NotFoundException e) {
-            notFoundCaughtAsNotFound = true;
-        } catch (AuthenticationException e) {
-            // Should not happen
+            caught = e;
         }
 
-        try {
-            throw auth;
-        } catch (AuthenticationException e) {
-            authCaughtAsAuth = true;
-        } catch (NotFoundException e) {
-            // Should not happen
-        }
-
-        assertTrue(notFoundCaughtAsNotFound, "NotFoundException should be caught by its own catch block");
-        assertTrue(authCaughtAsAuth, "AuthenticationException should be caught by its own catch block");
+        assertNotNull(caught);
+        assertInstanceOf(NotFoundException.class, caught);
+        assertEquals("Test message", caught.getMessage());
     }
 }

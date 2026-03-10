@@ -1,4 +1,4 @@
-package com.epam.gym.model;
+package com.epam.gym.entity;
 
 import com.epam.gym.enums.TrainingTypeName;
 import jakarta.persistence.*;
@@ -20,7 +20,6 @@ public class Training {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
     @NotNull(message = "Trainee is required")
@@ -54,8 +53,7 @@ public class Training {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Training)) return false;
-        Training training = (Training) o;
+        if (!(o instanceof Training training)) return false;
         return id != null && id.equals(training.id);
     }
 

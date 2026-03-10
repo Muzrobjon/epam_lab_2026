@@ -1,34 +1,34 @@
 package com.epam.gym.service;
 
 import com.epam.gym.enums.TrainingTypeName;
-import com.epam.gym.model.Trainee;
-import com.epam.gym.model.Trainer;
-import com.epam.gym.model.Training;
-import com.epam.gym.model.TrainingType;
+import com.epam.gym.exception.ValidationException;
+import com.epam.gym.entity.Trainee;
+import com.epam.gym.entity.Trainer;
+import com.epam.gym.entity.Training;
 import com.epam.gym.repository.TrainingRepository;
-import com.epam.gym.repository.TrainingSpecification;
-import com.epam.gym.repository.TrainingTypeRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@Validated
 @RequiredArgsConstructor
-@Transactional
 public class TrainingService {
 
     private final TrainingRepository trainingRepository;
     private final TraineeService traineeService;
     private final TrainerService trainerService;
-    private final TrainingTypeRepository trainingTypeRepository;
+    private final Validator validator;
 
+    @Transactional
     public Training createTraining(
             String traineeUsername, String traineePassword,
             String trainerUsername, String trainerPassword,
@@ -38,20 +38,12 @@ public class TrainingService {
         log.info("Creating training: {} for trainee: {} and trainer: {}",
                 trainingName, traineeUsername, trainerUsername);
 
-        // Authenticate both trainee and trainer
-        Trainee trainee = traineeService.selectByUsername(traineeUsername);
         traineeService.authenticate(traineeUsername, traineePassword);
-
-        Trainer trainer = trainerService.selectByUsername(trainerUsername);
         trainerService.authenticate(trainerUsername, trainerPassword);
 
-        // Get training type (entity)
-        TrainingType trainingType = trainingTypeRepository
-                .findByTrainingTypeName(trainingTypeName)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Training type not found: " + trainingTypeName));
+        Trainee trainee = traineeService.selectByUsername(traineeUsername);
+        Trainer trainer = trainerService.selectByUsername(trainerUsername);
 
-        // Create training
         Training training = Training.builder()
                 .trainee(trainee)
                 .trainer(trainer)
@@ -61,8 +53,11 @@ public class TrainingService {
                 .trainingDurationMinutes(duration)
                 .build();
 
+        validateTraining(training);
+
         Training saved = trainingRepository.save(training);
         log.info("Training created successfully with ID: {}", saved.getId());
+
         return saved;
     }
 
@@ -70,14 +65,30 @@ public class TrainingService {
     public List<Training> getTraineeTrainingsByCriteria(
             String traineeUsername, String traineePassword,
             LocalDate fromDate, LocalDate toDate,
-            String trainerName, TrainingTypeName trainingTypeName) {
+            String trainerName, TrainingTypeName trainingType) {
 
         log.info("Getting trainee trainings by criteria for: {}", traineeUsername);
         traineeService.authenticate(traineeUsername, traineePassword);
 
-        return trainingRepository.findAll(
-                TrainingSpecification.findTraineeTrainingsByCriteria(
-                        traineeUsername, fromDate, toDate, trainerName, trainingTypeName));
+        List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
+                traineeUsername, null, fromDate, toDate);
+
+        if (trainerName != null && !trainerName.isBlank()) {
+            String lowerName = trainerName.toLowerCase();
+            trainings = trainings.stream()
+                    .filter(t -> t.getTrainer().getUser().getFirstName().toLowerCase().contains(lowerName) ||
+                            t.getTrainer().getUser().getLastName().toLowerCase().contains(lowerName))
+                    .collect(Collectors.toList());
+        }
+
+        if (trainingType != null) {
+            trainings = trainings.stream()
+                    .filter(t -> t.getTrainingType() == trainingType)
+                    .collect(Collectors.toList());
+        }
+
+        log.info("Found {} trainings for trainee: {}", trainings.size(), traineeUsername);
+        return trainings;
     }
 
     @Transactional(readOnly = true)
@@ -89,8 +100,38 @@ public class TrainingService {
         log.info("Getting trainer trainings by criteria for: {}", trainerUsername);
         trainerService.authenticate(trainerUsername, trainerPassword);
 
-        return trainingRepository.findAll(
-                TrainingSpecification.findTrainerTrainingsByCriteria(
-                        trainerUsername, fromDate, toDate, traineeName));
+        List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
+                null, trainerUsername, fromDate, toDate);
+
+        if (traineeName != null && !traineeName.isBlank()) {
+            String lowerName = traineeName.toLowerCase();
+            trainings = trainings.stream()
+                    .filter(t -> t.getTrainee().getUser().getFirstName().toLowerCase().contains(lowerName) ||
+                            t.getTrainee().getUser().getLastName().toLowerCase().contains(lowerName))
+                    .collect(Collectors.toList());
+        }
+
+        log.info("Found {} trainings for trainer: {}", trainings.size(), trainerUsername);
+        return trainings;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Training> getTrainingsWithAllUsers(
+            String traineeUsername, String trainerUsername,
+            LocalDate fromDate, LocalDate toDate) {
+
+        return trainingRepository.findTrainingsWithAllUsers(
+                traineeUsername, trainerUsername, fromDate, toDate
+        );
+    }
+
+    private void validateTraining(Training training) {
+        Set<ConstraintViolation<Training>> violations = validator.validate(training);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+            throw new ValidationException("Training validation failed: " + message);
+        }
     }
 }

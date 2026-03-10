@@ -1,7 +1,7 @@
 package com.epam.gym.storage;
 
-import com.epam.gym.model.TrainingType;
 import com.epam.gym.enums.TrainingTypeName;
+import com.epam.gym.entity.TrainingType;
 import com.epam.gym.repository.TrainingTypeRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

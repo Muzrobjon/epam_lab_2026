@@ -1,45 +1,55 @@
 package com.epam.gym.storage;
 
 import com.epam.gym.enums.TrainingTypeName;
-import com.epam.gym.model.TrainingType;
+import com.epam.gym.entity.TrainingType;
 import com.epam.gym.repository.TrainingTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.*;
 
-import java.util.Optional;
+import java.util.*;
 
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class DataInitializerTest {
 
+    @Mock
     private TrainingTypeRepository trainingTypeRepository;
+
     private DataInitializer dataInitializer;
 
     @BeforeEach
     void setUp() {
-        trainingTypeRepository = mock(TrainingTypeRepository.class);
+        MockitoAnnotations.openMocks(this);
         dataInitializer = new DataInitializer(trainingTypeRepository);
     }
 
     @Test
-    void testInit_SavesAllMissingTrainingTypes() {
-        // Simulate all types are missing
+    void init_createsMissingTrainingTypes() {
+        // Simulate that all types are missing
         for (TrainingTypeName typeName : TrainingTypeName.values()) {
             when(trainingTypeRepository.findByTrainingTypeName(typeName)).thenReturn(Optional.empty());
         }
 
         dataInitializer.init();
 
-        // Should save each type once (use argThat to check the typeName)
-        for (TrainingTypeName typeName : TrainingTypeName.values()) {
-            verify(trainingTypeRepository).save(argThat(t -> t.getTrainingTypeName() == typeName));
+        // Capture all saved TrainingType objects
+        ArgumentCaptor<TrainingType> captor = ArgumentCaptor.forClass(TrainingType.class);
+        verify(trainingTypeRepository, times(TrainingTypeName.values().length)).save(captor.capture());
+
+        // Assert that each TrainingTypeName was saved
+        Set<TrainingTypeName> savedTypes = new HashSet<>();
+        for (TrainingType saved : captor.getAllValues()) {
+            savedTypes.add(saved.getTrainingTypeName());
+            assertNull(saved.getId());
         }
+        assertEquals(Set.of(TrainingTypeName.values()), savedTypes);
     }
 
     @Test
-    void testInit_DoesNotSaveExistingTypes() {
-        // Simulate all types already exist
+    void init_doesNotCreateExistingTrainingTypes() {
+        // Simulate that all types already exist
         for (TrainingTypeName typeName : TrainingTypeName.values()) {
             when(trainingTypeRepository.findByTrainingTypeName(typeName))
                     .thenReturn(Optional.of(new TrainingType(1L, typeName)));
@@ -47,7 +57,7 @@ class DataInitializerTest {
 
         dataInitializer.init();
 
-        // Should not save any type
-        verify(trainingTypeRepository, never()).save(any());
+        // Verify that save was NOT called for any type
+        verify(trainingTypeRepository, never()).save(any(TrainingType.class));
     }
 }

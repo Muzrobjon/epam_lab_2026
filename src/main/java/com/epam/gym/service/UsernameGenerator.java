@@ -1,26 +1,23 @@
 package com.epam.gym.service;
 
-import com.epam.gym.model.User;
+import com.epam.gym.entity.User;
 import org.springframework.stereotype.Service;
 
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 @Service
 public class UsernameGenerator {
 
-    public String generateUsername(User user, Predicate<String> usernameExists) {
-        String base = normalize(user.getFirstName()) + "." + normalize(user.getLastName());
-        int counter = 0;
-        String candidate = base;
+    public String generateUsername(User user, Function<String, Boolean> existsChecker) {
+        String baseUsername = user.getFirstName() + "." + user.getLastName();
+        String username = baseUsername;
+        int suffix = 1;
 
-        while (usernameExists.test(candidate)) {
-            candidate = base + ++counter;
+        while (existsChecker.apply(username)) {
+            username = baseUsername + suffix;
+            suffix++;
         }
-        return candidate;
-    }
 
-    private String normalize(String s) {
-        return s.trim()
-                .replaceAll("\\s+", "");
+        return username;
     }
 }

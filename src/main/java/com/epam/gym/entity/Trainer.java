@@ -1,24 +1,29 @@
-package com.epam.gym.model;
+package com.epam.gym.entity;
 
 import com.epam.gym.enums.TrainingTypeName;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "trainers")
-@PrimaryKeyJoinColumn(name = "id")
-@DiscriminatorValue("TRAINER")
-public class Trainer extends User {
+public class Trainer {
+
+    @Id
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @MapsId
+    @JoinColumn(name = "id")
+    private User user;
 
     @NotNull(message = "Specialization is required")
     @Enumerated(EnumType.STRING)
@@ -33,23 +38,11 @@ public class Trainer extends User {
     @Builder.Default
     private List<Trainee> trainees = new ArrayList<>();
 
-    // Helper methods
-    public void addTraining(Training training) {
-        trainings.add(training);
-        training.setTrainer(this);
-    }
-
-    public void removeTraining(Training training) {
-        trainings.remove(training);
-        training.setTrainer(null);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Trainer)) return false;
-        Trainer trainer = (Trainer) o;
-        return getId() != null && getId().equals(trainer.getId());
+        if (!(o instanceof Trainer trainer)) return false;
+        return id != null && id.equals(trainer.id);
     }
 
     @Override
@@ -60,11 +53,7 @@ public class Trainer extends User {
     @Override
     public String toString() {
         return "Trainer{" +
-                "id=" + getId() +
-                ", firstName='" + getFirstName() + '\'' +
-                ", lastName='" + getLastName() + '\'' +
-                ", userName='" + getUserName() + '\'' +
-                ", isActive=" + getIsActive() +
+                "id=" + id +
                 ", specialization=" + specialization +
                 '}';
     }

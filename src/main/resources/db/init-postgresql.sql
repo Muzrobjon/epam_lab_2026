@@ -1,12 +1,9 @@
--- ============================================================
--- PostgreSQL Database Initialization Script for Gym CRM
--- ============================================================
--- Run this script to create the database and user
--- ============================================================
+-- Drop database if exists (optional - for clean start)
+DROP DATABASE IF EXISTS gymdb;
 
--- Create database (run as postgres superuser)
+-- Create database
 CREATE DATABASE gymdb
-    WITH 
+    WITH
     OWNER = postgres
     ENCODING = 'UTF8'
     LC_COLLATE = 'en_US.UTF-8'
@@ -14,11 +11,18 @@ CREATE DATABASE gymdb
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;
 
+-- Add comment
+COMMENT ON DATABASE gymdb IS 'Gym CRM Database for Hibernate Project';
+
 -- Connect to the database
 \c gymdb;
 
--- Create schema (optional, Hibernate will create tables)
-CREATE SCHEMA IF NOT EXISTS gymdb;
+-- Grant privileges
+GRANT ALL PRIVILEGES ON DATABASE gymdb TO postgres;
 
--- Add comment
-COMMENT ON DATABASE gymdb IS 'Gym CRM Database for Hibernate Project';
+-- Create extensions (optional but useful)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Success message
+SELECT 'Database gymdb created successfully!' AS message;

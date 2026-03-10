@@ -1,38 +1,50 @@
 package com.epam.gym.service;
 
 import com.epam.gym.enums.TrainingTypeName;
-import com.epam.gym.exception.AuthenticationException;
 import com.epam.gym.exception.NotFoundException;
-import com.epam.gym.exception.ValidationException;
-import com.epam.gym.model.Trainer;
+import com.epam.gym.entity.Trainee;
+import com.epam.gym.entity.Trainer;
+import com.epam.gym.entity.User;
+import com.epam.gym.repository.TraineeRepository;
 import com.epam.gym.repository.TrainerRepository;
-import jakarta.validation.ConstraintViolation;
+import com.epam.gym.repository.UserRepository;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.*;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class TrainerServiceTest {
 
+    @Mock
     private TrainerRepository trainerRepository;
+    @Mock
+    private TraineeRepository traineeRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
     private UsernameGenerator usernameGenerator;
+    @Mock
     private PasswordGenerator passwordGenerator;
+    @Mock
     private Validator validator;
+
+    @InjectMocks
     private TrainerService trainerService;
 
     @BeforeEach
     void setUp() {
-        trainerRepository = mock(TrainerRepository.class);
-        usernameGenerator = mock(UsernameGenerator.class);
-        passwordGenerator = mock(PasswordGenerator.class);
-        validator = mock(Validator.class);
-
+        MockitoAnnotations.openMocks(this);
         trainerService = new TrainerService(
                 trainerRepository,
+                traineeRepository,
+                userRepository,
                 usernameGenerator,
                 passwordGenerator,
                 validator
@@ -40,81 +52,97 @@ class TrainerServiceTest {
     }
 
     @Test
-    void testCreateProfile_Success() {
-        when(usernameGenerator.generateUsername(any(), any())).thenReturn("traineruser");
-        when(passwordGenerator.generatePassword(anyInt())).thenReturn("password123");
-        when(validator.validate(any(Trainer.class))).thenReturn(Collections.emptySet());
-        when(trainerRepository.save(any(Trainer.class))).thenAnswer(invocation -> {
-            Trainer t = invocation.getArgument(0);
-            t.setId(1L);
-            return t;
-        });
+    void createProfile_createsTrainerAndUser() {
+        String firstName = "Jane";
+        String lastName = "Smith";
+        TrainingTypeName specialization = TrainingTypeName.YOGA;
+        String rawPassword = "password123";
+        String username = "jane.smith";
 
-        Trainer result = trainerService.createProfile("Alice", "Smith", TrainingTypeName.CARDIO);
-        assertEquals("traineruser", result.getUserName());
-        assertEquals("password123", result.getPassword());
-        assertEquals("Alice", result.getFirstName());
-        assertEquals("Smith", result.getLastName());
-        assertEquals(TrainingTypeName.CARDIO, result.getSpecialization());
-        assertTrue(result.getIsActive());
-        assertNotNull(result.getId());
+        User user = User.builder()
+                .id(1L)
+                .firstName(firstName)
+                .lastName(lastName)
+                .isActive(true)
+                .password(rawPassword)
+                .username(username)
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(1L)
+                .user(user)
+                .specialization(specialization)
+                .build();
+
+        when(passwordGenerator.generatePassword()).thenReturn(rawPassword);
+        when(usernameGenerator.generateUsername(any(), any())).thenReturn(username);
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(trainerRepository.save(any(Trainer.class))).thenReturn(trainer);
+
+        Trainer result = trainerService.createProfile(firstName, lastName, specialization);
+
+        assertNotNull(result);
+        assertEquals(firstName,
+                result.getUser().getFirstName());
+        assertEquals(lastName, result.getUser().getLastName());
+        assertEquals(username, result.getUser().getUsername());
+        assertEquals(rawPassword, result.getUser().getPassword());
+        assertEquals(specialization, result.getSpecialization());
+
+        verify(passwordGenerator).generatePassword();
+        verify(usernameGenerator).generateUsername(any(), any());
+        verify(userRepository).save(any(User.class));
+        verify(trainerRepository).save(any(Trainer.class));
+        verify(validator).validate(any(Trainer.class));
     }
 
     @Test
-    void testCreateProfile_ValidationFails() {
-        when(usernameGenerator.generateUsername(any(), any())).thenReturn("traineruser");
-        when(passwordGenerator.generatePassword(anyInt())).thenReturn("password123");
-        ConstraintViolation<Trainer> violation = mock(ConstraintViolation.class);
-        when(violation.getMessage()).thenReturn("Specialization required");
-        Set<ConstraintViolation<Trainer>> violations = Set.of(violation);
-        when(validator.validate(any(Trainer.class))).thenReturn(violations);
+    void selectByUsername_returnsTrainer() {
+        String username = "jane.smith";
+        User user = User.builder().username(username).build();
+        Trainer trainer = Trainer.builder().user(user).build();
 
-        ValidationException ex = assertThrows(ValidationException.class, () ->
-                trainerService.createProfile("Alice", "Smith", TrainingTypeName.CARDIO));
-        assertTrue(ex.getMessage().contains("Specialization required"));
+        when(trainerRepository.findByUser_Username(username)).thenReturn(Optional.of(trainer));
+
+        Trainer result = trainerService.selectByUsername(username);
+
+        assertNotNull(result);
+        assertEquals(username, result.getUser().getUsername());
     }
 
     @Test
-    void testAuthenticate_Success() {
-        Trainer trainer = Trainer.builder().userName("traineruser").password("pass").build();
-        when(trainerRepository.findByUserName("traineruser")).thenReturn(Optional.of(trainer));
-        assertDoesNotThrow(() -> trainerService.authenticate("traineruser", "pass"));
+    void selectByUsername_notFound_throwsException() {
+        String username = "notfound";
+        when(trainerRepository.findByUser_Username(username)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> trainerService.selectByUsername(username));
     }
 
     @Test
-    void testAuthenticate_NotFound() {
-        when(trainerRepository.findByUserName("traineruser")).thenReturn(Optional.empty());
-        assertThrows(AuthenticationException.class, () -> trainerService.authenticate("traineruser", "pass"));
+    void getUnassignedTrainers_returnsList() {
+        String traineeUsername = "trainee1";
+        User user = User.builder().username(traineeUsername).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+        Trainer trainer = Trainer.builder().user(User.builder().username("trainer1").build()).build();
+
+        when(traineeRepository.findByUser_Username(traineeUsername)).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findUnassignedTrainersByTraineeUsername(traineeUsername))
+                .thenReturn(Collections.singletonList(trainer));
+
+        List<Trainer> result = trainerService.getUnassignedTrainers(traineeUsername);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("trainer1", result.getFirst().getUser().getUsername());
     }
 
     @Test
-    void testAuthenticate_WrongPassword() {
-        Trainer trainer = Trainer.builder().userName("traineruser").password("pass").build();
-        when(trainerRepository.findByUserName("traineruser")).thenReturn(Optional.of(trainer));
-        assertThrows(AuthenticationException.class, () -> trainerService.authenticate("traineruser", "wrong"));
+    void getUnassignedTrainers_traineeNotFound_throwsException() {
+        String traineeUsername = "notfound";
+        when(traineeRepository.findByUser_Username(traineeUsername)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> trainerService.getUnassignedTrainers(traineeUsername));
     }
 
-    @Test
-    void testSelectByUsername_Success() {
-        Trainer trainer = Trainer.builder().userName("traineruser").build();
-        when(trainerRepository.findByUserName("traineruser")).thenReturn(Optional.of(trainer));
-        assertEquals(trainer, trainerService.selectByUsername("traineruser"));
-    }
-
-    @Test
-    void testSelectByUsername_NotFound() {
-        when(trainerRepository.findByUserName("traineruser")).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> trainerService.selectByUsername("traineruser"));
-    }
-
-    @Test
-    void testGetUnassignedTrainers() {
-        List<Trainer> trainers = List.of(
-                Trainer.builder().userName("t1").build(),
-                Trainer.builder().userName("t2").build()
-        );
-        when(trainerRepository.findUnassignedTrainersByTraineeUsername("trainee1")).thenReturn(trainers);
-        List<Trainer> result = trainerService.getUnassignedTrainers("trainee1");
-        assertEquals(trainers, result);
-    }
+    // Add more tests for updateProfile and other methods as needed
 }

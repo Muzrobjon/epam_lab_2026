@@ -1,158 +1,231 @@
 package com.epam.gym.service;
 
 import com.epam.gym.enums.TrainingTypeName;
-import com.epam.gym.model.Trainee;
-import com.epam.gym.model.Trainer;
-import com.epam.gym.model.Training;
-import com.epam.gym.model.TrainingType;
+import com.epam.gym.exception.ValidationException;
+import com.epam.gym.entity.Trainee;
+import com.epam.gym.entity.Trainer;
+import com.epam.gym.entity.Training;
+import com.epam.gym.entity.User;
 import com.epam.gym.repository.TrainingRepository;
-import com.epam.gym.repository.TrainingTypeRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.jpa.domain.Specification;
+import org.mockito.*;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class TrainingServiceTest {
 
+    @Mock
     private TrainingRepository trainingRepository;
+    @Mock
     private TraineeService traineeService;
+    @Mock
     private TrainerService trainerService;
-    private TrainingTypeRepository trainingTypeRepository;
+    @Mock
+    private Validator validator;
+
+    @InjectMocks
     private TrainingService trainingService;
 
     @BeforeEach
     void setUp() {
-        trainingRepository = mock(TrainingRepository.class);
-        traineeService = mock(TraineeService.class);
-        trainerService = mock(TrainerService.class);
-        trainingTypeRepository = mock(TrainingTypeRepository.class);
-
+        MockitoAnnotations.openMocks(this);
         trainingService = new TrainingService(
                 trainingRepository,
                 traineeService,
                 trainerService,
-                trainingTypeRepository
+                validator
         );
     }
 
     @Test
-    void testCreateTraining_Success() {
+    void createTraining_success() {
         String traineeUsername = "trainee1";
         String traineePassword = "pass1";
         String trainerUsername = "trainer1";
         String trainerPassword = "pass2";
-        String trainingName = "Morning Cardio";
-        TrainingTypeName trainingTypeName = TrainingTypeName.CARDIO;
-        LocalDate trainingDate = LocalDate.of(2024, 3, 10);
+        String trainingName = "Morning Yoga";
+        TrainingTypeName trainingType = TrainingTypeName.YOGA;
+        LocalDate trainingDate = LocalDate.now();
         Integer duration = 60;
 
-        Trainee trainee = Trainee.builder().userName(traineeUsername).password(traineePassword).build();
-        Trainer trainer = Trainer.builder().userName(trainerUsername).password(trainerPassword).build();
-        TrainingType trainingType = new TrainingType(1L, trainingTypeName);
+        User traineeUser = User.builder().username(traineeUsername).build();
+        Trainee trainee = Trainee.builder().user(traineeUser).build();
+        User trainerUser = User.builder().username(trainerUsername).build();
+        Trainer trainer = Trainer.builder().user(trainerUser).build();
 
-        when(traineeService.selectByUsername(traineeUsername)).thenReturn(trainee);
+        Training.builder()
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingName(trainingName)
+                .trainingType(trainingType)
+                .trainingDate(trainingDate)
+                .trainingDurationMinutes(duration)
+                .build();
+
+        Training savedTraining = Training.builder()
+                .id(1L)
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingName(trainingName)
+                .trainingType(trainingType)
+                .trainingDate(trainingDate)
+                .trainingDurationMinutes(duration)
+                .build();
+
         doNothing().when(traineeService).authenticate(traineeUsername, traineePassword);
-        when(trainerService.selectByUsername(trainerUsername)).thenReturn(trainer);
         doNothing().when(trainerService).authenticate(trainerUsername, trainerPassword);
-        when(trainingTypeRepository.findByTrainingTypeName(trainingTypeName)).thenReturn(Optional.of(trainingType));
-        when(trainingRepository.save(any(Training.class))).thenAnswer(invocation -> {
-            Training t = invocation.getArgument(0);
-            t.setId(100L);
-            return t;
-        });
+        when(traineeService.selectByUsername(traineeUsername)).thenReturn(trainee);
+        when(trainerService.selectByUsername(trainerUsername)).thenReturn(trainer);
+        when(validator.validate(any(Training.class))).thenReturn(Collections.emptySet());
+        when(trainingRepository.save(any(Training.class))).thenReturn(savedTraining);
 
-        Training result = trainingService.createTraining(
+        Training
+                result = trainingService.createTraining(
                 traineeUsername, traineePassword,
                 trainerUsername, trainerPassword,
-                trainingName, trainingTypeName,
+                trainingName, trainingType,
                 trainingDate, duration
         );
 
         assertNotNull(result);
-        assertEquals(100L, result.getId());
-        assertEquals(trainee, result.getTrainee());
-        assertEquals(trainer, result.getTrainer());
+        assertEquals(1L, result.getId());
         assertEquals(trainingName, result.getTrainingName());
-        assertEquals(trainingTypeName, result.getTrainingType());
+        assertEquals(trainingType, result.getTrainingType());
         assertEquals(trainingDate, result.getTrainingDate());
         assertEquals(duration, result.getTrainingDurationMinutes());
+
+        verify(traineeService).authenticate(traineeUsername, traineePassword);
+        verify(trainerService).authenticate(trainerUsername, trainerPassword);
+        verify(traineeService).selectByUsername(traineeUsername);
+        verify(trainerService).selectByUsername(trainerUsername);
+        verify(validator).validate(any(Training.class));
+        verify(trainingRepository).save(any(Training.class));
     }
 
     @Test
-    void testCreateTraining_TrainingTypeNotFound() {
+    void createTraining_validationFails_throwsException() {
         String traineeUsername = "trainee1";
         String traineePassword = "pass1";
         String trainerUsername = "trainer1";
         String trainerPassword = "pass2";
-        String trainingName = "Morning Cardio";
-        TrainingTypeName trainingTypeName = TrainingTypeName.CARDIO;
-        LocalDate trainingDate = LocalDate.of(2024, 3, 10);
+        String trainingName = "Morning Yoga";
+        TrainingTypeName trainingType = TrainingTypeName.YOGA;
+        LocalDate trainingDate = LocalDate.now();
         Integer duration = 60;
 
-        Trainee trainee = Trainee.builder().userName(traineeUsername).password(traineePassword).build();
-        Trainer trainer = Trainer.builder().userName(trainerUsername).password(trainerPassword).build();
+        User traineeUser = User.builder().username(traineeUsername).build();
+        Trainee trainee = Trainee.builder().user(traineeUser).build();
+        User trainerUser = User.builder().username(trainerUsername).build();
+        Trainer trainer = Trainer.builder().user(trainerUser).build();
 
-        when(traineeService.selectByUsername(traineeUsername)).thenReturn(trainee);
+        ConstraintViolation<Training> violation = mock(ConstraintViolation.class);
+        when(violation.getMessage()).thenReturn("Invalid training");
+
+        Set<ConstraintViolation<Training>> violations = new HashSet<>();
+        violations.add(violation);
+
         doNothing().when(traineeService).authenticate(traineeUsername, traineePassword);
-        when(trainerService.selectByUsername(trainerUsername)).thenReturn(trainer);
         doNothing().when(trainerService).authenticate(trainerUsername, trainerPassword);
-        when(trainingTypeRepository.findByTrainingTypeName(trainingTypeName)).thenReturn(Optional.empty());
+        when(traineeService.selectByUsername(traineeUsername)).thenReturn(trainee);
+        when(trainerService.selectByUsername(trainerUsername)).thenReturn(trainer);
+        when(validator.validate(any(Training.class))).thenReturn(violations);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        ValidationException ex = assertThrows(ValidationException.class, () ->
                 trainingService.createTraining(
                         traineeUsername, traineePassword,
                         trainerUsername, trainerPassword,
-                        trainingName, trainingTypeName,
+                        trainingName, trainingType,
                         trainingDate, duration
-                ));
+                )
+        );
+        assertTrue(ex.getMessage().contains("Invalid training"));
     }
 
     @Test
-    void testGetTraineeTrainingsByCriteria() {
+    void getTraineeTrainingsByCriteria_filtersByTrainerNameAndType() {
         String traineeUsername = "trainee1";
         String traineePassword = "pass1";
-        LocalDate fromDate = LocalDate.of(2024, 3, 1);
-        LocalDate toDate = LocalDate.of(2024, 3, 31);
-        String trainerName = "trainer";
-        TrainingTypeName trainingTypeName = TrainingTypeName.CARDIO;
+        LocalDate fromDate = LocalDate.now().minusDays(10);
+        LocalDate toDate = LocalDate.now().plusDays(10);
+        String trainerName = "John";
+        TrainingTypeName trainingType = TrainingTypeName.YOGA;
 
-        List<Training> trainings = List.of(
-                Training.builder().trainingName("Morning Cardio").build()
-        );
+        User trainerUser = User.builder().firstName("John").lastName("Doe").build();
+        Trainer trainer = Trainer.builder().user(trainerUser).build();
+        Training training = Training.builder()
+                .trainer(trainer)
+                .trainingType(trainingType)
+                .build();
+
+        List<Training> trainings = Collections.singletonList(training);
 
         doNothing().when(traineeService).authenticate(traineeUsername, traineePassword);
-        when(trainingRepository.findAll((Specification<Training>) any())).thenReturn(trainings);
+        when(trainingRepository.findTrainingsWithAllUsers(traineeUsername, null, fromDate, toDate))
+                .thenReturn(trainings);
 
         List<Training> result = trainingService.getTraineeTrainingsByCriteria(
-                traineeUsername, traineePassword, fromDate, toDate, trainerName, trainingTypeName
+                traineeUsername, traineePassword, fromDate, toDate, trainerName, trainingType
         );
-        assertEquals(trainings, result);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(trainingType, result.getFirst().getTrainingType());
+        assertEquals("John", result.getFirst().getTrainer().getUser().getFirstName());
     }
 
     @Test
-    void testGetTrainerTrainingsByCriteria() {
+    void getTrainerTrainingsByCriteria_filtersByTraineeName() {
         String trainerUsername = "trainer1";
         String trainerPassword = "pass1";
-        LocalDate fromDate = LocalDate.of(2024, 3, 1);
-        LocalDate toDate = LocalDate.of(2024, 3, 31);
-        String traineeName = "trainee";
-
-        List<Training> trainings = List.of(
-                Training.builder().trainingName("Evening Strength").build()
+        LocalDate fromDate = LocalDate.now().minusDays(10);
+        LocalDate toDate = LocalDate.now().plusDays(10
         );
+        String traineeName = "Alice";
+
+        User traineeUser = User.builder().firstName("Alice").lastName("Smith").build();
+        Trainee trainee = Trainee.builder().user(traineeUser).build();
+        Training training = Training.builder()
+                .trainee(trainee)
+                .build();
+
+        List<Training> trainings = Collections.singletonList(training);
 
         doNothing().when(trainerService).authenticate(trainerUsername, trainerPassword);
-        when(trainingRepository.findAll((Specification<Training>) any())).thenReturn(trainings);
+        when(trainingRepository.findTrainingsWithAllUsers(null, trainerUsername, fromDate, toDate))
+                .thenReturn(trainings);
 
         List<Training> result = trainingService.getTrainerTrainingsByCriteria(
                 trainerUsername, trainerPassword, fromDate, toDate, traineeName
         );
-        assertEquals(trainings, result);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Alice", result.getFirst().getTrainee().getUser().getFirstName());
+    }
+
+    @Test
+    void getTrainingsWithAllUsers_returnsList() {
+        String traineeUsername = "trainee1";
+        String trainerUsername = "trainer1";
+        LocalDate fromDate = LocalDate.now().minusDays(10);
+        LocalDate toDate = LocalDate.now().plusDays(10);
+
+        Training training = Training.builder().build();
+        when(trainingRepository.findTrainingsWithAllUsers(traineeUsername, trainerUsername, fromDate, toDate))
+                .thenReturn(Collections.singletonList(training));
+
+        List<Training> result = trainingService.getTrainingsWithAllUsers(
+                traineeUsername, trainerUsername, fromDate, toDate
+        );
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
     }
 }
