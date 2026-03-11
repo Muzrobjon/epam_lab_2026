@@ -13,10 +13,10 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring.version>6.1.13</spring.version>
+        <spring.version>6.1.5</spring.version>
         <spring-data-jpa.version>3.2.3</spring-data-jpa.version>
         <hibernate.version>6.1.7.Final</hibernate.version>
-        <postgresql.version>42.7.4</postgresql.version>
+        <postgresql.version>42.7.10</postgresql.version>
         <h2.version>2.2.224</h2.version>
         <jakarta.persistence.version>3.0.0</jakarta.persistence.version>
         <jakarta.validation.version>3.0.2</jakarta.validation.version>
@@ -25,9 +25,9 @@
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <jakarta.el.version>5.0.0</jakarta.el.version>
         <lombok.version>1.18.34</lombok.version>
-        <jackson.version>2.16.1</jackson.version>
+        <jackson.version>2.21.1</jackson.version>
         <slf4j.version>2.0.12</slf4j.version>
-        <logback.version>1.4.14</logback.version>
+        <logback.version>1.5.32</logback.version>
         <junit.version>5.10.2</junit.version>
         <mockito.version>5.14.2</mockito.version>
     </properties>
@@ -217,8 +217,15 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.24.2</version>
+            <version>4.0.0-M1</version>
             <scope>test</scope>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-surefire-plugin -->
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.5.5</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -230,11 +237,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.2</version>
-              </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

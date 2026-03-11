@@ -1,264 +1,262 @@
 package com.epam.gym.repository;
 
-import org.junit.jupiter.api.DisplayName;
+import com.epam.gym.config.TestJpaConfig;
+import com.epam.gym.entity.*;
+import com.epam.gym.enums.TrainingTypeName;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Method;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Simple verification tests for TrainingRepository interface.
- * No Spring context required - pure interface testing.
- */
-@DisplayName("TrainingRepository Interface Tests")
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = TestJpaConfig.class)
+@Transactional
+@Rollback
 class TrainingRepositoryTest {
 
-    @Test
-    @DisplayName("Should extend JpaRepository")
-    void shouldExtendJpaRepository() {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
+    @PersistenceContext
+    private EntityManager em;
 
-        // Then
-        assertTrue(org.springframework.data.jpa.repository.JpaRepository.class.isAssignableFrom(repoClass));
+    @Autowired
+    private TrainingRepository trainingRepository;
+
+    private TrainingType cardio;
+    private TrainingType yoga;
+    private Trainee trainee1;
+    private Trainee trainee2;
+    private Trainer trainer1;
+    private Trainer trainer2;
+
+    @BeforeEach
+    void setUp() {
+        // TrainingType
+        cardio = new TrainingType(null, TrainingTypeName.CARDIO);
+        yoga = new TrainingType(null, TrainingTypeName.YOGA);
+        em.persist(cardio);
+        em.persist(yoga);
+
+        // Trainee 1
+        User traineeUser1 = createUser("John", "Doe", "john.trainee", true);
+        trainee1 = createTrainee(traineeUser1);
+
+        // Trainee 2
+        User traineeUser2 = createUser("Jane", "Smith", "jane.trainee", true);
+        trainee2 = createTrainee(traineeUser2);
+
+        // Trainer 1
+        User trainerUser1 = createUser("Mike", "Coach", "mike.trainer", true);
+        trainer1 = createTrainer(trainerUser1, cardio);
+
+        // Trainer 2
+        User trainerUser2 = createUser("Sara", "Fit", "sara.trainer", true);
+        trainer2 = createTrainer(trainerUser2, yoga);
+
+        em.flush();
+    }
+
+    // ============ findTrainingsWithAllUsers ============
+
+    @Test
+    void findTrainings_noFilters_returnsAll() {
+        createTraining(trainee1, trainer1, cardio, "Morning Cardio", LocalDate.now(), 60);
+        createTraining(trainee2, trainer2, yoga, "Evening Yoga", LocalDate.now(), 45);
+        em.flush();
+        em.clear();
+
+        List<Training> result = trainingRepository.findTrainingsWithAllUsers(
+                null, null, null, null);
+
+        assertThat(result).hasSize(2);
     }
 
     @Test
-    @DisplayName("Should be annotated with Repository")
-    void shouldBeAnnotatedWithRepository() {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
+    void findTrainings_byTraineeUsername() {
+        createTraining(trainee1, trainer1, cardio, "Cardio 1", LocalDate.now(), 60);
+        createTraining(trainee2, trainer2, yoga, "Yoga 1", LocalDate.now(), 45);
+        em.flush();
+        em.clear();
 
-        // Then
-        assertTrue(repoClass.isAnnotationPresent(org.springframework.stereotype.Repository.class));
+        List<Training> result = trainingRepository.findTrainingsWithAllUsers(
+                "john.trainee", null, null, null);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTrainee().getUser().getUsername()).isEqualTo("john.trainee");
     }
 
     @Test
-    @DisplayName("Should have findTrainingsWithAllUsers method")
-    void shouldHaveFindTrainingsWithAllUsersMethod() throws NoSuchMethodException {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
+    void findTrainings_byTrainerUsername() {
+        createTraining(trainee1, trainer1, cardio, "Cardio 1", LocalDate.now(), 60);
+        createTraining(trainee2, trainer2, yoga, "Yoga 1", LocalDate.now(), 45);
+        em.flush();
+        em.clear();
 
-        // When
-        Method method = repoClass.getMethod("findTrainingsWithAllUsers",
-                String.class, String.class, LocalDate.class, LocalDate.class);
+        List<Training> result = trainingRepository.findTrainingsWithAllUsers(
+                null, "sara.trainer", null, null);
 
-        // Then
-        assertNotNull(method);
-        assertEquals(List.class, method.getReturnType());
-
-        // Verify EntityGraph annotation
-        assertTrue(method.isAnnotationPresent(org.springframework.data.jpa.repository.EntityGraph.class));
-
-        // Verify Query annotation
-        assertTrue(method.isAnnotationPresent(org.springframework.data.jpa.repository.Query.class));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTrainer().getUser().getUsername()).isEqualTo("sara.trainer");
     }
 
     @Test
-    @DisplayName("Should verify EntityGraph attribute paths for eager fetching")
-    void shouldVerifyEntityGraphAttributePathsForEagerFetching() throws NoSuchMethodException {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
-        Method method = repoClass.getMethod("findTrainingsWithAllUsers",
-                String.class, String.class, LocalDate.class, LocalDate.class);
+    void findTrainings_byDateRange() {
+        createTraining(trainee1, trainer1, cardio, "Old", LocalDate.now().minusDays(10), 60);
+        createTraining(trainee1, trainer1, cardio, "Recent", LocalDate.now().minusDays(2), 60);
+        createTraining(trainee1, trainer1, cardio, "Today", LocalDate.now(), 60);
+        em.flush();
+        em.clear();
 
-        // When
-        org.springframework.data.jpa.repository.EntityGraph entityGraph =
-                method.getAnnotation(org.springframework.data.jpa.repository.EntityGraph.class);
+        LocalDate fromDate = LocalDate.now().minusDays(5);
+        LocalDate toDate = LocalDate.now();
 
-        // Then
-        assertNotNull(entityGraph);
-        String[] attributePaths = entityGraph.attributePaths();
+        List<Training> result = trainingRepository.findTrainingsWithAllUsers(
+                null, null, fromDate, toDate);
 
-        // Verify both trainee.user and trainer.user are in attribute paths
-        assertEquals(2, attributePaths.length);
-        assertTrue(
-                (attributePaths[0].equals("trainee.user") && attributePaths[1].equals("trainer.user")) ||
-                        (attributePaths[0].equals("trainer.user") && attributePaths[1].equals("trainee.user")),
-                "EntityGraph should include both trainee.user and trainer.user"
-        );
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(Training::getTrainingName)
+                .containsExactlyInAnyOrder("Recent", "Today");
     }
 
     @Test
-    @DisplayName("Should verify Query value contains correct JPQL with optional parameters")
-    void shouldVerifyQueryValueContainsCorrectJpql() throws NoSuchMethodException {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
-        Method method = repoClass.getMethod("findTrainingsWithAllUsers",
-                String.class, String.class, LocalDate.class, LocalDate.class);
+    void findTrainings_byAllFilters() {
+        createTraining(trainee1, trainer1, cardio, "Target", LocalDate.now(), 60);
+        createTraining(trainee1, trainer2, yoga, "Wrong trainer", LocalDate.now(), 45);
+        createTraining(trainee2, trainer1, cardio, "Wrong trainee", LocalDate.now(), 60);
+        em.flush();
+        em.clear();
 
-        // When
-        org.springframework.data.jpa.repository.Query queryAnnotation =
-                method.getAnnotation(org.springframework.data.jpa.repository.Query.class);
+        List<Training> result = trainingRepository.findTrainingsWithAllUsers(
+                "john.trainee", "mike.trainer",
+                LocalDate.now().minusDays(1), LocalDate.now().plusDays(1));
 
-        // Then
-        assertNotNull(queryAnnotation);
-        String query = queryAnnotation.value();
-
-        // Verify key parts of the query
-        assertTrue(query.contains("SELECT t FROM Training t"));
-        assertTrue(query.contains(":traineeUsername IS NULL OR t.trainee.user.username = :traineeUsername"));
-        assertTrue(query.contains(":trainerUsername IS NULL OR t.trainer.user.username = :trainerUsername"));
-        assertTrue(query.contains("t.trainingDate >= COALESCE(:fromDate, t.trainingDate)"));
-        assertTrue(query.contains("t.trainingDate <= COALESCE(:toDate, t.trainingDate)"));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTrainingName()).isEqualTo("Target");
     }
 
     @Test
-    @DisplayName("Should verify all parameters have Param annotations")
-    void shouldVerifyAllParametersHaveParamAnnotations() throws NoSuchMethodException {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
-        Method method = repoClass.getMethod("findTrainingsWithAllUsers",
-                String.class, String.class, LocalDate.class, LocalDate.class);
+    void findTrainings_eagerlyFetchesAllRelations() {
+        createTraining(trainee1, trainer1, cardio, "Test", LocalDate.now(), 60);
+        em.flush();
+        em.clear();
 
-        // When
-        java.lang.reflect.Parameter[] parameters = method.getParameters();
+        List<Training> result = trainingRepository.findTrainingsWithAllUsers(
+                null, null, null, null);
 
-        // Then
-        assertEquals(4, parameters.length);
+        assertThat(result).hasSize(1);
+        Training training = result.get(0);
 
-        // Verify each parameter has @Param annotation
-        String[] expectedNames = {"traineeUsername", "trainerUsername", "fromDate", "toDate"};
-        for (int i = 0; i < parameters.length; i++) {
-            assertTrue(parameters[i].isAnnotationPresent(org.springframework.data.repository.query.Param.class),
-                    "Parameter " + i + " should have @Param annotation");
-
-            org.springframework.data.repository.query.Param paramAnnotation =
-                    parameters[i].getAnnotation(org.springframework.data.repository.query.Param.class);
-            assertEquals(expectedNames[i], paramAnnotation.value(),
-                    "Parameter " + i + " should have correct @Param value");
-        }
+        // EntityGraph tufayli LazyInitializationException bo'lmasligi kerak
+        assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("john.trainee");
+        assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("mike.trainer");
+        assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo(TrainingTypeName.CARDIO);
     }
 
     @Test
-    @DisplayName("Should verify return type is List of Training")
-    void shouldVerifyReturnTypeIsListOfTraining() throws NoSuchMethodException {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
-        Method method = repoClass.getMethod("findTrainingsWithAllUsers",
-                String.class, String.class, LocalDate.class, LocalDate.class);
+    void findTrainings_returnsEmptyWhenNoMatch() {
+        createTraining(trainee1, trainer1, cardio, "Test", LocalDate.now(), 60);
+        em.flush();
+        em.clear();
 
-        // When
-        Class<?> returnType = method.getReturnType();
+        List<Training> result = trainingRepository.findTrainingsWithAllUsers(
+                "nonexistent", null, null, null);
 
-        // Then
-        assertEquals(List.class, returnType);
+        assertThat(result).isEmpty();
+    }
+
+    // ============ JPA Default Methods ============
+
+    @Test
+    void save_createsTraining() {
+        Training training = Training.builder()
+                .trainee(trainee1)
+                .trainer(trainer1)
+                .trainingType(cardio)
+                .trainingName("New Training")
+                .trainingDate(LocalDate.now())
+                .trainingDurationMinutes(60)
+                .build();
+
+        Training saved = trainingRepository.save(training);
+
+        assertThat(saved.getId()).isNotNull();
     }
 
     @Test
-    @DisplayName("Should verify generic type of JpaRepository is Training and Long")
-    void shouldVerifyGenericTypeOfJpaRepository() {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
+    void findById_found() {
+        Training training = createTraining(trainee1, trainer1, cardio, "Test", LocalDate.now(), 60);
+        em.flush();
 
-        // When - get generic interfaces
-        java.lang.reflect.Type[] genericInterfaces = repoClass.getGenericInterfaces();
-
-        // Then - find JpaRepository interface
-        boolean foundJpaRepository = false;
-        for (java.lang.reflect.Type type : genericInterfaces) {
-            if (type.getTypeName().contains("JpaRepository")) {
-                foundJpaRepository = true;
-                assertTrue(type.getTypeName().contains("Training"));
-                assertTrue(type.getTypeName().contains("Long"));
-                break;
-            }
-        }
-        assertTrue(foundJpaRepository, "Should implement JpaRepository<Training, Long>");
+        assertThat(trainingRepository.findById(training.getId())).isPresent();
     }
 
     @Test
-    @DisplayName("Should inherit standard CrudRepository methods")
-    void shouldInheritStandardCrudRepositoryMethods() {
-        // Given - verify methods exist in parent interfaces
+    void delete_removesTraining() {
+        Training training = createTraining(trainee1, trainer1, cardio, "Test", LocalDate.now(), 60);
+        Long id = training.getId();
+        em.flush();
 
-        // Then - verify inherited methods from CrudRepository
-        assertDoesNotThrow(() -> {
-            Method findById = org.springframework.data.repository.CrudRepository.class
-                    .getMethod("findById", Object.class);
-            assertNotNull(findById);
-        });
+        trainingRepository.deleteById(id);
+        em.flush();
 
-        assertDoesNotThrow(() -> {
-            Method save = org.springframework.data.repository.CrudRepository.class
-                    .getMethod("save", Object.class);
-            assertNotNull(save);
-        });
-
-        assertDoesNotThrow(() -> {
-            Method findAll = org.springframework.data.repository.CrudRepository.class
-                    .getMethod("findAll");
-            assertNotNull(findAll);
-        });
-
-        assertDoesNotThrow(() -> {
-            Method deleteById = org.springframework.data.repository.CrudRepository.class
-                    .getMethod("deleteById", Object.class);
-            assertNotNull(deleteById);
-        });
+        assertThat(trainingRepository.findById(id)).isEmpty();
     }
 
-    @Test
-    @DisplayName("Should inherit JpaRepository specific methods")
-    void shouldInheritJpaRepositorySpecificMethods() {
-        // Then - verify JpaRepository specific methods
-        assertDoesNotThrow(() -> {
-            Method findAll = org.springframework.data.jpa.repository.JpaRepository.class
-                    .getMethod("findAll");
-            assertNotNull(findAll);
-        });
+    // ============ Helper Methods ============
 
-        assertDoesNotThrow(() -> {
-            Method saveAndFlush = org.springframework.data.jpa.repository.JpaRepository.class
-                    .getMethod("saveAndFlush", Object.class);
-            assertNotNull(saveAndFlush);
-        });
+    private User createUser(String firstName, String lastName, String username, boolean active) {
+        User user = User.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .username(username)
+                .password("pass123")
+                .isActive(active)
+                .build();
+        em.persist(user);
+        return user;
     }
 
-    @Test
-    @DisplayName("Should verify query handles null parameters with COALESCE")
-    void shouldVerifyQueryHandlesNullParametersWithCoalesce() throws NoSuchMethodException {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
-        Method method = repoClass.getMethod("findTrainingsWithAllUsers",
-                String.class, String.class, LocalDate.class, LocalDate.class);
-
-        // When
-        org.springframework.data.jpa.repository.Query queryAnnotation =
-                method.getAnnotation(org.springframework.data.jpa.repository.Query.class);
-
-        // Then
-        assertNotNull(queryAnnotation);
-        String query = queryAnnotation.value();
-
-        // Verify COALESCE is used for date parameters
-        assertTrue(query.contains("COALESCE(:fromDate, t.trainingDate)"));
-        assertTrue(query.contains("COALESCE(:toDate, t.trainingDate)"));
-
-        // Verify IS NULL check for username parameters
-        assertTrue(query.contains(":traineeUsername IS NULL"));
-        assertTrue(query.contains(":trainerUsername IS NULL"));
+    private Trainee createTrainee(User user) {
+        Trainee trainee = Trainee.builder()
+                .user(user)
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .address("Address")
+                .trainers(new ArrayList<>())
+                .build();
+        em.persist(trainee);
+        return trainee;
     }
 
-    @Test
-    @DisplayName("Should verify method signature has correct parameter types")
-    void shouldVerifyMethodSignatureHasCorrectParameterTypes() throws NoSuchMethodException {
-        // Given
-        Class<?> repoClass = TrainingRepository.class;
-        Method method = repoClass.getMethod("findTrainingsWithAllUsers",
-                String.class, String.class, LocalDate.class, LocalDate.class);
+    private Trainer createTrainer(User user, TrainingType spec) {
+        Trainer trainer = Trainer.builder()
+                .user(user)
+                .specialization(spec)
+                .build();
+        em.persist(trainer);
+        return trainer;
+    }
 
-        // When
-        Class<?>[] parameterTypes = method.getParameterTypes();
-
-        // Then
-        assertEquals(4, parameterTypes.length);
-        assertEquals(String.class, parameterTypes[0]);
-        assertEquals(String.class, parameterTypes[1]);
-        assertEquals(LocalDate.class, parameterTypes[2]);
-        assertEquals(LocalDate.class, parameterTypes[3]);
+    private Training createTraining(Trainee trainee, Trainer trainer, TrainingType type,
+                                    String name, LocalDate date, int duration) {
+        Training training = Training.builder()
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingType(type)
+                .trainingName(name)
+                .trainingDate(date)
+                .trainingDurationMinutes(duration)
+                .build();
+        em.persist(training);
+        return training;
     }
 }

@@ -3,9 +3,11 @@ package com.epam.gym.service;
 import com.epam.gym.enums.TrainingTypeName;
 import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.entity.Trainer;
+import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
 import com.epam.gym.repository.TraineeRepository;
 import com.epam.gym.repository.TrainerRepository;
+import com.epam.gym.repository.TrainingTypeRepository;
 import com.epam.gym.repository.UserRepository;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +23,12 @@ public class TrainerService extends AbstractUserService<Trainer> {
 
     private final TrainerRepository trainerRepository;
     private final TraineeRepository traineeRepository;
+    private final TrainingTypeRepository trainingTypeRepository;
 
     public TrainerService(
             TrainerRepository trainerRepository,
             TraineeRepository traineeRepository,
+            TrainingTypeRepository trainingTypeRepository,
             UserRepository userRepository,
             UsernameGenerator usernameGenerator,
             PasswordGenerator passwordGenerator,
@@ -33,6 +37,7 @@ public class TrainerService extends AbstractUserService<Trainer> {
         super(userRepository, usernameGenerator, passwordGenerator, validator);
         this.trainerRepository = trainerRepository;
         this.traineeRepository = traineeRepository;
+        this.trainingTypeRepository = trainingTypeRepository;
     }
 
     @Transactional
@@ -53,10 +58,13 @@ public class TrainerService extends AbstractUserService<Trainer> {
 
         User savedUser = userRepository.save(user);
 
+        TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(specialization)
+                .orElseThrow(() -> new NotFoundException("Training type not found: " + specialization));
+
         Trainer trainer = Trainer.builder()
                 .id(savedUser.getId())
                 .user(savedUser)
-                .specialization(specialization)
+                .specialization(trainingType)
                 .build();
 
         validateEntity(trainer);
@@ -80,7 +88,7 @@ public class TrainerService extends AbstractUserService<Trainer> {
     public Trainer updateProfile(String username, String password, Trainer updatedTrainer) {
         log.info("Updating trainer profile: {}", username);
 
-        authenticate(username, password);
+        authenticateUser(username, password);
 
         Trainer existing = selectByUsername(username);
 
@@ -115,7 +123,7 @@ public class TrainerService extends AbstractUserService<Trainer> {
         traineeRepository.findByUser_Username(traineeUsername)
                 .orElseThrow(() -> new NotFoundException("Trainee not found: " + traineeUsername));
 
-        List<Trainer> unassignedTrainers = trainerRepository.findUnassignedTrainersByTraineeUsername(traineeUsername);
+        List<Trainer> unassignedTrainers = trainerRepository.findAvailableTrainers(traineeUsername);
 
         log.info("Found {} unassigned trainers for trainee: {}", unassignedTrainers.size(), traineeUsername);
 

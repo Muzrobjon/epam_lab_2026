@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -82,7 +83,7 @@ public class TraineeService extends AbstractUserService<Trainee> {
     public Trainee updateProfile(String username, String password, Trainee updatedTrainee) {
         log.info("Updating trainee profile: {}", username);
 
-        authenticate(username, password);
+        authenticateUser(username, password);
 
         Trainee existing = selectByUsername(username);
 
@@ -116,7 +117,7 @@ public class TraineeService extends AbstractUserService<Trainee> {
     public void deleteByUsername(String username, String password) {
         log.info("Deleting trainee profile: {}", username);
 
-        authenticate(username, password);
+        authenticateUser(username, password);
 
         Trainee trainee = selectByUsername(username);
 
@@ -129,20 +130,50 @@ public class TraineeService extends AbstractUserService<Trainee> {
     public void updateTrainersList(String traineeUsername, String password, List<String> trainerUsernames) {
         log.info("Updating trainers list for trainee: {}", traineeUsername);
 
-        authenticate(traineeUsername, password);
+        authenticateUser(traineeUsername, password);
 
         Trainee trainee = selectByUsername(traineeUsername);
 
+        // TODO: N+1 problem FIXED!
+        // OLD: Loop with individual queries - very inefficient for large collections
+        // NEW: Single query with findByUser_UsernameIn
+
+        List<Trainer> trainers = fetchTrainersByUsernames(trainerUsernames);
+
         trainee.getTrainers().clear();
-
-        List<Trainer> trainers = trainerUsernames.stream()
-                .map(trainerUsername -> trainerRepository.findByUser_Username(trainerUsername)
-                        .orElseThrow(() -> new NotFoundException("Trainer not found: " + trainerUsername)))
-                .collect(Collectors.toList());
-
         trainee.setTrainers(trainers);
+        traineeRepository.save(trainee);
 
-        log.info("Updated trainers list for trainee: {}", traineeUsername);
+        log.info("Updated trainers list for trainee: {} with {} trainers",
+                traineeUsername, trainers.size());
+    }
+
+    /**
+     * FIXED: N+1 problem - fetches all trainers in a single query
+     * Validates that all usernames exist, throws if any missing
+     */
+    private List<Trainer> fetchTrainersByUsernames(List<String> trainerUsernames) {
+        if (trainerUsernames == null || trainerUsernames.isEmpty()) {
+            return List.of();
+        }
+
+        // Single query instead of N queries
+        List<Trainer> foundTrainers = trainerRepository.findByUser_UsernameIn(trainerUsernames);
+
+        // Validate all usernames exist
+        if (foundTrainers.size() != trainerUsernames.size()) {
+            Set<String> foundUsernames = foundTrainers.stream()
+                    .map(t -> t.getUser().getUsername())
+                    .collect(Collectors.toSet());
+
+            List<String> missingUsernames = trainerUsernames.stream()
+                    .filter(username -> !foundUsernames.contains(username))
+                    .toList();
+
+            throw new NotFoundException("Trainers not found for usernames: " + missingUsernames);
+        }
+
+        return foundTrainers;
     }
 
     @Override

@@ -40,7 +40,6 @@ public class GymCrmApplication {
         String newTraineePass = "newTraineePass123";
         String newTrainerPass = "newTrainerPass123";
 
-        // 1. Create Trainer profile
         System.out.println("1️⃣  Create Trainer Profile:");
         Trainer trainer1 = facade.createTrainer("Alice", "Fitness", TrainingTypeName.CARDIO);
         trainer1Pass = getRawPassword(trainer1);
@@ -52,7 +51,6 @@ public class GymCrmApplication {
         System.out.println("    ✓ Created: " + trainer2.getUser().getUsername() +
                 " | Password: " + trainer2Pass);
 
-        // 2. Create Trainee profile
         System.out.println("\n2️⃣  Create Trainee Profile:");
         Trainee trainee1 = facade.createTrainee("John", "Doe",
                 LocalDate.of(1995, 3, 20), "789 Pine St, Chicago");
@@ -66,51 +64,42 @@ public class GymCrmApplication {
         System.out.println("    ✓ Created: " + trainee2.getUser().getUsername() +
                 " | Password: " + trainee2Pass);
 
-        // 3. Trainee username and password matching
         System.out.println("\n3️⃣  Trainee Authentication:");
         facade.authenticateTrainee(trainee1.getUser().getUsername(), trainee1Pass);
         System.out.println("    ✓ Trainee " + trainee1.getUser().getUsername() + " authenticated successfully!");
 
-        // 4. Trainer username and password matching
         System.out.println("\n4️⃣  Trainer Authentication:");
         facade.authenticateTrainer(trainer1.getUser().getUsername(), trainer1Pass);
         System.out.println("    ✓ Trainer " + trainer1.getUser().getUsername() + " authenticated successfully!");
 
-        // 5. Select Trainer profile by username
         System.out.println("\n5️⃣  Select Trainer Profile by Username:");
         Trainer foundTrainer = facade.getTrainerByUsername(trainer1.getUser().getUsername());
         System.out.println("    ✓ Found: " + foundTrainer.getUser().getFirstName() + " " +
                 foundTrainer.getUser().getLastName() + " | Specialization: " + foundTrainer.getSpecialization());
 
-        // 6. Select Trainee profile by username
         System.out.println("\n6️⃣  Select Trainee Profile by Username:");
         Trainee foundTrainee = facade.getTraineeByUsername(trainee1.getUser().getUsername());
         System.out.println("    ✓ Found: " + foundTrainee.getUser().getFirstName() + " " +
                 foundTrainee.getUser().getLastName() + " | Address: " + foundTrainee.getAddress());
 
-        // 7. Trainee password change
         System.out.println("\n7️⃣  Trainee Password Change:");
-        facade.changeTraineePassword(trainee1.getUser().getUsername(), trainee1Pass, newTraineePass); // ✅
+        facade.changeTraineePassword(trainee1.getUser().getUsername(), trainee1Pass, newTraineePass);
         System.out.println("    ✓ Password changed from '" + trainee1Pass + "' to '" + newTraineePass + "'");
         trainee1Pass = newTraineePass;
 
-        // 8. Trainer password change
         System.out.println("\n8️⃣  Trainer Password Change:");
-        facade.changeTrainerPassword(trainer1.getUser().getUsername(), trainer1Pass, newTrainerPass); // ✅
+        facade.changeTrainerPassword(trainer1.getUser().getUsername(), trainer1Pass, newTrainerPass);
         System.out.println("    ✓ Password changed from '" + trainer1Pass + "' to '" + newTrainerPass + "'");
         trainer1Pass = newTrainerPass;
 
-        // 9. Update trainer profile
         System.out.println("\n9️⃣  Update Trainer Profile:");
         Trainer updatedTrainerData = Trainer.builder()
                 .user(User.builder().firstName("Alicia").build())
-                .specialization(TrainingTypeName.YOGA)
                 .build();
         Trainer updatedTrainer = facade.updateTrainer(trainer1.getUser().getUsername(), trainer1Pass, updatedTrainerData);
         System.out.println("    ✓ Updated: " + updatedTrainer.getUser().getFirstName() +
-                " | New Specialization: " + updatedTrainer.getSpecialization());
+                " | Specialization: " + updatedTrainer.getSpecialization());
 
-        // 10. Update trainee profile
         System.out.println("\n🔟 Update Trainee Profile:");
         Trainee updatedTraineeData = Trainee.builder()
                 .user(User.builder().firstName("Johnny").build())
@@ -120,25 +109,21 @@ public class GymCrmApplication {
         System.out.println("    ✓ Updated: " + updatedTrainee.getUser().getFirstName() +
                 " | New Address: " + updatedTrainee.getAddress());
 
-        // 11. Activate/De-activate trainee
         System.out.println("\n1️⃣1️⃣ Activate/De-activate Trainee:");
         System.out.println("    Before: isActive = " + updatedTrainee.getUser().getIsActive());
         facade.toggleTraineeStatus(trainee1.getUser().getUsername(), trainee1Pass);
         Trainee toggledTrainee = facade.getTraineeByUsername(trainee1.getUser().getUsername());
         System.out.println("    After:  isActive = " + toggledTrainee.getUser().getIsActive());
 
-        // 12. Activate/De-activate trainer
         System.out.println("\n1️⃣2️⃣ Activate/De-activate Trainer:");
         System.out.println("    Before: isActive = " + updatedTrainer.getUser().getIsActive());
         facade.toggleTrainerStatus(trainer1.getUser().getUsername(), trainer1Pass);
         Trainer toggledTrainer = facade.getTrainerByUsername(trainer1.getUser().getUsername());
         System.out.println("    After:  isActive = " + toggledTrainer.getUser().getIsActive());
 
-        // Re-activate for further tests
         facade.toggleTraineeStatus(trainee1.getUser().getUsername(), trainee1Pass);
         facade.toggleTrainerStatus(trainer1.getUser().getUsername(), trainer1Pass);
 
-        // 16. Add training
         System.out.println("\n1️⃣6️⃣ Add Training:");
         Training training1 = facade.createTraining(
                 trainee1.getUser().getUsername(), trainee1Pass,
@@ -158,7 +143,6 @@ public class GymCrmApplication {
         System.out.println("    ✓ Created: " + training2.getTrainingName() +
                 " | Date: " + training2.getTrainingDate() + " | Duration: " + training2.getTrainingDurationMinutes() + " min");
 
-        // 14. Get Trainee Trainings List by criteria
         System.out.println("\n1️⃣4️⃣ Get Trainee Trainings List by Criteria:");
         List<Training> traineeTrainings = facade.getTraineeTrainingsByCriteria(
                 trainee1.getUser().getUsername(), trainee1Pass,
@@ -169,7 +153,6 @@ public class GymCrmApplication {
         traineeTrainings.forEach(t -> System.out.println("      - " + t.getTrainingName() +
                 " | Type: " + t.getTrainingType() + " | Date: " + t.getTrainingDate()));
 
-        // 15. Get Trainer Trainings List by criteria
         System.out.println("\n1️⃣5️⃣ Get Trainer Trainings List by Criteria:");
         List<Training> trainerTrainings = facade.getTrainerTrainingsByCriteria(
                 trainer1.getUser().getUsername(), trainer1Pass,
@@ -180,7 +163,6 @@ public class GymCrmApplication {
         trainerTrainings.forEach(t -> System.out.println("      - " + t.getTrainingName() +
                 " | Trainee: " + t.getTrainee().getUser().getFirstName()));
 
-        // 17. Get trainers list that not assigned on trainee
         System.out.println("\n1️⃣7️⃣ Get Unassigned Trainers:");
         List<Trainer> unassignedBefore = facade.getUnassignedTrainers(trainee2.getUser().getUsername());
         System.out.println("    ✓ Unassigned trainers for " + trainee2.getUser().getUsername() + ": " +
@@ -188,7 +170,6 @@ public class GymCrmApplication {
         unassignedBefore.forEach(t -> System.out.println("      - " + t.getUser().getUsername() +
                 " | Specialization: " + t.getSpecialization()));
 
-        // 18. Update Trainee's trainers list
         System.out.println("\n1️⃣8️⃣ Update Trainee's Trainers List:");
         facade.updateTraineeTrainersList(
                 trainee2.getUser().getUsername(),
@@ -198,7 +179,6 @@ public class GymCrmApplication {
         System.out.println("    ✓ Assigned trainer " + trainer1.getUser().getUsername() +
                 " to trainee " + trainee2.getUser().getUsername());
 
-        // 13. Delete trainee profile by username
         System.out.println("\n1️⃣3️⃣ Delete Trainee Profile:");
         Trainee traineeToDelete = facade.createTrainee("Delete", "Me",
                 LocalDate.of(2000, 1, 1), "To be deleted");
@@ -210,7 +190,6 @@ public class GymCrmApplication {
         System.out.println("    ✓ Trainee " + traineeToDelete.getUser().getUsername() +
                 " deleted successfully (cascade deletion of trainings)!");
     }
-
 
     private static String getRawPassword(Trainee trainee) {
         return trainee.getUser().getPassword();

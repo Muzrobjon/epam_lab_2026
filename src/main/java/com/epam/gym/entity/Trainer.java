@@ -18,6 +18,7 @@ import java.util.List;
 public class Trainer {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -26,9 +27,9 @@ public class Trainer {
     private User user;
 
     @NotNull(message = "Specialization is required")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "specialization", nullable = false)
-    private TrainingTypeName specialization;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "specialization_id", nullable = false)
+    private TrainingType specialization;
 
     @OneToMany(mappedBy = "trainer", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @Builder.Default

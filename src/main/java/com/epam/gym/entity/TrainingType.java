@@ -37,7 +37,6 @@ public class TrainingType {
     public String toString() {
         return "TrainingType{" +
                 "id=" + id +
-                ", trainingTypeName=" + trainingTypeName +
                 '}';
     }
 }

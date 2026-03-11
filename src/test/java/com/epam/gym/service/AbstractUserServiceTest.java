@@ -1,23 +1,28 @@
 package com.epam.gym.service;
 
+import com.epam.gym.entity.User;
 import com.epam.gym.exception.AuthenticationException;
 import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.exception.ValidationException;
-import com.epam.gym.entity.User;
 import com.epam.gym.repository.UserRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class AbstractUserServiceTest {
 
     @Mock
@@ -32,154 +37,23 @@ class AbstractUserServiceTest {
     @Mock
     private Validator validator;
 
-    private AbstractUserService<User> userService;
+    private TestUserService testService;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        userService = new TestUserService(userRepository, usernameGenerator, passwordGenerator, validator);
+    // Test uchun konkret implementation
+    static class TestEntity {
+        private User user;
+
+        TestEntity(User user) {
+            this.user = user;
+        }
+
+        User getUser() {
+            return user;
+        }
     }
 
-    @Test
-    void authenticate_success() {
-        String username = "test.user";
-        String password = "pass123";
-        User user = new User();
-        user.setPassword(password);
-
-        userService = spy(userService);
-
-        when(userService.findByUsername()).thenReturn(ignored -> user);
-        when(userService.extractUser(any(User.class))).thenReturn(user);
-
-        assertDoesNotThrow(() -> userService.authenticate(username, password));
-    }
-
-    @Test
-    void authenticate_userNotFound() {
-        String username = "unknown";
-        String password = "pass123";
-
-        userService = spy(userService);
-
-        when(userService.findByUsername()).thenReturn(ignored -> null);
-        when(userService.extractUser(null)).thenReturn(null);
-
-        assertThrows(AuthenticationException.class,
-                () -> userService.authenticate(username, password));
-    }
-
-    @Test
-    void authenticate_invalidPassword() {
-        String username = "test.user";
-        String password = "wrong";
-        User user = new User();
-        user.setPassword("correct");
-
-        userService = spy(userService);
-
-        when(userService.findByUsername()).thenReturn(ignored -> user);
-        when(userService.extractUser(any(User.class))).thenReturn(user);
-
-        assertThrows(AuthenticationException.class,
-                () -> userService.authenticate(username, password));
-    }
-
-    @Test
-    void changePassword_success() {
-        String username = "test.user";
-        String oldPassword = "old123";
-        String newPassword = "new456";
-        User user = new User();
-        user.setPassword(oldPassword);
-
-        userService = spy(userService);
-
-        when(userService.findByUsername()).thenReturn(ignored -> user);
-        when(userService.extractUser(any(User.class))).thenReturn(user);
-        doNothing().when(userService).authenticate(username, oldPassword);
-
-        assertDoesNotThrow(() -> userService.changePassword(username, oldPassword, newPassword));
-
-        assertEquals(newPassword, user.getPassword());
-    }
-
-    @Test
-    void changePassword_userNotFound() {
-        String username = "unknown";
-        String oldPassword = "old123";
-        String newPassword = "new456";
-
-        userService = spy(userService);
-
-        doNothing().when(userService).authenticate(username, oldPassword);
-        when(userService.findByUsername()).thenReturn(ignored -> null);
-        when(userService.extractUser(null)).thenReturn(null);
-
-        assertThrows(NotFoundException.class,
-                () -> userService.changePassword(username, oldPassword, newPassword));
-    }
-
-    @Test
-    void toggleActiveStatus_success() {
-        String username = "test.user";
-        String password = "pass123";
-        User user = new User();
-        user.setPassword(password);
-        user.setIsActive(false);
-
-        userService = spy(userService);
-
-        doNothing().when(userService).authenticate(username, password);
-        when(userService.findByUsername()).thenReturn(ignored -> user);
-        when(userService.extractUser(any(User.class))).thenReturn(user);
-
-        userService.toggleActiveStatus(username, password);
-
-        assertTrue(user.getIsActive());
-    }
-
-    @Test
-    void toggleActiveStatus_userNotFound() {
-        String username = "unknown";
-        String password = "pass123";
-
-        userService = spy(userService);
-
-        doNothing().when(userService).authenticate(username, password);
-        when(userService.findByUsername()).thenReturn(ignored -> null);
-        when(userService.extractUser(null)).thenReturn(null);
-
-        assertThrows(NotFoundException.class,
-                () -> userService.toggleActiveStatus(username, password));
-    }
-
-    @Test
-    void validateEntity_success() {
-        User user = new User();
-
-        when(validator.validate(user)).thenReturn(Collections.emptySet());
-
-        assertDoesNotThrow(() -> userService.validateEntity(user));
-    }
-
-    @Test
-    void validateEntity_violation() {
-        User user = new User();
-
-        @SuppressWarnings("unchecked")
-        ConstraintViolation<User> violation = mock(ConstraintViolation.class);
-        when(violation.getMessage()).thenReturn("username must not be empty");
-        when(validator.validate(user)).thenReturn(Set.of(violation));
-
-        assertThrows(ValidationException.class,
-                () -> userService.validateEntity(user));
-    }
-
-    // -------------------------------------------------------------------------
-    // Minimal concrete implementation for testing abstract class
-    // -------------------------------------------------------------------------
-    static class TestUserService extends AbstractUserService<User> {
+    class TestUserService extends AbstractUserService<TestEntity> {
+        private Function<String, TestEntity> findByUsernameFunc;
 
         public TestUserService(UserRepository userRepository,
                                UsernameGenerator usernameGenerator,
@@ -188,15 +62,194 @@ class AbstractUserServiceTest {
             super(userRepository, usernameGenerator, passwordGenerator, validator);
         }
 
-        @Override
-        protected Function<String, User> findByUsername() {
-            // Default stub — will be overridden with when(...).thenReturn(...) in tests
-            return username -> null;
+        void setFindByUsernameFunc(Function<String, TestEntity> func) {
+            this.findByUsernameFunc = func;
         }
 
         @Override
-        protected User extractUser(User entity) {
-            return entity;
+        protected Function<String, TestEntity> findByUsername() {
+            return findByUsernameFunc;
         }
+
+        @Override
+        protected User extractUser(TestEntity entity) {
+            return entity != null ? entity.getUser() : null;
+        }
+
+        public void callValidateEntity(TestEntity entity) {
+            validateEntity(entity);
+        }
+    }
+
+    @BeforeEach
+    void setUp() {
+        testService = new TestUserService(userRepository, usernameGenerator,
+                passwordGenerator, validator);
+    }
+
+    // ============ authenticate ============
+
+    @Test
+    void authenticate_success() {
+        User user = User.builder()
+                .username("john.doe")
+                .password("password123")
+                .build();
+        TestEntity entity = new TestEntity(user);
+
+        testService.setFindByUsernameFunc(username -> entity);
+
+        testService.authenticate("john.doe", "password123");
+    }
+
+    @Test
+    void authenticate_wrongPassword_throwsException() {
+        User user = User.builder()
+                .username("john.doe")
+                .password("password123")
+                .build();
+        TestEntity entity = new TestEntity(user);
+
+        testService.setFindByUsernameFunc(username -> entity);
+
+        assertThatThrownBy(() -> testService.authenticate("john.doe", "wrongpass"))
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("Invalid password");
+    }
+
+    @Test
+    void authenticate_nullUser_throwsException() {
+        TestEntity entity = new TestEntity(null);
+
+        testService.setFindByUsernameFunc(username -> entity);
+
+        assertThatThrownBy(() -> testService.authenticate("john.doe", "pass"))
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    // ============ changePassword ============
+
+    @Test
+    void changePassword_success() {
+        User user = User.builder()
+                .username("john.doe")
+                .password("oldPass")
+                .build();
+        TestEntity entity = new TestEntity(user);
+
+        when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+        testService.setFindByUsernameFunc(username -> entity);
+
+        testService.changePassword("john.doe", "oldPass", "newPass");
+
+        assertThat(user.getPassword()).isEqualTo("newPass");
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void changePassword_wrongOldPassword_throwsException() {
+        User user = User.builder()
+                .username("john.doe")
+                .password("oldPass")
+                .build();
+
+        when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() ->
+                testService.changePassword("john.doe", "wrongOld", "newPass"))
+                .isInstanceOf(AuthenticationException.class);
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void changePassword_userNotFound_throwsException() {
+        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                testService.changePassword("nonexistent", "old", "new"))
+                .isInstanceOf(AuthenticationException.class);
+    }
+
+    // ============ toggleActiveStatus ============
+
+    @Test
+    void toggleActiveStatus_fromActiveToInactive() {
+        User user = User.builder()
+                .username("john.doe")
+                .password("password")
+                .isActive(true)
+                .build();
+        TestEntity entity = new TestEntity(user);
+
+        when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+        testService.setFindByUsernameFunc(username -> entity);
+
+        testService.toggleActiveStatus("john.doe", "password");
+
+        assertThat(user.getIsActive()).isFalse();
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void toggleActiveStatus_fromInactiveToActive() {
+        User user = User.builder()
+                .username("john.doe")
+                .password("password")
+                .isActive(false)
+                .build();
+        TestEntity entity = new TestEntity(user);
+
+        when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+        testService.setFindByUsernameFunc(username -> entity);
+
+        testService.toggleActiveStatus("john.doe", "password");
+
+        assertThat(user.getIsActive()).isTrue();
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void toggleActiveStatus_wrongPassword_throwsException() {
+        User user = User.builder()
+                .username("john.doe")
+                .password("password")
+                .isActive(true)
+                .build();
+
+        when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() ->
+                testService.toggleActiveStatus("john.doe", "wrongpass"))
+                .isInstanceOf(AuthenticationException.class);
+
+        verify(userRepository, never()).save(any());
+    }
+
+    // ============ validateEntity ============
+
+    @Test
+    void validateEntity_valid_noException() {
+        TestEntity entity = new TestEntity(new User());
+
+        when(validator.validate(entity)).thenReturn(Collections.emptySet());
+
+        testService.callValidateEntity(entity);
+    }
+
+    @Test
+    void validateEntity_invalid_throwsValidationException() {
+        TestEntity entity = new TestEntity(new User());
+
+        @SuppressWarnings("unchecked")
+        ConstraintViolation<TestEntity> violation = mock(ConstraintViolation.class);
+        when(violation.getMessage()).thenReturn("Field is required");
+        when(validator.validate(entity)).thenReturn(Set.of(violation));
+
+        assertThatThrownBy(() -> testService.callValidateEntity(entity))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Validation failed")
+                .hasMessageContaining("Field is required");
     }
 }

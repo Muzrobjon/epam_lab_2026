@@ -13,17 +13,22 @@ import java.util.Optional;
 @Repository
 public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"user", "specialization"})
     Optional<Trainer> findByUser_Username(String username);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"user", "specialization"})
+    @Query("SELECT t FROM Trainer t JOIN t.user u WHERE u.username IN :usernames")
+    List<Trainer> findByUser_UsernameIn(@Param("usernames") List<String> usernames);
+
+    @EntityGraph(attributePaths = {"user", "specialization"})
     @Query("""
-            SELECT t FROM Trainer t
-            WHERE t.id NOT IN (
-                SELECT tr.id FROM Trainee te
-                JOIN te.trainers tr
-                WHERE te.user.username = :traineeUsername
-            )
-            """)
-    List<Trainer> findUnassignedTrainersByTraineeUsername(@Param("traineeUsername") String traineeUsername);
+        SELECT t FROM Trainer t
+        WHERE t.id NOT IN (
+            SELECT tr.id FROM Trainee te
+            JOIN te.trainers tr
+            WHERE te.user.username = :traineeUsername
+        )
+        AND t.user.isActive = true
+        """)
+    List<Trainer> findAvailableTrainers(@Param("traineeUsername") String traineeUsername);
 }

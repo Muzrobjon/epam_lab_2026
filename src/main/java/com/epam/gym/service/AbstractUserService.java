@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbstractUserService<T> {
@@ -34,6 +35,20 @@ public abstract class AbstractUserService<T> {
     }
 
     @Transactional(readOnly = true)
+    protected void authenticateUser(String username, String password) {
+        log.info("Authenticating user: {}", username);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AuthenticationException("User not found: " + username));
+
+        if (!user.getPassword().equals(password)) {
+            throw new AuthenticationException("Invalid password for user: " + username);
+        }
+
+        log.info("User authenticated successfully: {}", username);
+    }
+
+    @Transactional(readOnly = true)
     public void authenticate(String username, String password) {
         log.info("Authenticating user: {}", username);
 
@@ -44,10 +59,7 @@ public abstract class AbstractUserService<T> {
             throw new AuthenticationException("User not found: " + username);
         }
 
-        String storedPassword = user.getPassword();
-        log.debug("Stored password: {}, Input password: {}", storedPassword, password);
-
-        if (!storedPassword.equals(password)) {
+        if (!user.getPassword().equals(password)) {
             throw new AuthenticationException("Invalid password for user: " + username);
         }
 
@@ -58,7 +70,7 @@ public abstract class AbstractUserService<T> {
     public void changePassword(String username, String oldPassword, String newPassword) {
         log.info("Changing password for user: {}", username);
 
-        authenticate(username, oldPassword);
+        authenticateUser(username, oldPassword);
 
         T entity = findByUsername().apply(username);
         User user = extractUser(entity);
@@ -68,6 +80,7 @@ public abstract class AbstractUserService<T> {
         }
 
         user.setPassword(newPassword);
+        userRepository.save(user);
 
         log.info("Password changed for user: {}", username);
     }
@@ -76,7 +89,7 @@ public abstract class AbstractUserService<T> {
     public void toggleActiveStatus(String username, String password) {
         log.info("Toggling active status for user: {}", username);
 
-        authenticate(username, password);
+        authenticateUser(username, password);
 
         T entity = findByUsername().apply(username);
         User user = extractUser(entity);
@@ -86,6 +99,7 @@ public abstract class AbstractUserService<T> {
         }
 
         user.setIsActive(!user.getIsActive());
+        userRepository.save(user);
 
         log.info("User {} is now {}", username, user.getIsActive() ? "active" : "inactive");
     }
@@ -95,7 +109,7 @@ public abstract class AbstractUserService<T> {
         if (!violations.isEmpty()) {
             String message = violations.stream()
                     .map(ConstraintViolation::getMessage)
-                    .collect(java.util.stream.Collectors.joining(", "));
+                    .collect(Collectors.joining(", "));
             throw new ValidationException("Validation failed: " + message);
         }
     }

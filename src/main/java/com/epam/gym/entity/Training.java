@@ -36,10 +36,10 @@ public class Training {
     @Column(name = "training_name", nullable = false)
     private String trainingName;
 
-    @NotNull(message = "Training type is required")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "training_type", nullable = false)
-    private TrainingTypeName trainingType;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "training_type_id", nullable = false)
+    private TrainingType trainingType;
 
     @NotNull(message = "Training date is required")
     @Column(name = "training_date", nullable = false)
