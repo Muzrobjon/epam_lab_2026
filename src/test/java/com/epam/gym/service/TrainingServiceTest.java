@@ -56,9 +56,6 @@ class TrainingServiceTest {
 
     private TrainingService trainingService;
 
-    // Test data
-    private User traineeUser;
-    private User trainerUser;
     private Trainee trainee;
     private Trainer trainer;
     private TrainingType trainingType;
@@ -74,7 +71,8 @@ class TrainingServiceTest {
         );
 
         // Setup common test data
-        traineeUser = User.builder()
+        // Test data
+        User traineeUser = User.builder()
                 .id(1L)
                 .username("john.doe")
                 .password("password123")
@@ -83,7 +81,7 @@ class TrainingServiceTest {
                 .isActive(true)
                 .build();
 
-        trainerUser = User.builder()
+        User trainerUser = User.builder()
                 .id(2L)
                 .username("jane.trainer")
                 .password("trainerPass")

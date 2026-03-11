@@ -10,11 +10,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -24,10 +21,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = TestJpaConfig.class)
+@SpringJUnitConfig(TestJpaConfig.class)
 @Transactional
-@Rollback
 class TrainerRepositoryTest {
 
     @PersistenceContext
@@ -41,13 +36,23 @@ class TrainerRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        cardio = new TrainingType(null, TrainingTypeName.CARDIO);
-        em.persist(cardio);
+        // Mavjud bo'lsa topish, bo'lmasa yaratish
+        cardio = findOrCreateTrainingType(TrainingTypeName.CARDIO);
+        yoga = findOrCreateTrainingType(TrainingTypeName.YOGA);
+    }
 
-        yoga = new TrainingType(null, TrainingTypeName.YOGA);
-        em.persist(yoga);
-
-        em.flush();
+    private TrainingType findOrCreateTrainingType(TrainingTypeName name) {
+        return em.createQuery(
+                        "SELECT t FROM TrainingType t WHERE t.trainingTypeName = :name",
+                        TrainingType.class)
+                .setParameter("name", name)
+                .getResultStream()
+                .findFirst()
+                .orElseGet(() -> {
+                    TrainingType type = new TrainingType(null, name);
+                    em.persist(type);
+                    return type;
+                });
     }
 
     @Test
@@ -129,8 +134,6 @@ class TrainerRepositoryTest {
 
         assertThat(saved.getId()).isNotNull();
     }
-
-    // ============ Helper Methods ============
 
     private User createUser(String firstName, String lastName, String username, boolean active) {
         User user = User.builder()
