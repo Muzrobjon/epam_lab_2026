@@ -1,18 +1,32 @@
-name: Verify Build
-
-on:
-  push:
-    branches: [ master, develop, feature/** ]
-  pull_request:
-    branches: [ master, develop ]
-
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: gymdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password123
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+
+      - name: Verify Build
+        run: |
+          if [ ! -f path/to/your/file ]; then
+            echo "File not found!"
+            exit 1
+          fi
 
       - name: Set up JDK
         uses: actions/setup-java@v4

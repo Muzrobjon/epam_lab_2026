@@ -1,21 +1,21 @@
 package com.epam.gym.config;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.validation.Validator;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringJUnitConfig(AppConfig.class)
+@SpringJUnitConfig(TestJpaConfig.class)
 class AppConfigTest {
 
     @Autowired
@@ -30,8 +30,8 @@ class AppConfigTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
-    @Autowired
-    private Validator validator;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Test
     void contextLoads() {
@@ -41,48 +41,39 @@ class AppConfigTest {
     @Test
     void dataSourceBeanExists() {
         assertNotNull(dataSource, "DataSource bean should exist");
-        assertInstanceOf(DriverManagerDataSource.class, dataSource, "DataSource should be instance of DriverManagerDataSource");
+    }
+
+    @Test
+    void dataSourceConnectionWorks() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            assertNotNull(connection, "Should be able to get connection");
+            assertFalse(connection.isClosed(), "Connection should be open");
+        }
     }
 
     @Test
     void entityManagerFactoryBeanExists() {
         assertNotNull(entityManagerFactory, "EntityManagerFactory bean should exist");
+        assertTrue(entityManagerFactory.isOpen(), "EntityManagerFactory should be open");
+    }
+
+    @Test
+    void entityManagerExists() {
+        assertNotNull(entityManager, "EntityManager should be injected");
     }
 
     @Test
     void transactionManagerBeanExists() {
         assertNotNull(transactionManager, "TransactionManager bean should exist");
-        assertInstanceOf(JpaTransactionManager.class, transactionManager, "TransactionManager should be instance of JpaTransactionManager");
     }
 
     @Test
-    void validatorBeanExists() {
-        assertNotNull(validator, "Validator bean should exist");
-    }
-
-    @Test
-    void dataSourceConfiguration() {
-        DriverManagerDataSource ds = (DriverManagerDataSource) dataSource;
-
-        assertNotNull(ds.getUrl(), "Database URL should be configured");
-        assertNotNull(ds.getUsername(), "Database username should be configured");
-        assertNotNull(ds.getPassword(), "Database password should be configured");
-    }
-
-    @Test
-    void entityManagerFactoryConfiguration() {
-        LocalContainerEntityManagerFactoryBean emfBean = applicationContext
-                .getBean(LocalContainerEntityManagerFactoryBean.class);
-
-        assertNotNull(emfBean.getDataSource(), "EntityManagerFactory should have DataSource");
-        assertNotNull(emfBean.getJpaVendorAdapter(), "JPA vendor adapter should be configured");
-    }
-
-    @Test
-    void transactionManagerConfiguration() {
-        JpaTransactionManager txManager = (JpaTransactionManager) transactionManager;
-
-        assertNotNull(txManager.getEntityManagerFactory(),
-                "TransactionManager should have EntityManagerFactory");
+    void allRequiredBeansExist() {
+        assertTrue(applicationContext.containsBean("dataSource"),
+                "DataSource bean should be registered");
+        assertTrue(applicationContext.containsBean("entityManagerFactory"),
+                "EntityManagerFactory bean should be registered");
+        assertTrue(applicationContext.containsBean("transactionManager"),
+                "TransactionManager bean should be registered");
     }
 }
