@@ -1,66 +1,63 @@
 package com.epam.gym.storage;
 
-import com.epam.gym.model.TrainingType;
+import com.epam.gym.enums.TrainingTypeName;
+import com.epam.gym.entity.TrainingType;
 import com.epam.gym.repository.TrainingTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.mockito.*;
 
-import java.util.Optional;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class DataInitializerTest {
 
+    @Mock
     private TrainingTypeRepository trainingTypeRepository;
+
     private DataInitializer dataInitializer;
 
     @BeforeEach
     void setUp() {
-        trainingTypeRepository = mock(TrainingTypeRepository.class);
+        MockitoAnnotations.openMocks(this);
         dataInitializer = new DataInitializer(trainingTypeRepository);
     }
 
     @Test
-    void init_shouldSaveTrainingTypes_whenTheyDoNotExist() {
-        // Mock: repository returns empty for all types (none exist)
-        when(trainingTypeRepository.findByTrainingTypeName(anyString()))
-                .thenReturn(Optional.empty());
+    void init_createsMissingTrainingTypes() {
+        // Simulate that all types are missing
+        for (TrainingTypeName typeName : TrainingTypeName.values()) {
+            when(trainingTypeRepository.findByTrainingTypeName(typeName)).thenReturn(Optional.empty());
+        }
 
         dataInitializer.init();
 
-        // Capture all saved types
+        // Capture all saved TrainingType objects
         ArgumentCaptor<TrainingType> captor = ArgumentCaptor.forClass(TrainingType.class);
-        verify(trainingTypeRepository, times(7)).save(captor.capture());
+        verify(trainingTypeRepository, times(TrainingTypeName.values().length)).save(captor.capture());
 
-        // Verify all expected training type names
-        assertEquals("Fitness", captor.getAllValues().get(0).getTrainingTypeName());
-        assertEquals("Yoga", captor.getAllValues().get(1).getTrainingTypeName());
-        assertEquals("Cardio", captor.getAllValues().get(2).getTrainingTypeName());
-        assertEquals("Strength", captor.getAllValues().get(3).getTrainingTypeName());
-        assertEquals("Pilates", captor.getAllValues().get(4).getTrainingTypeName());
-        assertEquals("CrossFit", captor.getAllValues().get(5).getTrainingTypeName());
-        assertEquals("Zumba", captor.getAllValues().get(6).getTrainingTypeName());
+        // Assert that each TrainingTypeName was saved
+        Set<TrainingTypeName> savedTypes = new HashSet<>();
+        for (TrainingType saved : captor.getAllValues()) {
+            savedTypes.add(saved.getTrainingTypeName());
+            assertNull(saved.getId());
+        }
+        assertEquals(Set.of(TrainingTypeName.values()), savedTypes);
     }
 
     @Test
-    void init_shouldNotSaveExistingTrainingTypes() {
-        // Mock: Yoga already exists
-        when(trainingTypeRepository.findByTrainingTypeName("Yoga"))
-                .thenReturn(Optional.of(new TrainingType()));
-
-        when(trainingTypeRepository.findByTrainingTypeName(argThat(name -> !"Yoga".equals(name))))
-                .thenReturn(Optional.empty());
+    void init_doesNotCreateExistingTrainingTypes() {
+        // Simulate that all types already exist
+        for (TrainingTypeName typeName : TrainingTypeName.values()) {
+            when(trainingTypeRepository.findByTrainingTypeName(typeName))
+                    .thenReturn(Optional.of(new TrainingType(1L, typeName)));
+        }
 
         dataInitializer.init();
 
-        // Captor should only capture 6 saves (all except Yoga)
-        ArgumentCaptor<TrainingType> captor = ArgumentCaptor.forClass(TrainingType.class);
-        verify(trainingTypeRepository, times(6)).save(captor.capture());
-
-        // Verify Yoga was not saved
-        assert captor.getAllValues().stream()
-                .noneMatch(t -> "Yoga".equals(t.getTrainingTypeName()));
+        // Verify that save was NOT called for any type
+        verify(trainingTypeRepository, never()).save(any(TrainingType.class));
     }
 }

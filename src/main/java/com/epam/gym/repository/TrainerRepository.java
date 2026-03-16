@@ -1,6 +1,7 @@
 package com.epam.gym.repository;
 
-import com.epam.gym.model.Trainer;
+import com.epam.gym.entity.Trainer;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,14 +13,22 @@ import java.util.Optional;
 @Repository
 public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
-    Optional<Trainer> findByUserName(String username);
+    @EntityGraph(attributePaths = {"user", "specialization"})
+    Optional<Trainer> findByUser_Username(String username);
 
-    boolean existsByUserName(String username);
+    @EntityGraph(attributePaths = {"user", "specialization"})
+    @Query("SELECT t FROM Trainer t JOIN t.user u WHERE u.username IN :usernames")
+    List<Trainer> findByUser_UsernameIn(@Param("usernames") List<String> usernames);
 
-    @Query("SELECT COUNT(t) FROM Trainer t WHERE t.userName LIKE :pattern")
-    long countByUserNamePattern(@Param("pattern") String pattern);
-
-    @Query("SELECT t FROM Trainer t WHERE t.userId NOT IN " +
-            "(SELECT tr.userId FROM Trainee te JOIN te.trainers tr WHERE te.userName = :traineeUsername)")
-    List<Trainer> findUnassignedTrainersByTraineeUsername(@Param("traineeUsername") String traineeUsername);
+    @EntityGraph(attributePaths = {"user", "specialization"})
+    @Query("""
+        SELECT t FROM Trainer t
+        WHERE t.id NOT IN (
+            SELECT tr.id FROM Trainee te
+            JOIN te.trainers tr
+            WHERE te.user.username = :traineeUsername
+        )
+        AND t.user.isActive = true
+        """)
+    List<Trainer> findAvailableTrainers(@Param("traineeUsername") String traineeUsername);
 }

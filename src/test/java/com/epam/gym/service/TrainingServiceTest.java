@@ -1,197 +1,687 @@
 package com.epam.gym.service;
 
+import com.epam.gym.entity.Trainee;
+import com.epam.gym.entity.Trainer;
+import com.epam.gym.entity.Training;
+import com.epam.gym.entity.TrainingType;
+import com.epam.gym.entity.User;
+import com.epam.gym.enums.TrainingTypeName;
 import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.exception.ValidationException;
-import com.epam.gym.model.*;
-import com.epam.gym.repository.*;
+import com.epam.gym.repository.TrainingRepository;
+import com.epam.gym.repository.TrainingTypeRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class TrainingServiceTest {
 
+    @Mock
     private TrainingRepository trainingRepository;
-    private TraineeRepository traineeRepository;
-    private TrainerRepository trainerRepository;
-    private TrainingTypeRepository trainingTypeRepository;
+
+    @Mock
     private TraineeService traineeService;
+
+    @Mock
     private TrainerService trainerService;
+
+    @Mock
+    private TrainingTypeRepository trainingTypeRepository;
+
+    @Mock
     private Validator validator;
+
+    @Captor
+    private ArgumentCaptor<Training> trainingCaptor;
 
     private TrainingService trainingService;
 
+    private Trainee trainee;
+    private Trainer trainer;
+    private TrainingType trainingType;
+
     @BeforeEach
     void setUp() {
-        trainingRepository = mock(TrainingRepository.class);
-        traineeRepository = mock(TraineeRepository.class);
-        trainerRepository = mock(TrainerRepository.class);
-        trainingTypeRepository = mock(TrainingTypeRepository.class);
-        traineeService = mock(TraineeService.class);
-        trainerService = mock(TrainerService.class);
-        validator = mock(Validator.class);
-
         trainingService = new TrainingService(
                 trainingRepository,
-                traineeRepository,
-                trainerRepository,
-                trainingTypeRepository,
                 traineeService,
                 trainerService,
+                trainingTypeRepository,
                 validator
         );
+
+        // Setup common test data
+        // Test data
+        User traineeUser = User.builder()
+                .id(1L)
+                .username("john.doe")
+                .password("password123")
+                .firstName("John")
+                .lastName("Doe")
+                .isActive(true)
+                .build();
+
+        User trainerUser = User.builder()
+                .id(2L)
+                .username("jane.trainer")
+                .password("trainerPass")
+                .firstName("Jane")
+                .lastName("Trainer")
+                .isActive(true)
+                .build();
+
+        trainee = Trainee.builder()
+                .id(1L)
+                .user(traineeUser)
+                .build();
+
+        trainingType = new TrainingType(1L, TrainingTypeName.CARDIO);
+
+        trainer = Trainer.builder()
+                .id(1L)
+                .user(trainerUser)
+                .specialization(trainingType)
+                .build();
     }
 
-    @Test
-    void createTraining_shouldCreateAndSaveTraining() {
-        String traineeUsername = "trainee1";
-        String traineePassword = "pass1";
-        String trainerUsername = "trainer1";
-        String trainerPassword = "pass2";
-        String trainingName = "Morning Yoga";
-        String trainingTypeName = "Yoga";
-        LocalDate date = LocalDate.of(2026, 3, 2);
-        int duration = 60;
+    @Nested
+    @DisplayName("createTraining Tests")
+    class CreateTrainingTests {
 
-        Trainee trainee = Trainee.builder().userName(traineeUsername).build();
-        Trainer trainer = Trainer.builder().userName(trainerUsername).build();
-        TrainingType trainingType = TrainingType.builder().trainingTypeName(trainingTypeName).build();
+        @Test
+        @DisplayName("Should create training successfully")
+        void shouldCreateTrainingSuccessfully() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            String trainerUsername = "jane.trainer";
+            String trainerPassword = "trainerPass";
+            String trainingName = "Morning Cardio";
+            TrainingTypeName trainingTypeName = TrainingTypeName.CARDIO;
+            LocalDate trainingDate = LocalDate.now().plusDays(1);
+            Integer duration = 60;
 
-        when(traineeRepository.findByUserName(traineeUsername)).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUserName(trainerUsername)).thenReturn(Optional.of(trainer));
-        when(trainingTypeRepository.findByTrainingTypeName(trainingTypeName)).thenReturn(Optional.of(trainingType));
-        when(trainingRepository.save(any(Training.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(validator.validate(any(Training.class))).thenReturn(Collections.emptySet());
+            Training savedTraining = Training.builder()
+                    .id(1L)
+                    .trainee(trainee)
+                    .trainer(trainer)
+                    .trainingName(trainingName)
+                    .trainingType(trainingType)
+                    .trainingDate(trainingDate)
+                    .trainingDurationMinutes(duration)
+                    .build();
 
-        Training saved = trainingService.createTraining(
-                traineeUsername, traineePassword,
-                trainerUsername, trainerPassword,
-                trainingName, trainingTypeName, date, duration
-        );
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            doNothing().when(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            when(traineeService.selectByUsername(traineeUsername)).thenReturn(trainee);
+            when(trainerService.selectByUsername(trainerUsername)).thenReturn(trainer);
+            when(trainingTypeRepository.findByTrainingTypeName(trainingTypeName))
+                    .thenReturn(Optional.of(trainingType));
+            when(validator.validate(any(Training.class))).thenReturn(Collections.emptySet());
+            when(trainingRepository.save(any(Training.class))).thenReturn(savedTraining);
 
-        assertEquals(trainingName, saved.getTrainingName());
-        assertEquals(trainee, saved.getTrainee());
-        assertEquals(trainer, saved.getTrainer());
-        assertEquals(trainingType, saved.getTrainingType());
-        assertEquals(date, saved.getTrainingDate());
-        assertEquals(duration, saved.getTrainingDurationMinutes());
+            // When
+            Training result = trainingService.createTraining(
+                    traineeUsername, traineePassword,
+                    trainerUsername, trainerPassword,
+                    trainingName, trainingTypeName,
+                    trainingDate, duration
+            );
 
-        verify(traineeService).authenticate(traineeUsername, traineePassword);
-        verify(trainerService).authenticate(trainerUsername, trainerPassword);
-        verify(trainingRepository).save(saved);
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(1L);
+            assertThat(result.getTrainingName()).isEqualTo(trainingName);
+
+            verify(traineeService).authenticateUser(traineeUsername, traineePassword);
+            verify(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            verify(trainingRepository).save(trainingCaptor.capture());
+
+            Training captured = trainingCaptor.getValue();
+            assertThat(captured.getTrainee()).isEqualTo(trainee);
+            assertThat(captured.getTrainer()).isEqualTo(trainer);
+            assertThat(captured.getTrainingType()).isEqualTo(trainingType);
+            assertThat(captured.getTrainingDurationMinutes()).isEqualTo(duration);
+        }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when training type not found")
+        void shouldThrowNotFoundExceptionWhenTrainingTypeNotFound() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            String trainerUsername = "jane.trainer";
+            String trainerPassword = "trainerPass";
+            TrainingTypeName trainingTypeName = TrainingTypeName.YOGA;
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            doNothing().when(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            when(traineeService.selectByUsername(traineeUsername)).thenReturn(trainee);
+            when(trainerService.selectByUsername(trainerUsername)).thenReturn(trainer);
+            when(trainingTypeRepository.findByTrainingTypeName(trainingTypeName))
+                    .thenReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() -> trainingService.createTraining(
+                    traineeUsername, traineePassword,
+                    trainerUsername, trainerPassword,
+                    "Training", trainingTypeName,
+                    LocalDate.now(), 60
+            ))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Training type not found: " + trainingTypeName);
+
+            verify(trainingRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw ValidationException when training is invalid")
+        void shouldThrowValidationExceptionWhenTrainingInvalid() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            String trainerUsername = "jane.trainer";
+            String trainerPassword = "trainerPass";
+            TrainingTypeName trainingTypeName = TrainingTypeName.CARDIO;
+
+            @SuppressWarnings("unchecked")
+            ConstraintViolation<Training> violation = mock(ConstraintViolation.class);
+            when(violation.getMessage()).thenReturn("Training name is required");
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            doNothing().when(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            when(traineeService.selectByUsername(traineeUsername)).thenReturn(trainee);
+            when(trainerService.selectByUsername(trainerUsername)).thenReturn(trainer);
+            when(trainingTypeRepository.findByTrainingTypeName(trainingTypeName))
+                    .thenReturn(Optional.of(trainingType));
+            when(validator.validate(any(Training.class))).thenReturn(Set.of(violation));
+
+            // When & Then
+            assertThatThrownBy(() -> trainingService.createTraining(
+                    traineeUsername, traineePassword,
+                    trainerUsername, trainerPassword,
+                    null, trainingTypeName,
+                    LocalDate.now(), 60
+            ))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Training validation failed")
+                    .hasMessageContaining("Training name is required");
+
+            verify(trainingRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when trainee authentication fails")
+        void shouldThrowExceptionWhenTraineeAuthenticationFails() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "wrongPassword";
+
+            doThrow(new RuntimeException("Authentication failed"))
+                    .when(traineeService).authenticateUser(traineeUsername, traineePassword);
+
+            // When & Then
+            assertThatThrownBy(() -> trainingService.createTraining(
+                    traineeUsername, traineePassword,
+                    "trainer", "pass",
+                    "Training", TrainingTypeName.CARDIO,
+                    LocalDate.now(), 60
+            ))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Authentication failed");
+
+            verify(trainerService, never()).authenticateUser(anyString(), anyString());
+            verify(trainingRepository, never()).save(any());
+        }
     }
 
-    @Test
-    void createTraining_shouldThrowNotFoundException_whenTraineeMissing() {
-        when(traineeRepository.findByUserName("trainee1")).thenReturn(Optional.empty());
+    @Nested
+    @DisplayName("getTraineeTrainingsByCriteria Tests")
+    class GetTraineeTrainingsByCriteriaTests {
 
-        assertThrows(NotFoundException.class,
-                () -> trainingService.createTraining(
-                        "trainee1", "pass1", "trainer1", "pass2",
-                        "Yoga", "Yoga", LocalDate.now(), 60
-                ));
+        private List<Training> createSampleTrainings() {
+            User trainer1User = User.builder()
+                    .firstName("Mike")
+                    .lastName("Johnson")
+                    .build();
+            Trainer trainer1 = Trainer.builder()
+                    .id(1L)
+                    .user(trainer1User)
+                    .build();
+
+            User trainer2User = User.builder()
+                    .firstName("Sarah")
+                    .lastName("Smith")
+                    .build();
+            Trainer trainer2 = Trainer.builder()
+                    .id(2L)
+                    .user(trainer2User)
+                    .build();
+
+            TrainingType cardio = new TrainingType(1L, TrainingTypeName.CARDIO);
+            TrainingType yoga = new TrainingType(2L, TrainingTypeName.YOGA);
+
+            return List.of(
+                    Training.builder()
+                            .id(1L)
+                            .trainer(trainer1)
+                            .trainingType(cardio)
+                            .trainingName("Cardio Session")
+                            .build(),
+                    Training.builder()
+                            .id(2L)
+                            .trainer(trainer2)
+                            .trainingType(yoga)
+                            .trainingName("Yoga Session")
+                            .build(),
+                    Training.builder()
+                            .id(3L)
+                            .trainer(trainer1)
+                            .trainingType(yoga)
+                            .trainingName("Morning Yoga")
+                            .build()
+            );
+        }
+
+        @Test
+        @DisplayName("Should return all trainings without filters")
+        void shouldReturnAllTrainingsWithoutFilters() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            List<Training> trainings = createSampleTrainings();
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, null, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTraineeTrainingsByCriteria(
+                    traineeUsername, traineePassword,
+                    null, null, null, null
+            );
+
+            // Then
+            assertThat(result).hasSize(3);
+            verify(traineeService).authenticateUser(traineeUsername, traineePassword);
+        }
+
+        @Test
+        @DisplayName("Should filter by trainer name")
+        void shouldFilterByTrainerName() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            List<Training> trainings = createSampleTrainings();
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, null, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTraineeTrainingsByCriteria(
+                    traineeUsername, traineePassword,
+                    null, null, "Mike", null
+            );
+
+            // Then
+            assertThat(result).hasSize(2);
+            assertThat(result).allMatch(t ->
+                    t.getTrainer().getUser().getFirstName().contains("Mike"));
+        }
+
+        @Test
+        @DisplayName("Should filter by training type")
+        void shouldFilterByTrainingType() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            List<Training> trainings = createSampleTrainings();
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, null, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTraineeTrainingsByCriteria(
+                    traineeUsername, traineePassword,
+                    null, null, null, TrainingTypeName.YOGA
+            );
+
+            // Then
+            assertThat(result).hasSize(2);
+            assertThat(result).allMatch(t ->
+                    t.getTrainingType().getTrainingTypeName() == TrainingTypeName.YOGA);
+        }
+
+        @Test
+        @DisplayName("Should filter by trainer name and training type")
+        void shouldFilterByTrainerNameAndTrainingType() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            List<Training> trainings = createSampleTrainings();
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, null, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTraineeTrainingsByCriteria(
+                    traineeUsername, traineePassword,
+                    null, null, "Mike", TrainingTypeName.YOGA
+            );
+
+            // Then
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getTrainingName()).isEqualTo("Morning Yoga");
+        }
+
+        @Test
+        @DisplayName("Should filter by date range")
+        void shouldFilterByDateRange() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            LocalDate fromDate = LocalDate.now().minusDays(7);
+            LocalDate toDate = LocalDate.now();
+            List<Training> trainings = createSampleTrainings();
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, null, fromDate, toDate))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTraineeTrainingsByCriteria(
+                    traineeUsername, traineePassword,
+                    fromDate, toDate, null, null
+            );
+
+            // Then
+            assertThat(result).hasSize(3);
+            verify(trainingRepository).findTrainingsWithAllUsers(
+                    traineeUsername, null, fromDate, toDate);
+        }
+
+        @Test
+        @DisplayName("Should handle case-insensitive trainer name search")
+        void shouldHandleCaseInsensitiveTrainerNameSearch() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            List<Training> trainings = createSampleTrainings();
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, null, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTraineeTrainingsByCriteria(
+                    traineeUsername, traineePassword,
+                    null, null, "MIKE", null
+            );
+
+            // Then
+            assertThat(result).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("Should return empty list when no matching trainings")
+        void shouldReturnEmptyListWhenNoMatchingTrainings() {
+            // Given
+            String traineeUsername = "john.doe";
+            String traineePassword = "password123";
+            List<Training> trainings = createSampleTrainings();
+
+            doNothing().when(traineeService).authenticateUser(traineeUsername, traineePassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, null, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTraineeTrainingsByCriteria(
+                    traineeUsername, traineePassword,
+                    null, null, "NonExistent", null
+            );
+
+            // Then
+            assertThat(result).isEmpty();
+        }
     }
 
-    @Test
-    void createTraining_shouldThrowValidationException_whenInvalid() {
-        Trainee trainee = Trainee.builder().userName("t1").build();
-        Trainer trainer = Trainer.builder().userName("tr1").build();
-        TrainingType trainingType = TrainingType.builder().trainingTypeName("Yoga").build();
+    @Nested
+    @DisplayName("getTrainerTrainingsByCriteria Tests")
+    class GetTrainerTrainingsByCriteriaTests {
 
-        when(traineeRepository.findByUserName("t1")).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUserName("tr1")).thenReturn(Optional.of(trainer));
-        when(trainingTypeRepository.findByTrainingTypeName("Yoga")).thenReturn(Optional.of(trainingType));
+        private List<Training> createTrainerTrainings() {
+            User trainee1User = User.builder()
+                    .firstName("John")
+                    .lastName("Doe")
+                    .build();
+            Trainee trainee1 = Trainee.builder()
+                    .id(1L)
+                    .user(trainee1User)
+                    .build();
 
-        ConstraintViolation<Training> violation = mock(ConstraintViolation.class);
-        when(violation.getMessage()).thenReturn("Invalid training");
-        when(validator.validate(any(Training.class))).thenReturn(Set.of(violation));
+            User trainee2User = User.builder()
+                    .firstName("Alice")
+                    .lastName("Wonder")
+                    .build();
+            Trainee trainee2 = Trainee.builder()
+                    .id(2L)
+                    .user(trainee2User)
+                    .build();
 
-        assertThrows(ValidationException.class,
-                () -> trainingService.createTraining(
-                        "t1", "pass", "tr1", "pass",
-                        "Yoga Session", "Yoga", LocalDate.now(), 30
-                ));
+            return List.of(
+                    Training.builder()
+                            .id(1L)
+                            .trainee(trainee1)
+                            .trainingName("Session 1")
+                            .build(),
+                    Training.builder()
+                            .id(2L)
+                            .trainee(trainee2)
+                            .trainingName("Session 2")
+                            .build(),
+                    Training.builder()
+                            .id(3L)
+                            .trainee(trainee1)
+                            .trainingName("Session 3")
+                            .build()
+            );
+        }
+
+        @Test
+        @DisplayName("Should return all trainings without filters")
+        void shouldReturnAllTrainingsWithoutFilters() {
+            // Given
+            String trainerUsername = "jane.trainer";
+            String trainerPassword = "trainerPass";
+            List<Training> trainings = createTrainerTrainings();
+
+            doNothing().when(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    null, trainerUsername, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTrainerTrainingsByCriteria(
+                    trainerUsername, trainerPassword,
+                    null, null, null
+            );
+
+            // Then
+            assertThat(result).hasSize(3);
+            verify(trainerService).authenticateUser(trainerUsername, trainerPassword);
+        }
+
+        @Test
+        @DisplayName("Should filter by trainee name")
+        void shouldFilterByTraineeName() {
+            // Given
+            String trainerUsername = "jane.trainer";
+            String trainerPassword = "trainerPass";
+            List<Training> trainings = createTrainerTrainings();
+
+            doNothing().when(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    null, trainerUsername, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTrainerTrainingsByCriteria(
+                    trainerUsername, trainerPassword,
+                    null, null, "John"
+            );
+
+            // Then
+            assertThat(result).hasSize(2);
+            assertThat(result).allMatch(t ->
+                    t.getTrainee().getUser().getFirstName().contains("John"));
+        }
+
+        @Test
+        @DisplayName("Should filter by trainee last name")
+        void shouldFilterByTraineeLastName() {
+            // Given
+            String trainerUsername = "jane.trainer";
+            String trainerPassword = "trainerPass";
+            List<Training> trainings = createTrainerTrainings();
+
+            doNothing().when(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    null, trainerUsername, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTrainerTrainingsByCriteria(
+                    trainerUsername, trainerPassword,
+                    null, null, "Wonder"
+            );
+
+            // Then
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getTrainee().getUser().getLastName()).isEqualTo("Wonder");
+        }
+
+        @Test
+        @DisplayName("Should handle blank trainee name")
+        void shouldHandleBlankTraineeName() {
+            // Given
+            String trainerUsername = "jane.trainer";
+            String trainerPassword = "trainerPass";
+            List<Training> trainings = createTrainerTrainings();
+
+            doNothing().when(trainerService).authenticateUser(trainerUsername, trainerPassword);
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    null, trainerUsername, null, null))
+                    .thenReturn(trainings);
+
+            // When
+            List<Training> result = trainingService.getTrainerTrainingsByCriteria(
+                    trainerUsername, trainerPassword,
+                    null, null, "   "
+            );
+
+            // Then
+            assertThat(result).hasSize(3); // No filtering applied
+        }
     }
 
-    @Test
-    void getTraineeTrainingsByCriteria_shouldCallRepository() {
-        String traineeUsername = "trainee1";
-        String password = "pass";
-        LocalDate from = LocalDate.of(2026, 3, 1);
-        LocalDate to = LocalDate.of(2026, 3, 5);
+    @Nested
+    @DisplayName("getTrainingsWithAllUsers Tests")
+    class GetTrainingsWithAllUsersTests {
 
-        List<Training> trainings = List.of(new Training(), new Training());
-        when(trainingRepository.findTraineeTrainingsByCriteria(
-                traineeUsername, from, to, "trainer1", "Yoga"
-        )).thenReturn(trainings);
+        @Test
+        @DisplayName("Should return trainings with all parameters")
+        void shouldReturnTrainingsWithAllParameters() {
+            // Given
+            String traineeUsername = "john.doe";
+            String trainerUsername = "jane.trainer";
+            LocalDate fromDate = LocalDate.now().minusDays(30);
+            LocalDate toDate = LocalDate.now();
 
-        List<Training> result = trainingService.getTraineeTrainingsByCriteria(
-                traineeUsername, password, from, to, "trainer1", "Yoga"
-        );
+            List<Training> expectedTrainings = List.of(
+                    Training.builder().id(1L).build(),
+                    Training.builder().id(2L).build()
+            );
 
-        verify(traineeService).authenticate(traineeUsername, password);
-        assertEquals(2, result.size());
-    }
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    traineeUsername, trainerUsername, fromDate, toDate))
+                    .thenReturn(expectedTrainings);
 
-    @Test
-    void getTrainerTrainingsByCriteria_shouldCallRepository() {
-        String trainerUsername = "trainer1";
-        String password = "pass";
-        LocalDate from = LocalDate.of(2026, 3, 1);
-        LocalDate to = LocalDate.of(2026, 3, 5);
+            // When
+            List<Training> result = trainingService.getTrainingsWithAllUsers(
+                    traineeUsername, trainerUsername, fromDate, toDate
+            );
 
-        List<Training> trainings = List.of(new Training(), new Training(), new Training());
-        when(trainingRepository.findTrainerTrainingsByCriteria(
-                trainerUsername, from, to, "trainee1"
-        )).thenReturn(trainings);
+            // Then
+            assertThat(result).hasSize(2);
+            verify(trainingRepository).findTrainingsWithAllUsers(
+                    traineeUsername, trainerUsername, fromDate, toDate);
+        }
 
-        List<Training> result = trainingService.getTrainerTrainingsByCriteria(
-                trainerUsername, password, from, to, "trainee1"
-        );
+        @Test
+        @DisplayName("Should return trainings with null parameters")
+        void shouldReturnTrainingsWithNullParameters() {
+            // Given
+            List<Training> expectedTrainings = List.of(
+                    Training.builder().id(1L).build()
+            );
 
-        verify(trainerService).authenticate(trainerUsername, password);
-        assertEquals(3, result.size());
-    }
+            when(trainingRepository.findTrainingsWithAllUsers(null, null, null, null))
+                    .thenReturn(expectedTrainings);
 
-    @Test
-    void selectProfile_shouldReturnTrainingOrThrow() {
-        Training t1 = Training.builder().trainingId(1L).build();
-        Training t2 = Training.builder().trainingId(2L).build();
-        when(trainingRepository.findAll()).thenReturn(List.of(t1, t2));
+            // When
+            List<Training> result = trainingService.getTrainingsWithAllUsers(
+                    null, null, null, null
+            );
 
-        Training result = trainingService.selectProfile(2L);
-        assertEquals(t2, result);
+            // Then
+            assertThat(result).hasSize(1);
+        }
 
-        assertThrows(NotFoundException.class, () -> trainingService.selectProfile(99L));
-    }
+        @Test
+        @DisplayName("Should return empty list when no trainings found")
+        void shouldReturnEmptyListWhenNoTrainingsFound() {
+            // Given
+            when(trainingRepository.findTrainingsWithAllUsers(
+                    "nonexistent", null, null, null))
+                    .thenReturn(Collections.emptyList());
 
-    @Test
-    void findByTraineeUsername_shouldReturnList() {
-        Training t1 = new Training();
-        Training t2 = new Training();
-        List<Training> list = List.of(t1, t2);
+            // When
+            List<Training> result = trainingService.getTrainingsWithAllUsers(
+                    "nonexistent", null, null, null
+            );
 
-        when(trainingRepository.findByTraineeUsername("trainee1")).thenReturn(list);
-        List<Training> result = trainingService.findByTraineeUsername("trainee1");
-
-        assertEquals(2, result.size());
-    }
-
-    @Test
-    void findByTrainerUsername_shouldReturnList() {
-        Training t1 = new Training();
-        List<Training> list = List.of(t1);
-
-        when(trainingRepository.findByTrainerUsername("trainer1")).thenReturn(list);
-        List<Training> result = trainingService.findByTrainerUsername("trainer1");
-
-        assertEquals(1, result.size());
+            // Then
+            assertThat(result).isEmpty();
+        }
     }
 }

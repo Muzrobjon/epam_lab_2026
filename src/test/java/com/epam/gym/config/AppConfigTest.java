@@ -1,66 +1,79 @@
 package com.epam.gym.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.validation.Validator;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
-import java.time.LocalDate;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringJUnitConfig(TestJpaConfig.class)
 class AppConfigTest {
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private DataSource dataSource;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Test
-    void contextLoads_andAllBeansCreated() throws JsonProcessingException {
-        // Create Spring context with your AppConfig
-        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class)) {
+    void contextLoads() {
+        assertNotNull(applicationContext, "Application context should be loaded");
+    }
 
-            // =========================
-            // Test DataSource (PostgreSQL)
-            // =========================
-            DataSource dataSource = context.getBean(DataSource.class);
-            assertNotNull(dataSource);
+    @Test
+    void dataSourceBeanExists() {
+        assertNotNull(dataSource, "DataSource bean should exist");
+    }
 
-            // =========================
-            // Test ObjectMapper
-            // =========================
-            ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
-            assertNotNull(objectMapper);
-
-            // Check JavaTimeModule works
-            String json = objectMapper.writeValueAsString(LocalDate.of(2026, 3, 2));
-            assertEquals("\"2026-03-02\"", json);
-
-            // =========================
-            // Test EntityManagerFactoryBean
-            // =========================
-            LocalContainerEntityManagerFactoryBean emfBean =
-                    context.getBean(LocalContainerEntityManagerFactoryBean.class);
-            assertNotNull(emfBean);
-
-            // =========================
-            // Test EntityManagerFactory
-            // =========================
-            EntityManagerFactory emf = context.getBean(EntityManagerFactory.class);
-            assertNotNull(emf);
-
-            // =========================
-            // Test TransactionManager
-            // =========================
-            PlatformTransactionManager txManager = context.getBean(PlatformTransactionManager.class);
-            assertNotNull(txManager);
-
-            // =========================
-            // Test Validator
-            // =========================
-            Validator validator = context.getBean(Validator.class);
-            assertNotNull(validator);
+    @Test
+    void dataSourceConnectionWorks() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            assertNotNull(connection, "Should be able to get connection");
+            assertFalse(connection.isClosed(), "Connection should be open");
         }
+    }
+
+    @Test
+    void entityManagerFactoryBeanExists() {
+        assertNotNull(entityManagerFactory, "EntityManagerFactory bean should exist");
+        assertTrue(entityManagerFactory.isOpen(), "EntityManagerFactory should be open");
+    }
+
+    @Test
+    void entityManagerExists() {
+        assertNotNull(entityManager, "EntityManager should be injected");
+    }
+
+    @Test
+    void transactionManagerBeanExists() {
+        assertNotNull(transactionManager, "TransactionManager bean should exist");
+    }
+
+    @Test
+    void allRequiredBeansExist() {
+        assertTrue(applicationContext.containsBean("dataSource"),
+                "DataSource bean should be registered");
+        assertTrue(applicationContext.containsBean("entityManagerFactory"),
+                "EntityManagerFactory bean should be registered");
+        assertTrue(applicationContext.containsBean("transactionManager"),
+                "TransactionManager bean should be registered");
     }
 }

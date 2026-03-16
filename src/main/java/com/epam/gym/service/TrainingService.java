@@ -1,18 +1,16 @@
 package com.epam.gym.service;
 
+import com.epam.gym.enums.TrainingTypeName;
 import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.exception.ValidationException;
-import com.epam.gym.model.Trainee;
-import com.epam.gym.model.Trainer;
-import com.epam.gym.model.Training;
-import com.epam.gym.model.TrainingType;
-import com.epam.gym.repository.TraineeRepository;
-import com.epam.gym.repository.TrainerRepository;
+import com.epam.gym.entity.Trainee;
+import com.epam.gym.entity.Trainer;
+import com.epam.gym.entity.Training;
+import com.epam.gym.entity.TrainingType;
 import com.epam.gym.repository.TrainingRepository;
 import com.epam.gym.repository.TrainingTypeRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,33 +22,43 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TrainingService {
 
     private final TrainingRepository trainingRepository;
-    private final TraineeRepository traineeRepository;
-    private final TrainerRepository trainerRepository;
-    private final TrainingTypeRepository trainingTypeRepository;
     private final TraineeService traineeService;
     private final TrainerService trainerService;
+    private final TrainingTypeRepository trainingTypeRepository;
     private final Validator validator;
 
+    public TrainingService(
+            TrainingRepository trainingRepository,
+            TraineeService traineeService,
+            TrainerService trainerService,
+            TrainingTypeRepository trainingTypeRepository,
+            Validator validator
+    ) {
+        this.trainingRepository = trainingRepository;
+        this.traineeService = traineeService;
+        this.trainerService = trainerService;
+        this.trainingTypeRepository = trainingTypeRepository;
+        this.validator = validator;
+    }
+
     @Transactional
-    public Training createTraining(String traineeUsername, String traineePassword,
-                                   String trainerUsername, String trainerPassword,
-                                   String trainingName, String trainingTypeName,
-                                   LocalDate trainingDate, Integer duration) {
-        log.info("Creating training: {} for trainee {} and trainer {}",
+    public Training createTraining(
+            String traineeUsername, String traineePassword,
+            String trainerUsername, String trainerPassword,
+            String trainingName, TrainingTypeName trainingTypeName,
+            LocalDate trainingDate, Integer duration) {
+
+        log.info("Creating training: {} for trainee: {} and trainer: {}",
                 trainingName, traineeUsername, trainerUsername);
 
-        traineeService.authenticate(traineeUsername, traineePassword);
-        trainerService.authenticate(trainerUsername, trainerPassword);
+        traineeService.authenticateUser(traineeUsername, traineePassword);
+        trainerService.authenticateUser(trainerUsername, trainerPassword);
 
-        Trainee trainee = traineeRepository.findByUserName(traineeUsername)
-                .orElseThrow(() -> new NotFoundException("Trainee not found: " + traineeUsername));
-
-        Trainer trainer = trainerRepository.findByUserName(trainerUsername)
-                .orElseThrow(() -> new NotFoundException("Trainer not found: " + trainerUsername));
+        Trainee trainee = traineeService.selectByUsername(traineeUsername);
+        Trainer trainer = trainerService.selectByUsername(trainerUsername);
 
         TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(trainingTypeName)
                 .orElseThrow(() -> new NotFoundException("Training type not found: " + trainingTypeName));
@@ -67,55 +75,73 @@ public class TrainingService {
         validateTraining(training);
 
         Training saved = trainingRepository.save(training);
-        log.info("Created training: {} (ID: {})", saved.getTrainingName(), saved.getTrainingId());
+        log.info("Training created successfully with ID: {}", saved.getId());
+
         return saved;
     }
 
     @Transactional(readOnly = true)
-    public List<Training> getTraineeTrainingsByCriteria(String traineeUsername, String traineePassword,
-                                                        LocalDate fromDate, LocalDate toDate,
-                                                        String trainerName, String trainingTypeName) {
+    public List<Training> getTraineeTrainingsByCriteria(
+            String traineeUsername, String traineePassword,
+            LocalDate fromDate, LocalDate toDate,
+            String trainerName, TrainingTypeName trainingTypeName) {
+
         log.info("Getting trainee trainings by criteria for: {}", traineeUsername);
+        traineeService.authenticateUser(traineeUsername, traineePassword);
 
-        traineeService.authenticate(traineeUsername, traineePassword);
+        List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
+                traineeUsername, null, fromDate, toDate);
 
-        return trainingRepository.findTraineeTrainingsByCriteria(
-                traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
+        if (trainerName != null && !trainerName.isBlank()) {
+            String lowerName = trainerName.toLowerCase();
+            trainings = trainings.stream()
+                    .filter(t -> t.getTrainer().getUser().getFirstName().toLowerCase().contains(lowerName) ||
+                            t.getTrainer().getUser().getLastName().toLowerCase().contains(lowerName))
+                    .collect(Collectors.toList());
+        }
+
+        if (trainingTypeName != null) {
+            trainings = trainings.stream()
+                    .filter(t -> t.getTrainingType().getTrainingTypeName() == trainingTypeName)
+                    .collect(Collectors.toList());
+        }
+
+        log.info("Found {} trainings for trainee: {}", trainings.size(), traineeUsername);
+        return trainings;
     }
 
     @Transactional(readOnly = true)
-    public List<Training> getTrainerTrainingsByCriteria(String trainerUsername, String trainerPassword,
-                                                        LocalDate fromDate, LocalDate toDate,
-                                                        String traineeName) {
+    public List<Training> getTrainerTrainingsByCriteria(
+            String trainerUsername, String trainerPassword,
+            LocalDate fromDate, LocalDate toDate,
+            String traineeName) {
+
         log.info("Getting trainer trainings by criteria for: {}", trainerUsername);
+        trainerService.authenticateUser(trainerUsername, trainerPassword);
 
-        trainerService.authenticate(trainerUsername, trainerPassword);
+        List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
+                null, trainerUsername, fromDate, toDate);
 
-        return trainingRepository.findTrainerTrainingsByCriteria(
-                trainerUsername, fromDate, toDate, traineeName);
+        if (traineeName != null && !traineeName.isBlank()) {
+            String lowerName = traineeName.toLowerCase();
+            trainings = trainings.stream()
+                    .filter(t -> t.getTrainee().getUser().getFirstName().toLowerCase().contains(lowerName) ||
+                            t.getTrainee().getUser().getLastName().toLowerCase().contains(lowerName))
+                    .collect(Collectors.toList());
+        }
+
+        log.info("Found {} trainings for trainer: {}", trainings.size(), trainerUsername);
+        return trainings;
     }
 
     @Transactional(readOnly = true)
-    public Training selectProfile(Long id) {
-        return trainingRepository.findAll().stream()
-                .filter(t -> t.getTrainingId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("Training not found: " + id));
-    }
+    public List<Training> getTrainingsWithAllUsers(
+            String traineeUsername, String trainerUsername,
+            LocalDate fromDate, LocalDate toDate) {
 
-    @Transactional(readOnly = true)
-    public List<Training> findAll() {
-        return trainingRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Training> findByTraineeUsername(String traineeUsername) {
-        return trainingRepository.findByTraineeUsername(traineeUsername);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Training> findByTrainerUsername(String trainerUsername) {
-        return trainingRepository.findByTrainerUsername(trainerUsername);
+        return trainingRepository.findTrainingsWithAllUsers(
+                traineeUsername, trainerUsername, fromDate, toDate
+        );
     }
 
     private void validateTraining(Training training) {
@@ -124,7 +150,7 @@ public class TrainingService {
             String message = violations.stream()
                     .map(ConstraintViolation::getMessage)
                     .collect(Collectors.joining(", "));
-            throw new ValidationException("Validation failed: " + message);
+            throw new ValidationException("Training validation failed: " + message);
         }
     }
 }
