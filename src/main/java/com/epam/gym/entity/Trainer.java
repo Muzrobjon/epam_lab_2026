@@ -1,6 +1,5 @@
 package com.epam.gym.entity;
 
-import com.epam.gym.enums.TrainingTypeName;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;

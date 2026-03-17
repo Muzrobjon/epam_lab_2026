@@ -42,19 +42,7 @@ public class TraineeService extends AbstractUserService<Trainee> {
     public Trainee createProfile(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         log.info("Creating trainee profile for {} {}", firstName, lastName);
 
-        String rawPassword = passwordGenerator.generatePassword();
-
-        User user = User.builder()
-                .firstName(firstName)
-                .lastName(lastName)
-                .isActive(true)
-                .password(rawPassword)
-                .build();
-
-        String username = usernameGenerator.generateUsername(user, userRepository::existsByUsername);
-        user.setUsername(username);
-
-        User savedUser = userRepository.save(user);
+        User savedUser = createAndSaveUser(firstName, lastName);
 
         Trainee trainee = Trainee.builder()
                 .id(savedUser.getId())
@@ -67,7 +55,7 @@ public class TraineeService extends AbstractUserService<Trainee> {
 
         Trainee saved = traineeRepository.save(trainee);
         log.info("Created trainee: {} with username: {} and password: {}",
-                saved.getId(), savedUser.getUsername(), rawPassword);
+                saved.getId(), savedUser.getUsername(), savedUser.getPassword());
 
         return saved;
     }
@@ -87,16 +75,7 @@ public class TraineeService extends AbstractUserService<Trainee> {
 
         Trainee existing = selectByUsername(username);
 
-        User user = existing.getUser();
-
-        if (updatedTrainee.getUser() != null) {
-            if (updatedTrainee.getUser().getFirstName() != null) {
-                user.setFirstName(updatedTrainee.getUser().getFirstName());
-            }
-            if (updatedTrainee.getUser().getLastName() != null) {
-                user.setLastName(updatedTrainee.getUser().getLastName());
-            }
-        }
+        updateUserBasicInfo(existing.getUser(), updatedTrainee.getUser());
 
         if (updatedTrainee.getDateOfBirth() != null) {
             existing.setDateOfBirth(updatedTrainee.getDateOfBirth());
@@ -134,10 +113,6 @@ public class TraineeService extends AbstractUserService<Trainee> {
 
         Trainee trainee = selectByUsername(traineeUsername);
 
-        // TODO: N+1 problem FIXED!
-        // OLD: Loop with individual queries - very inefficient for large collections
-        // NEW: Single query with findByUser_UsernameIn
-
         List<Trainer> trainers = fetchTrainersByUsernames(trainerUsernames);
 
         trainee.getTrainers().clear();
@@ -148,19 +123,14 @@ public class TraineeService extends AbstractUserService<Trainee> {
                 traineeUsername, trainers.size());
     }
 
-    /**
-     * FIXED: N+1 problem - fetches all trainers in a single query
-     * Validates that all usernames exist, throws if any missing
-     */
+
     private List<Trainer> fetchTrainersByUsernames(List<String> trainerUsernames) {
         if (trainerUsernames == null || trainerUsernames.isEmpty()) {
             return List.of();
         }
 
-        // Single query instead of N queries
         List<Trainer> foundTrainers = trainerRepository.findByUser_UsernameIn(trainerUsernames);
 
-        // Validate all usernames exist
         if (foundTrainers.size() != trainerUsernames.size()) {
             Set<String> foundUsernames = foundTrainers.stream()
                     .map(t -> t.getUser().getUsername())

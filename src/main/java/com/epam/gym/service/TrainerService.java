@@ -44,19 +44,7 @@ public class TrainerService extends AbstractUserService<Trainer> {
     public Trainer createProfile(String firstName, String lastName, TrainingTypeName specialization) {
         log.info("Creating trainer profile for {} {}", firstName, lastName);
 
-        String rawPassword = passwordGenerator.generatePassword();
-
-        User user = User.builder()
-                .firstName(firstName)
-                .lastName(lastName)
-                .isActive(true)
-                .password(rawPassword)
-                .build();
-
-        String username = usernameGenerator.generateUsername(user, userRepository::existsByUsername);
-        user.setUsername(username);
-
-        User savedUser = userRepository.save(user);
+        User savedUser = createAndSaveUser(firstName, lastName);
 
         TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(specialization)
                 .orElseThrow(() -> new NotFoundException("Training type not found: " + specialization));
@@ -72,7 +60,7 @@ public class TrainerService extends AbstractUserService<Trainer> {
         Trainer saved = trainerRepository.save(trainer);
 
         log.info("Created trainer: {} with username: {} and password: {}",
-                saved.getId(), savedUser.getUsername(), rawPassword);
+                saved.getId(), savedUser.getUsername(), savedUser.getPassword());
 
         return saved;
     }
@@ -92,16 +80,7 @@ public class TrainerService extends AbstractUserService<Trainer> {
 
         Trainer existing = selectByUsername(username);
 
-        User user = existing.getUser();
-
-        if (updatedTrainer.getUser() != null) {
-            if (updatedTrainer.getUser().getFirstName() != null) {
-                user.setFirstName(updatedTrainer.getUser().getFirstName());
-            }
-            if (updatedTrainer.getUser().getLastName() != null) {
-                user.setLastName(updatedTrainer.getUser().getLastName());
-            }
-        }
+        updateUserBasicInfo(existing.getUser(), updatedTrainer.getUser());
 
         if (updatedTrainer.getSpecialization() != null) {
             existing.setSpecialization(updatedTrainer.getSpecialization());

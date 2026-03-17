@@ -34,6 +34,45 @@ public abstract class AbstractUserService<T> {
         this.validator = validator;
     }
 
+    @Transactional
+    protected User createAndSaveUser(String firstName, String lastName) {
+        log.debug("Creating user for {} {}", firstName, lastName);
+
+        String rawPassword = passwordGenerator.generatePassword();
+
+        User user = User.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .isActive(true)
+                .password(rawPassword)
+                .build();
+
+        String username = usernameGenerator.generateUsername(user, userRepository::existsByUsername);
+        user.setUsername(username);
+
+        User savedUser = userRepository.save(user);
+
+        log.debug("Created user: {} with username: {}", savedUser.getId(), username);
+
+        return savedUser;
+    }
+
+     protected void updateUserBasicInfo(User existingUser, User updatedUser) {
+        if (updatedUser == null) {
+            return;
+        }
+
+        if (updatedUser.getFirstName() != null) {
+            existingUser.setFirstName(updatedUser.getFirstName());
+            log.debug("Updated firstName to: {}", updatedUser.getFirstName());
+        }
+
+        if (updatedUser.getLastName() != null) {
+            existingUser.setLastName(updatedUser.getLastName());
+            log.debug("Updated lastName to: {}", updatedUser.getLastName());
+        }
+    }
+
     @Transactional(readOnly = true)
     protected void authenticateUser(String username, String password) {
         log.info("Authenticating user: {}", username);
@@ -102,6 +141,26 @@ public abstract class AbstractUserService<T> {
         userRepository.save(user);
 
         log.info("User {} is now {}", username, user.getIsActive() ? "active" : "inactive");
+    }
+
+
+    @Transactional
+    public void setActiveStatus(String username, String password, Boolean isActive) {
+        log.info("Setting active status for user: {} to {}", username, isActive);
+
+        authenticateUser(username, password);
+
+        T entity = findByUsername().apply(username);
+        User user = extractUser(entity);
+
+        if (user == null) {
+            throw new NotFoundException("User not found: " + username);
+        }
+
+        user.setIsActive(isActive);
+        userRepository.save(user);
+
+        log.info("User {} active status set to: {}", username, isActive);
     }
 
     protected void validateEntity(T entity) {
