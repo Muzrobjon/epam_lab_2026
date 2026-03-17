@@ -60,6 +60,10 @@ public class TraineeController {
                 request.getAddress()
         );
 
+        // TODO:
+        //  [Optional]
+        //  You have mapstruct, let's use it here as well. And since registration response consists of only profile
+        //  related fields for both Trainer and Trainee, I would say introducing UserMapper would be a good idea
         RegistrationResponse response = RegistrationResponse.builder()
                 .username(trainee.getUser().getUsername())
                 .password(trainee.getUser().getPassword())
@@ -117,6 +121,9 @@ public class TraineeController {
                     "Username in path does not match username in request body");
         }
 
+        // TODO:
+        //  Why to introduce additional instances? You can instead pass the DTO to the service layer
+        //  Ideally, the only moment when you instantiate an entity is when you create a new one.
         Trainee updatedData = Trainee.builder()
                 .user(com.epam.gym.entity.User.builder()
                         .firstName(request.getFirstName())
@@ -147,6 +154,8 @@ public class TraineeController {
     })
     @DeleteMapping("/{username}")
     public ResponseEntity<Void> deleteTraineeProfile(
+            // TODO:
+            //  Danger!!! password in query parameters is insecure
             @Parameter(description = "Username of the trainee", required = true)
             @PathVariable String username,
             @Parameter(description = "Password for authentication", required = true)

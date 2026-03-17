@@ -58,6 +58,21 @@ class TraineeControllerTest {
 
     @BeforeEach
     void setUp() {
+        // TODO:
+        //  [Optional]
+        //  standaloneSetup(...) is okay for narrow controller-unit tests, but it does not reproduce the real MVC configuration.
+        //  So by default you can miss things like:
+        //        @ControllerAdvice
+        //        servlet filters
+        //        interceptors
+        //        custom argument resolvers
+        //        message converters
+        //        formatter/conversion setup
+        //        validation behavior differences
+        //        security chain
+        //  Even if all above are tested separately, standaloneSetup does not verify that everything is actually wired
+        //  together correctly and how they interact with each other in the real MVC pipeline
+        //  Consider using @WebMvcTest(TraineeController.class) to verify actual entire web-layer behavior.
         mockMvc = MockMvcBuilders.standaloneSetup(traineeController).build();
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());

@@ -172,7 +172,10 @@ public abstract class AbstractUserService<T> {
             throw new ValidationException("Validation failed: " + message);
         }
     }
-
+    // TODO:
+    //  To be fair, good attempt to extract common logic. Unfortunately, web layer revealed some
+    //  level of flexibility issues with this design. My suggestion would be to get rid of abstract part.
+    //  findByUsername - this can just call userRepository
     protected abstract Function<String, T> findByUsername();
 
     protected abstract User extractUser(T entity);

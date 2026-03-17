@@ -51,6 +51,8 @@ public class TrainingController {
         var trainer = gymFacade.getTrainerByUsername(request.getTrainerUsername());
         TrainingTypeName trainingType = trainer.getSpecialization().getTrainingTypeName();
 
+        // TODO:
+        //  Can we just pass a DTO instead of bunch of parameters?
         gymFacade.createTraining(
                 request.getTraineeUsername(),
                 request.getTraineePassword(),
@@ -75,6 +77,9 @@ public class TrainingController {
     public ResponseEntity<List<TrainingTypeResponse>> getTrainingTypes() {
         log.info("Fetching all training types");
 
+        // TODO:
+        //  What are the pros and cons of controller using repository directly vs going through service layer?
+        //  If you decided to use facade to encapsulate calls seems like using repository directly breaks the pattern
         List<TrainingType> types = trainingTypeRepository.findAll();
         List<TrainingTypeResponse> response = types.stream()
                 .map(type -> TrainingTypeResponse.builder()

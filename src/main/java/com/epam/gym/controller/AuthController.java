@@ -31,6 +31,11 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
+    // TODO:
+    //  DANGER!!! With GET you are exposing credentials in URL and making it visible for all
+    //  possible middlewares between client and server.
+    //  Also note that GET is idempotent meaning there is no side effects and state changes on the server, while
+    //  during login most real-world system (and we later in the course) will create some sort of auth state
     @GetMapping("/login")
     public ResponseEntity<Void> login(@Valid @ModelAttribute LoginRequest request) {
         log.info("Login attempt for user: {}", request.getUsername());
@@ -39,6 +44,13 @@ public class AuthController {
         try {
             gymFacade.authenticateTrainee(request.getUsername(), request.getPassword());
         } catch (Exception e) {
+            // TODO:
+            //  “Trainee or trainer” is normal business logic, not exceptional control flow and there is a ton of
+            //  problems with exception-driven business branching. Without going into details let's keep
+            //  responsibilities clear and separate:
+            //  User is our profile representation: to work with profile related data the system does not need to know
+            //  whether it's a trainer or trainee.
+            //  You will need to refactor AbstractUserService to just UserService:)
             gymFacade.authenticateTrainer(request.getUsername(), request.getPassword());
         }
 
