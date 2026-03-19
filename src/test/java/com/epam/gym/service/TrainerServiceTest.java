@@ -1,15 +1,18 @@
 package com.epam.gym.service;
 
+import com.epam.gym.dto.request.TrainerRegistrationRequest;
+import com.epam.gym.dto.request.UpdateTrainerRequest;
 import com.epam.gym.entity.Trainee;
 import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
 import com.epam.gym.enums.TrainingTypeName;
 import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.exception.ValidationException;
 import com.epam.gym.repository.TraineeRepository;
 import com.epam.gym.repository.TrainerRepository;
 import com.epam.gym.repository.TrainingTypeRepository;
-import com.epam.gym.repository.UserRepository;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,10 +21,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -30,51 +36,62 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("TrainerService Tests")
 class TrainerServiceTest {
 
     @Mock
     private TrainerRepository trainerRepository;
 
     @Mock
-    private TraineeRepository traineeRepository;
-
-    @Mock
     private TrainingTypeRepository trainingTypeRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private TraineeRepository traineeRepository;
 
     @Mock
-    private UsernameGenerator usernameGenerator;
-
-    @Mock
-    private PasswordGenerator passwordGenerator;
+    private UserService userService;
 
     @Mock
     private Validator validator;
 
+    @InjectMocks
+    private TrainerService trainerService;
+
     @Captor
     private ArgumentCaptor<Trainer> trainerCaptor;
 
-    @Captor
-    private ArgumentCaptor<User> userCaptor;
-
-    private TrainerService trainerService;
+    private User testUser;
+    private Trainer testTrainer;
+    private TrainingType cardioType;
 
     @BeforeEach
     void setUp() {
-        trainerService = new TrainerService(
-                trainerRepository,
-                traineeRepository,
-                trainingTypeRepository,
-                userRepository,
-                usernameGenerator,
-                passwordGenerator,
-                validator
-        );
+        testUser = User.builder()
+                .id(1L)
+                .firstName("Mike")
+                .lastName("Johnson")
+                .username("mike.johnson")
+                .password("password123")
+                .isActive(true)
+                .build();
+
+        cardioType = new TrainingType(1L, TrainingTypeName.CARDIO);
+
+        testTrainer = Trainer.builder()
+                .id(1L)
+                .user(testUser)
+                .specialization(cardioType)
+                .trainees(new ArrayList<>())
+                .build();
     }
 
     @Nested
@@ -85,130 +102,187 @@ class TrainerServiceTest {
         @DisplayName("Should create trainer profile successfully")
         void shouldCreateTrainerProfileSuccessfully() {
             // Given
-            String firstName = "John";
-            String lastName = "Doe";
-            TrainingTypeName specialization = TrainingTypeName.CARDIO;
-            String generatedPassword = "password123";
-            String generatedUsername = "john.doe";
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Johnson");
+            request.setSpecialization(TrainingTypeName.CARDIO);
 
-            User savedUser = User.builder()
-                    .id(1L)
-                    .firstName(firstName)
-                    .lastName(lastName)
-                    .username(generatedUsername)
-                    .password(generatedPassword)
-                    .isActive(true)
-                    .build();
-
-            TrainingType trainingType = new TrainingType(1L, TrainingTypeName.CARDIO);
-
-            Trainer savedTrainer = Trainer.builder()
-                    .id(1L)
-                    .user(savedUser)
-                    .specialization(trainingType)
-                    .build();
-
-            when(passwordGenerator.generatePassword()).thenReturn(generatedPassword);
-            when(usernameGenerator.generateUsername(any(User.class), any())).thenReturn(generatedUsername);
-            when(userRepository.save(any(User.class))).thenReturn(savedUser);
-            when(trainingTypeRepository.findByTrainingTypeName(specialization))
-                    .thenReturn(Optional.of(trainingType));
+            when(userService.createUser("Mike", "Johnson")).thenReturn(testUser);
+            when(trainingTypeRepository.findByTrainingTypeName(TrainingTypeName.CARDIO))
+                    .thenReturn(Optional.of(cardioType));
             when(validator.validate(any(Trainer.class))).thenReturn(Collections.emptySet());
-            when(trainerRepository.save(any(Trainer.class))).thenReturn(savedTrainer);
+            when(trainerRepository.save(any(Trainer.class))).thenReturn(testTrainer);
 
             // When
-            Trainer result = trainerService.createProfile(firstName, lastName, specialization);
+            Trainer result = trainerService.createProfile(request);
 
             // Then
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getUser().getUsername()).isEqualTo(generatedUsername);
-            assertThat(result.getSpecialization()).isEqualTo(trainingType);
+            assertThat(result.getUser().getUsername()).isEqualTo("mike.johnson");
+            assertThat(result.getSpecialization()).isEqualTo(cardioType);
 
-            verify(passwordGenerator).generatePassword();
-            verify(usernameGenerator).generateUsername(any(User.class), any());
-            verify(userRepository).save(userCaptor.capture());
-            verify(trainingTypeRepository).findByTrainingTypeName(specialization);
+            verify(userService).createUser("Mike", "Johnson");
+            verify(trainingTypeRepository).findByTrainingTypeName(TrainingTypeName.CARDIO);
+            verify(validator).validate(any(Trainer.class));
             verify(trainerRepository).save(trainerCaptor.capture());
 
-            User capturedUser = userCaptor.getValue();
-            assertThat(capturedUser.getFirstName()).isEqualTo(firstName);
-            assertThat(capturedUser.getLastName()).isEqualTo(lastName);
-            assertThat(capturedUser.getIsActive()).isTrue();
+            Trainer capturedTrainer = trainerCaptor.getValue();
+            assertThat(capturedTrainer.getUser()).isEqualTo(testUser);
+            assertThat(capturedTrainer.getSpecialization()).isEqualTo(cardioType);
+        }
+
+        @Test
+        @DisplayName("Should create trainer with different specialization")
+        void shouldCreateTrainerWithDifferentSpecialization() {
+            // Given
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Sarah");
+            request.setLastName("Wilson");
+            request.setSpecialization(TrainingTypeName.STRENGTH);
+
+            TrainingType strengthType = new TrainingType(2L, TrainingTypeName.STRENGTH);
+
+            User user = User.builder()
+                    .id(2L)
+                    .firstName("Sarah")
+                    .lastName("Wilson")
+                    .username("sarah.wilson")
+                    .password("pass123")
+                    .isActive(true)
+                    .build();
+
+            Trainer savedTrainer = Trainer.builder()
+                    .id(2L)
+                    .user(user)
+                    .specialization(strengthType)
+                    .trainees(List.of())
+                    .build();
+
+            when(userService.createUser("Sarah", "Wilson")).thenReturn(user);
+            when(trainingTypeRepository.findByTrainingTypeName(TrainingTypeName.STRENGTH))
+                    .thenReturn(Optional.of(strengthType));
+            when(validator.validate(any(Trainer.class))).thenReturn(Collections.emptySet());
+            when(trainerRepository.save(any(Trainer.class))).thenReturn(savedTrainer);
+
+            // When
+            Trainer result = trainerService.createProfile(request);
+
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getSpecialization().getTrainingTypeName())
+                    .isEqualTo(TrainingTypeName.STRENGTH);
         }
 
         @Test
         @DisplayName("Should throw NotFoundException when training type not found")
         void shouldThrowNotFoundExceptionWhenTrainingTypeNotFound() {
             // Given
-            String firstName = "John";
-            String lastName = "Doe";
-            TrainingTypeName specialization = TrainingTypeName.YOGA;
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Johnson");
+            request.setSpecialization(TrainingTypeName.YOGA);
 
-            User savedUser = User.builder()
-                    .id(1L)
-                    .firstName(firstName)
-                    .lastName(lastName)
-                    .build();
-
-            when(passwordGenerator.generatePassword()).thenReturn("password123");
-            when(usernameGenerator.generateUsername(any(User.class), any())).thenReturn("john.doe");
-            when(userRepository.save(any(User.class))).thenReturn(savedUser);
-            when(trainingTypeRepository.findByTrainingTypeName(specialization))
+            when(userService.createUser("Mike", "Johnson")).thenReturn(testUser);
+            when(trainingTypeRepository.findByTrainingTypeName(TrainingTypeName.YOGA))
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> trainerService.createProfile(firstName, lastName, specialization))
+            assertThatThrownBy(() -> trainerService.createProfile(request))
                     .isInstanceOf(NotFoundException.class)
-                    .hasMessageContaining("Training type not found: " + specialization);
+                    .hasMessageContaining("Training type not found: YOGA");
 
             verify(trainerRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw ValidationException when validation fails")
+        void shouldThrowValidationExceptionWhenValidationFails() {
+            // Given
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Johnson");
+            request.setSpecialization(TrainingTypeName.CARDIO);
+
+            when(userService.createUser("Mike", "Johnson")).thenReturn(testUser);
+            when(trainingTypeRepository.findByTrainingTypeName(TrainingTypeName.CARDIO))
+                    .thenReturn(Optional.of(cardioType));
+
+            @SuppressWarnings("unchecked")
+            ConstraintViolation<Trainer> violation = mock(ConstraintViolation.class);
+            when(violation.getMessage()).thenReturn("Specialization is required");
+            Set<ConstraintViolation<Trainer>> violations = new HashSet<>();
+            violations.add(violation);
+
+            when(validator.validate(any(Trainer.class))).thenReturn(violations);
+
+            // When & Then
+            assertThatThrownBy(() -> trainerService.createProfile(request))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Validation failed")
+                    .hasMessageContaining("Specialization is required");
+
+            verify(trainerRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should initialize trainees list as empty")
+        void shouldInitializeTraineesListAsEmpty() {
+            // Given
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Johnson");
+            request.setSpecialization(TrainingTypeName.CARDIO);
+
+            when(userService.createUser("Mike", "Johnson")).thenReturn(testUser);
+            when(trainingTypeRepository.findByTrainingTypeName(TrainingTypeName.CARDIO))
+                    .thenReturn(Optional.of(cardioType));
+            when(validator.validate(any(Trainer.class))).thenReturn(Collections.emptySet());
+            when(trainerRepository.save(any(Trainer.class))).thenReturn(testTrainer);
+
+            // When
+            trainerService.createProfile(request);
+
+            // Then
+            verify(trainerRepository).save(trainerCaptor.capture());
+            Trainer capturedTrainer = trainerCaptor.getValue();
+            assertThat(capturedTrainer.getTrainees()).isNotNull();
+            assertThat(capturedTrainer.getTrainees()).isEmpty();
         }
     }
 
     @Nested
-    @DisplayName("selectByUsername Tests")
-    class SelectByUsernameTests {
+    @DisplayName("getByUsername Tests")
+    class GetByUsernameTests {
 
         @Test
         @DisplayName("Should return trainer when found")
         void shouldReturnTrainerWhenFound() {
             // Given
-            String username = "john.doe";
-            User user = User.builder()
-                    .id(1L)
-                    .username(username)
-                    .build();
-
-            Trainer trainer = Trainer.builder()
-                    .id(1L)
-                    .user(user)
-                    .build();
-
-            when(trainerRepository.findByUser_Username(username))
-                    .thenReturn(Optional.of(trainer));
+            when(trainerRepository.findByUser_Username("mike.johnson"))
+                    .thenReturn(Optional.of(testTrainer));
 
             // When
-            Trainer result = trainerService.selectByUsername(username);
+            Trainer result = trainerService.getByUsername("mike.johnson");
 
             // Then
             assertThat(result).isNotNull();
-            assertThat(result.getUser().getUsername()).isEqualTo(username);
-            verify(trainerRepository).findByUser_Username(username);
+            assertThat(result.getUser().getUsername()).isEqualTo("mike.johnson");
+            assertThat(result.getSpecialization()).isEqualTo(cardioType);
+            verify(trainerRepository).findByUser_Username("mike.johnson");
         }
 
         @Test
         @DisplayName("Should throw NotFoundException when trainer not found")
         void shouldThrowNotFoundExceptionWhenTrainerNotFound() {
             // Given
-            String username = "nonexistent";
-            when(trainerRepository.findByUser_Username(username))
+            when(trainerRepository.findByUser_Username("nonexistent"))
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> trainerService.selectByUsername(username))
+            assertThatThrownBy(() -> trainerService.getByUsername("nonexistent"))
                     .isInstanceOf(NotFoundException.class)
-                    .hasMessageContaining("Trainer not found: " + username);
+                    .hasMessageContaining("Trainer not found: nonexistent");
         }
     }
 
@@ -216,103 +290,163 @@ class TrainerServiceTest {
     @DisplayName("updateProfile Tests")
     class UpdateProfileTests {
 
+        private UpdateTrainerRequest updateRequest;
+
+        @BeforeEach
+        void setUp() {
+            updateRequest = new UpdateTrainerRequest();
+            updateRequest.setPassword("password123");
+            updateRequest.setFirstName("Michael");
+            updateRequest.setLastName("Updated");
+            updateRequest.setIsActive(true);
+        }
+
         @Test
         @DisplayName("Should update trainer profile successfully")
         void shouldUpdateTrainerProfileSuccessfully() {
             // Given
-            String username = "john.doe";
-            String password = "password123";
-
-            User existingUser = User.builder()
-                    .id(1L)
-                    .username(username)
-                    .password(password)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
-                    .build();
-
-            TrainingType existingSpecialization = new TrainingType(1L, TrainingTypeName.CARDIO);
-            TrainingType newSpecialization = new TrainingType(2L, TrainingTypeName.YOGA);
-
-            Trainer existingTrainer = Trainer.builder()
-                    .id(1L)
-                    .user(existingUser)
-                    .specialization(existingSpecialization)
-                    .build();
-
-            User updatedUserData = User.builder()
-                    .firstName("Johnny")
-                    .lastName("Updated")
-                    .build();
-
-            Trainer updatedTrainerData = Trainer.builder()
-                    .user(updatedUserData)
-                    .specialization(newSpecialization)
-                    .build();
-
-            when(userRepository.findByUsername(username)).thenReturn(Optional.of(existingUser));
-            when(trainerRepository.findByUser_Username(username))
-                    .thenReturn(Optional.of(existingTrainer));
+            doNothing().when(userService).authenticate("mike.johnson", "password123");
+            when(trainerRepository.findByUser_Username("mike.johnson"))
+                    .thenReturn(Optional.of(testTrainer));
             when(validator.validate(any(Trainer.class))).thenReturn(Collections.emptySet());
-            when(trainerRepository.save(any(Trainer.class))).thenReturn(existingTrainer);
+            when(trainerRepository.save(any(Trainer.class))).thenReturn(testTrainer);
 
             // When
-            Trainer result = trainerService.updateProfile(username, password, updatedTrainerData);
+            Trainer result = trainerService.updateProfile("mike.johnson", updateRequest);
 
             // Then
             assertThat(result).isNotNull();
-            verify(trainerRepository).save(trainerCaptor.capture());
 
-            Trainer captured = trainerCaptor.getValue();
-            assertThat(captured.getUser().getFirstName()).isEqualTo("Johnny");
-            assertThat(captured.getUser().getLastName()).isEqualTo("Updated");
-            assertThat(captured.getSpecialization()).isEqualTo(newSpecialization);
+            verify(userService).authenticate("mike.johnson", "password123");
+            verify(userService).updateUserBasicInfo(testUser, "Michael", "Updated", true);
+            verify(validator).validate(any(Trainer.class));
+            verify(trainerRepository).save(testTrainer);
         }
 
         @Test
-        @DisplayName("Should update only first name when only first name provided")
-        void shouldUpdateOnlyFirstName() {
+        @DisplayName("Should throw exception when authentication fails")
+        void shouldThrowExceptionWhenAuthenticationFails() {
             // Given
-            String username = "john.doe";
-            String password = "password123";
+            updateRequest.setPassword("wrongpassword");
+            doThrow(new RuntimeException("Invalid credentials"))
+                    .when(userService).authenticate("mike.johnson", "wrongpassword");
 
-            User existingUser = User.builder()
-                    .id(1L)
-                    .username(username)
-                    .password(password)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
-                    .build();
+            // When & Then
+            assertThatThrownBy(() -> trainerService.updateProfile("mike.johnson", updateRequest))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Invalid credentials");
 
-            Trainer existingTrainer = Trainer.builder()
-                    .id(1L)
-                    .user(existingUser)
-                    .build();
+            verify(trainerRepository, never()).findByUser_Username(anyString());
+            verify(trainerRepository, never()).save(any());
+        }
 
-            User updatedUserData = User.builder()
-                    .firstName("Johnny")
-                    .build();
+        @Test
+        @DisplayName("Should throw NotFoundException when trainer not found")
+        void shouldThrowNotFoundExceptionWhenTrainerNotFound() {
+            // Given
+            doNothing().when(userService).authenticate("nonexistent", "password123");
+            when(trainerRepository.findByUser_Username("nonexistent"))
+                    .thenReturn(Optional.empty());
 
-            Trainer updatedTrainerData = Trainer.builder()
-                    .user(updatedUserData)
-                    .build();
+            // When & Then
+            assertThatThrownBy(() -> trainerService.updateProfile("nonexistent", updateRequest))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainer not found: nonexistent");
 
-            when(userRepository.findByUsername(username)).thenReturn(Optional.of(existingUser));
-            when(trainerRepository.findByUser_Username(username))
-                    .thenReturn(Optional.of(existingTrainer));
+            verify(trainerRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw ValidationException when validation fails on update")
+        void shouldThrowValidationExceptionWhenValidationFailsOnUpdate() {
+            // Given
+            doNothing().when(userService).authenticate("mike.johnson", "password123");
+            when(trainerRepository.findByUser_Username("mike.johnson"))
+                    .thenReturn(Optional.of(testTrainer));
+
+            @SuppressWarnings("unchecked")
+            ConstraintViolation<Trainer> violation = mock(ConstraintViolation.class);
+            when(violation.getMessage()).thenReturn("Invalid trainer data");
+            Set<ConstraintViolation<Trainer>> violations = Set.of(violation);
+
+            when(validator.validate(any(Trainer.class))).thenReturn(violations);
+
+            // When & Then
+            assertThatThrownBy(() -> trainerService.updateProfile("mike.johnson", updateRequest))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Validation failed")
+                    .hasMessageContaining("Invalid trainer data");
+
+            verify(trainerRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should update isActive status")
+        void shouldUpdateIsActiveStatus() {
+            // Given
+            updateRequest.setIsActive(false);
+
+            doNothing().when(userService).authenticate("mike.johnson", "password123");
+            when(trainerRepository.findByUser_Username("mike.johnson"))
+                    .thenReturn(Optional.of(testTrainer));
             when(validator.validate(any(Trainer.class))).thenReturn(Collections.emptySet());
-            when(trainerRepository.save(any(Trainer.class))).thenReturn(existingTrainer);
+            when(trainerRepository.save(any(Trainer.class))).thenReturn(testTrainer);
 
             // When
-            trainerService.updateProfile(username, password, updatedTrainerData);
+            trainerService.updateProfile("mike.johnson", updateRequest);
 
             // Then
-            verify(trainerRepository).save(trainerCaptor.capture());
-            Trainer captured = trainerCaptor.getValue();
-            assertThat(captured.getUser().getFirstName()).isEqualTo("Johnny");
-            assertThat(captured.getUser().getLastName()).isEqualTo("Doe"); // Unchanged
+            verify(userService).updateUserBasicInfo(testUser, "Michael", "Updated", false);
+        }
+    }
+
+    @Nested
+    @DisplayName("authenticate Tests")
+    class AuthenticateTests {
+
+        @Test
+        @DisplayName("Should authenticate trainer successfully")
+        void shouldAuthenticateTrainerSuccessfully() {
+            // Given
+            doNothing().when(userService).authenticate("mike.johnson", "password123");
+            when(trainerRepository.findByUser_Username("mike.johnson"))
+                    .thenReturn(Optional.of(testTrainer));
+
+            // When
+            trainerService.authenticate("mike.johnson", "password123");
+
+            // Then
+            verify(userService).authenticate("mike.johnson", "password123");
+            verify(trainerRepository).findByUser_Username("mike.johnson");
+        }
+
+        @Test
+        @DisplayName("Should throw exception when user authentication fails")
+        void shouldThrowExceptionWhenUserAuthenticationFails() {
+            // Given
+            doThrow(new RuntimeException("Invalid credentials"))
+                    .when(userService).authenticate("mike.johnson", "wrongpassword");
+
+            // When & Then
+            assertThatThrownBy(() -> trainerService.authenticate("mike.johnson", "wrongpassword"))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Invalid credentials");
+
+            verify(trainerRepository, never()).findByUser_Username(anyString());
+        }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when user exists but not a trainer")
+        void shouldThrowNotFoundExceptionWhenUserExistsButNotATrainer() {
+            // Given
+            doNothing().when(userService).authenticate("trainee.user", "password123");
+            when(trainerRepository.findByUser_Username("trainee.user"))
+                    .thenReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() -> trainerService.authenticate("trainee.user", "password123"))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainer not found: trainee.user");
         }
     }
 
@@ -320,104 +454,256 @@ class TrainerServiceTest {
     @DisplayName("getUnassignedTrainers Tests")
     class GetUnassignedTrainersTests {
 
-        @Test
-        @DisplayName("Should return unassigned trainers")
-        void shouldReturnUnassignedTrainers() {
-            // Given
-            String traineeUsername = "trainee.user";
+        private Trainee testTrainee;
+        private List<Trainer> availableTrainers;
 
+        @BeforeEach
+        void setUp() {
             User traineeUser = User.builder()
-                    .id(1L)
-                    .username(traineeUsername)
+                    .id(10L)
+                    .firstName("John")
+                    .lastName("Doe")
+                    .username("john.doe")
+                    .password("password123")
+                    .isActive(true)
                     .build();
 
-            Trainee trainee = Trainee.builder()
-                    .id(1L)
+            testTrainee = Trainee.builder()
+                    .id(10L)
                     .user(traineeUser)
                     .build();
 
-            Trainer trainer1 = Trainer.builder().id(1L).build();
-            Trainer trainer2 = Trainer.builder().id(2L).build();
-            List<Trainer> unassignedTrainers = List.of(trainer1, trainer2);
+            User trainerUser1 = User.builder()
+                    .id(20L)
+                    .username("trainer1")
+                    .firstName("Trainer")
+                    .lastName("One")
+                    .build();
 
-            when(traineeRepository.findByUser_Username(traineeUsername))
-                    .thenReturn(Optional.of(trainee));
-            when(trainerRepository.findAvailableTrainers(traineeUsername))
-                    .thenReturn(unassignedTrainers);
+            User trainerUser2 = User.builder()
+                    .id(21L)
+                    .username("trainer2")
+                    .firstName("Trainer")
+                    .lastName("Two")
+                    .build();
+
+            TrainingType strengthType = new TrainingType(2L, TrainingTypeName.STRENGTH);
+
+            Trainer trainer1 = Trainer.builder()
+                    .id(20L)
+                    .user(trainerUser1)
+                    .specialization(cardioType)
+                    .build();
+
+            Trainer trainer2 = Trainer.builder()
+                    .id(21L)
+                    .user(trainerUser2)
+                    .specialization(strengthType)
+                    .build();
+
+            availableTrainers = List.of(trainer1, trainer2);
+        }
+
+        @Test
+        @DisplayName("Should return unassigned trainers successfully")
+        void shouldReturnUnassignedTrainersSuccessfully() {
+            // Given
+            doNothing().when(userService).authenticate("john.doe", "password123");
+            when(traineeRepository.findByUser_Username("john.doe"))
+                    .thenReturn(Optional.of(testTrainee));
+            when(trainerRepository.findAvailableTrainers("john.doe"))
+                    .thenReturn(availableTrainers);
 
             // When
-            List<Trainer> result = trainerService.getUnassignedTrainers(traineeUsername);
+            List<Trainer> result = trainerService.getUnassignedTrainers("john.doe", "password123");
 
             // Then
             assertThat(result).hasSize(2);
-            assertThat(result).containsExactly(trainer1, trainer2);
-            verify(traineeRepository).findByUser_Username(traineeUsername);
-            verify(trainerRepository).findAvailableTrainers(traineeUsername);
+            assertThat(result)
+                    .extracting(t -> t.getUser().getUsername())
+                    .containsExactlyInAnyOrder("trainer1", "trainer2");
+
+            verify(userService).authenticate("john.doe", "password123");
+            verify(traineeRepository).findByUser_Username("john.doe");
+            verify(trainerRepository).findAvailableTrainers("john.doe");
         }
 
         @Test
         @DisplayName("Should return empty list when no unassigned trainers")
         void shouldReturnEmptyListWhenNoUnassignedTrainers() {
             // Given
-            String traineeUsername = "trainee.user";
-
-            Trainee trainee = Trainee.builder().id(1L).build();
-
-            when(traineeRepository.findByUser_Username(traineeUsername))
-                    .thenReturn(Optional.of(trainee));
-            when(trainerRepository.findAvailableTrainers(traineeUsername))
+            doNothing().when(userService).authenticate("john.doe", "password123");
+            when(traineeRepository.findByUser_Username("john.doe"))
+                    .thenReturn(Optional.of(testTrainee));
+            when(trainerRepository.findAvailableTrainers("john.doe"))
                     .thenReturn(Collections.emptyList());
 
             // When
-            List<Trainer> result = trainerService.getUnassignedTrainers(traineeUsername);
+            List<Trainer> result = trainerService.getUnassignedTrainers("john.doe", "password123");
 
             // Then
             assertThat(result).isEmpty();
         }
 
         @Test
+        @DisplayName("Should throw exception when authentication fails")
+        void shouldThrowExceptionWhenAuthenticationFails() {
+            // Given
+            doThrow(new RuntimeException("Invalid credentials"))
+                    .when(userService).authenticate("john.doe", "wrongpassword");
+
+            // When & Then
+            assertThatThrownBy(() -> trainerService.getUnassignedTrainers("john.doe", "wrongpassword"))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Invalid credentials");
+
+            verifyNoInteractions(traineeRepository);
+            verifyNoInteractions(trainerRepository);
+        }
+
+        @Test
         @DisplayName("Should throw NotFoundException when trainee not found")
         void shouldThrowNotFoundExceptionWhenTraineeNotFound() {
             // Given
-            String traineeUsername = "nonexistent";
-            when(traineeRepository.findByUser_Username(traineeUsername))
+            doNothing().when(userService).authenticate("nonexistent", "password123");
+            when(traineeRepository.findByUser_Username("nonexistent"))
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> trainerService.getUnassignedTrainers(traineeUsername))
+            assertThatThrownBy(() -> trainerService.getUnassignedTrainers("nonexistent", "password123"))
                     .isInstanceOf(NotFoundException.class)
-                    .hasMessageContaining("Trainee not found: " + traineeUsername);
+                    .hasMessageContaining("Trainee not found: nonexistent");
 
             verify(trainerRepository, never()).findAvailableTrainers(anyString());
+        }
+
+        @Test
+        @DisplayName("Should return trainers with different specializations")
+        void shouldReturnTrainersWithDifferentSpecializations() {
+            // Given
+            doNothing().when(userService).authenticate("john.doe", "password123");
+            when(traineeRepository.findByUser_Username("john.doe"))
+                    .thenReturn(Optional.of(testTrainee));
+            when(trainerRepository.findAvailableTrainers("john.doe"))
+                    .thenReturn(availableTrainers);
+
+            // When
+            List<Trainer> result = trainerService.getUnassignedTrainers("john.doe", "password123");
+
+            // Then
+            assertThat(result).hasSize(2);
+            assertThat(result)
+                    .extracting(t -> t.getSpecialization().getTrainingTypeName())
+                    .containsExactlyInAnyOrder(TrainingTypeName.CARDIO, TrainingTypeName.STRENGTH);
         }
     }
 
     @Nested
-    @DisplayName("extractUser Tests")
-    class ExtractUserTests {
+    @DisplayName("Validation Tests")
+    class ValidationTests {
 
         @Test
-        @DisplayName("Should extract user from trainer")
-        void shouldExtractUserFromTrainer() {
+        @DisplayName("Should handle multiple validation errors")
+        void shouldHandleMultipleValidationErrors() {
             // Given
-            User user = User.builder()
-                    .id(1L)
-                    .username("test.user")
-                    .build();
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Johnson");
+            request.setSpecialization(TrainingTypeName.CARDIO);
 
-            Trainer trainer = Trainer.builder()
-                    .id(1L)
-                    .user(user)
-                    .build();
+            when(userService.createUser("Mike", "Johnson")).thenReturn(testUser);
+            when(trainingTypeRepository.findByTrainingTypeName(TrainingTypeName.CARDIO))
+                    .thenReturn(Optional.of(cardioType));
 
-            // When - using findByUsername which internally uses extractUser
-            when(trainerRepository.findByUser_Username("test.user"))
-                    .thenReturn(Optional.of(trainer));
+            @SuppressWarnings("unchecked")
+            ConstraintViolation<Trainer> violation1 = mock(ConstraintViolation.class);
+            when(violation1.getMessage()).thenReturn("Error 1");
 
-            Trainer result = trainerService.selectByUsername("test.user");
+            @SuppressWarnings("unchecked")
+            ConstraintViolation<Trainer> violation2 = mock(ConstraintViolation.class);
+            when(violation2.getMessage()).thenReturn("Error 2");
+
+            Set<ConstraintViolation<Trainer>> violations = new HashSet<>();
+            violations.add(violation1);
+            violations.add(violation2);
+
+            when(validator.validate(any(Trainer.class))).thenReturn(violations);
+
+            // When & Then
+            assertThatThrownBy(() -> trainerService.createProfile(request))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Validation failed");
+
+            verify(trainerRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should pass validation when no violations")
+        void shouldPassValidationWhenNoViolations() {
+            // Given
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Johnson");
+            request.setSpecialization(TrainingTypeName.CARDIO);
+
+            when(userService.createUser("Mike", "Johnson")).thenReturn(testUser);
+            when(trainingTypeRepository.findByTrainingTypeName(TrainingTypeName.CARDIO))
+                    .thenReturn(Optional.of(cardioType));
+            when(validator.validate(any(Trainer.class))).thenReturn(Collections.emptySet());
+            when(trainerRepository.save(any(Trainer.class))).thenReturn(testTrainer);
+
+            // When
+            Trainer result = trainerService.createProfile(request);
 
             // Then
-            assertThat(result.getUser()).isEqualTo(user);
+            assertThat(result).isNotNull();
+            verify(trainerRepository).save(any(Trainer.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("Edge Cases Tests")
+    class EdgeCasesTests {
+
+        @Test
+        @DisplayName("Should handle trainer with no trainees")
+        void shouldHandleTrainerWithNoTrainees() {
+            // Given
+            when(trainerRepository.findByUser_Username("mike.johnson"))
+                    .thenReturn(Optional.of(testTrainer));
+
+            // When
+            Trainer result = trainerService.getByUsername("mike.johnson");
+
+            // Then
+            assertThat(result.getTrainees()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should handle trainer with existing trainees")
+        void shouldHandleTrainerWithExistingTrainees() {
+            // Given
+            User traineeUser = User.builder()
+                    .id(100L)
+                    .username("trainee1")
+                    .build();
+
+            Trainee trainee = Trainee.builder()
+                    .id(100L)
+                    .user(traineeUser)
+                    .build();
+
+            testTrainer.setTrainees(List.of(trainee));
+
+            when(trainerRepository.findByUser_Username("mike.johnson"))
+                    .thenReturn(Optional.of(testTrainer));
+
+            // When
+            Trainer result = trainerService.getByUsername("mike.johnson");
+
+            // Then
+            assertThat(result.getTrainees()).hasSize(1);
+            assertThat(result.getTrainees().getFirst().getUser().getUsername()).isEqualTo("trainee1");
         }
     }
 }

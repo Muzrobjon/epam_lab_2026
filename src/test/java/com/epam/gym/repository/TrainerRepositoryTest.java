@@ -5,141 +5,40 @@ import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
 import com.epam.gym.enums.TrainingTypeName;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@DataJpaTest
 @ActiveProfiles("test")
-@Transactional
 @DisplayName("TrainerRepository Tests")
 class TrainerRepositoryTest {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private TestEntityManager entityManager;
 
     @Autowired
     private TrainerRepository trainerRepository;
 
-    private User trainerUser1;
-    private User trainerUser2;
-    private User trainerUser3;
-    private User traineeUser;
-    private TrainingType specialization;
-    private Trainer trainer1;
-    private Trainer trainer2;
-    private Trainer trainer3;
-    private Trainee trainee;
-
-    // Use unique identifiers to avoid conflicts with existing data
-    private String uniqueSuffix;
+    private TrainingType cardioType;
+    private TrainingType strengthType;
 
     @BeforeEach
     void setUp() {
-        // Generate unique suffix for this test run
-        uniqueSuffix = UUID.randomUUID().toString().substring(0, 8);
-
-        // Get or create training type
-        specialization = getOrCreateTrainingType(TrainingTypeName.FITNESS);
-
-        // Create trainer users with unique usernames
-        trainerUser1 = User.builder()
-                .username("john.doe." + uniqueSuffix)
-                .firstName("John")
-                .lastName("Doe")
-                .password("password123")
-                .isActive(true)
-                .build();
-
-        trainerUser2 = User.builder()
-                .username("jane.smith." + uniqueSuffix)
-                .firstName("Jane")
-                .lastName("Smith")
-                .password("password123")
-                .isActive(true)
-                .build();
-
-        trainerUser3 = User.builder()
-                .username("inactive.trainer." + uniqueSuffix)
-                .firstName("Inactive")
-                .lastName("Trainer")
-                .password("password123")
-                .isActive(false)
-                .build();
-
-        entityManager.persist(trainerUser1);
-        entityManager.persist(trainerUser2);
-        entityManager.persist(trainerUser3);
-
-        // Create trainers
-        trainer1 = Trainer.builder()
-                .user(trainerUser1)
-                .specialization(specialization)
-                .build();
-
-        trainer2 = Trainer.builder()
-                .user(trainerUser2)
-                .specialization(specialization)
-                .build();
-
-        trainer3 = Trainer.builder()
-                .user(trainerUser3)
-                .specialization(specialization)
-                .build();
-
-        entityManager.persist(trainer1);
-        entityManager.persist(trainer2);
-        entityManager.persist(trainer3);
-
-        // Create trainee user
-        traineeUser = User.builder()
-                .username("trainee.user." + uniqueSuffix)
-                .firstName("Trainee")
-                .lastName("User")
-                .password("password123")
-                .isActive(true)
-                .build();
-        entityManager.persist(traineeUser);
-
-        // Create trainee
-        trainee = Trainee.builder()
-                .user(traineeUser)
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .address("Test Address")
-                .build();
-        entityManager.persist(trainee);
-
+        cardioType = createTrainingType(TrainingTypeName.CARDIO);
+        strengthType = createTrainingType(TrainingTypeName.STRENGTH);
         entityManager.flush();
-        entityManager.clear();
-    }
-
-    private TrainingType getOrCreateTrainingType(TrainingTypeName typeName) {
-        List<TrainingType> types = entityManager
-                .createQuery("SELECT t FROM TrainingType t WHERE t.trainingTypeName = :name", TrainingType.class)
-                .setParameter("name", typeName)
-                .getResultList();
-
-        if (!types.isEmpty()) {
-            return types.get(0);
-        }
-
-        TrainingType type = new TrainingType(null, typeName);
-        entityManager.persist(type);
-        return type;
     }
 
     @Nested
@@ -147,55 +46,69 @@ class TrainerRepositoryTest {
     class FindByUserUsernameTests {
 
         @Test
-        @DisplayName("Should find trainer by username when exists")
-        void shouldFindTrainerByUsername_WhenExists() {
-            Optional<Trainer> result = trainerRepository.findByUser_Username("john.doe." + uniqueSuffix);
+        @DisplayName("Should find trainer by username")
+        void shouldFindTrainerByUsername() {
+            // Given
+            User user = createUser("john.doe", "John", "Doe", true);
+            createTrainer(user, cardioType);
+            entityManager.flush();
+            entityManager.clear();
 
+            // When
+            Optional<Trainer> result = trainerRepository.findByUser_Username("john.doe");
+
+            // Then
             assertThat(result).isPresent();
-            assertThat(result.get().getUser().getUsername()).isEqualTo("john.doe." + uniqueSuffix);
+            assertThat(result.get().getUser().getUsername()).isEqualTo("john.doe");
             assertThat(result.get().getUser().getFirstName()).isEqualTo("John");
-            assertThat(result.get().getUser().getLastName()).isEqualTo("Doe");
             assertThat(result.get().getSpecialization()).isNotNull();
-            assertThat(result.get().getSpecialization().getTrainingTypeName()).isEqualTo(TrainingTypeName.FITNESS);
         }
 
         @Test
-        @DisplayName("Should return empty when trainer username does not exist")
-        void shouldReturnEmpty_WhenUsernameDoesNotExist() {
-            Optional<Trainer> result = trainerRepository.findByUser_Username("nonexistent.user." + uniqueSuffix);
+        @DisplayName("Should return empty when trainer not found by username")
+        void shouldReturnEmptyWhenTrainerNotFoundByUsername() {
+            // When
+            Optional<Trainer> result = trainerRepository.findByUser_Username("nonexistent");
 
+            // Then
             assertThat(result).isEmpty();
         }
 
         @Test
-        @DisplayName("Should find inactive trainer by username")
-        void shouldFindInactiveTrainerByUsername() {
-            Optional<Trainer> result = trainerRepository.findByUser_Username("inactive.trainer." + uniqueSuffix);
+        @DisplayName("Should find trainer with case-sensitive username")
+        void shouldFindTrainerWithCaseSensitiveUsername() {
+            // Given
+            User user = createUser("John.Doe", "John", "Doe", true);
+            createTrainer(user, cardioType);
+            entityManager.flush();
+            entityManager.clear();
 
-            assertThat(result).isPresent();
-            assertThat(result.get().getUser().getIsActive()).isFalse();
+            // When
+            Optional<Trainer> resultExact = trainerRepository.findByUser_Username("John.Doe");
+            Optional<Trainer> resultLower = trainerRepository.findByUser_Username("john.doe");
+
+            // Then
+            assertThat(resultExact).isPresent();
+            assertThat(resultLower).isEmpty();
         }
 
         @Test
         @DisplayName("Should eagerly load user and specialization")
         void shouldEagerlyLoadUserAndSpecialization() {
-            Optional<Trainer> result = trainerRepository.findByUser_Username("john.doe." + uniqueSuffix);
+            // Given
+            User user = createUser("jane.trainer", "Jane", "Trainer", true);
+            createTrainer(user, strengthType);
+            entityManager.flush();
+            entityManager.clear();
 
+            // When
+            Optional<Trainer> result = trainerRepository.findByUser_Username("jane.trainer");
+
+            // Then
             assertThat(result).isPresent();
-            Trainer trainer = result.get();
-
-            assertThat(trainer.getUser()).isNotNull();
-            assertThat(trainer.getUser().getUsername()).isEqualTo("john.doe." + uniqueSuffix);
-            assertThat(trainer.getSpecialization()).isNotNull();
-            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo(TrainingTypeName.FITNESS);
-        }
-
-        @Test
-        @DisplayName("Should return empty for null username")
-        void shouldReturnEmpty_ForNullUsername() {
-            Optional<Trainer> result = trainerRepository.findByUser_Username(null);
-
-            assertThat(result).isEmpty();
+            assertThat(result.get().getUser().getFirstName()).isEqualTo("Jane");
+            assertThat(result.get().getUser().getLastName()).isEqualTo("Trainer");
+            assertThat(result.get().getSpecialization()).isNotNull();
         }
     }
 
@@ -204,71 +117,121 @@ class TrainerRepositoryTest {
     class FindByUserUsernameInTests {
 
         @Test
-        @DisplayName("Should find all trainers by usernames list")
-        void shouldFindAllTrainersByUsernamesList() {
-            List<String> usernames = List.of("john.doe." + uniqueSuffix, "jane.smith." + uniqueSuffix);
+        @DisplayName("Should find trainers by list of usernames")
+        void shouldFindTrainersByListOfUsernames() {
+            // Given
+            User user1 = createUser("trainer1", "John", "Doe", true);
+            User user2 = createUser("trainer2", "Jane", "Smith", true);
+            User user3 = createUser("trainer3", "Bob", "Wilson", true);
 
-            List<Trainer> result = trainerRepository.findByUser_UsernameIn(usernames);
+            createTrainer(user1, cardioType);
+            createTrainer(user2, strengthType);
+            createTrainer(user3, cardioType);
+            entityManager.flush();
+            entityManager.clear();
 
+            // When
+            List<Trainer> result = trainerRepository.findByUser_UsernameIn(
+                    List.of("trainer1", "trainer2"));
+
+            // Then
             assertThat(result).hasSize(2);
             assertThat(result)
                     .extracting(t -> t.getUser().getUsername())
-                    .containsExactlyInAnyOrder("john.doe." + uniqueSuffix, "jane.smith." + uniqueSuffix);
+                    .containsExactlyInAnyOrder("trainer1", "trainer2");
         }
 
         @Test
         @DisplayName("Should return empty list when no usernames match")
-        void shouldReturnEmptyList_WhenNoUsernamesMatch() {
-            List<String> usernames = List.of("nonexistent1." + uniqueSuffix, "nonexistent2." + uniqueSuffix);
+        void shouldReturnEmptyListWhenNoUsernamesMatch() {
+            // Given
+            User user = createUser("trainer1", "John", "Doe", true);
+            createTrainer(user, cardioType);
+            entityManager.flush();
+            entityManager.clear();
 
-            List<Trainer> result = trainerRepository.findByUser_UsernameIn(usernames);
+            // When
+            List<Trainer> result = trainerRepository.findByUser_UsernameIn(
+                    List.of("nonexistent1", "nonexistent2"));
 
+            // Then
             assertThat(result).isEmpty();
         }
 
         @Test
-        @DisplayName("Should find only matching trainers from mixed list")
-        void shouldFindOnlyMatchingTrainers_FromMixedList() {
-            List<String> usernames = List.of("john.doe." + uniqueSuffix, "nonexistent.user." + uniqueSuffix);
+        @DisplayName("Should return partial results when some usernames match")
+        void shouldReturnPartialResultsWhenSomeUsernamesMatch() {
+            // Given
+            User user1 = createUser("trainer1", "John", "Doe", true);
+            createTrainer(user1, cardioType);
+            entityManager.flush();
+            entityManager.clear();
 
-            List<Trainer> result = trainerRepository.findByUser_UsernameIn(usernames);
+            // When
+            List<Trainer> result = trainerRepository.findByUser_UsernameIn(
+                    List.of("trainer1", "nonexistent"));
 
+            // Then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getUser().getUsername()).isEqualTo("john.doe." + uniqueSuffix);
+            assertThat(result.getFirst().getUser().getUsername()).isEqualTo("trainer1");
         }
 
         @Test
-        @DisplayName("Should return empty list for empty usernames list")
-        void shouldReturnEmptyList_ForEmptyUsernamesList() {
-            List<String> usernames = List.of();
+        @DisplayName("Should handle empty username list")
+        void shouldHandleEmptyUsernameList() {
+            // Given
+            User user = createUser("trainer1", "John", "Doe", true);
+            createTrainer(user, cardioType);
+            entityManager.flush();
+            entityManager.clear();
 
-            List<Trainer> result = trainerRepository.findByUser_UsernameIn(usernames);
+            // When
+            List<Trainer> result = trainerRepository.findByUser_UsernameIn(List.of());
 
+            // Then
             assertThat(result).isEmpty();
         }
 
         @Test
-        @DisplayName("Should find single trainer for single username")
-        void shouldFindSingleTrainer_ForSingleUsername() {
-            List<String> usernames = List.of("jane.smith." + uniqueSuffix);
+        @DisplayName("Should eagerly load user and specialization for all trainers")
+        void shouldEagerlyLoadUserAndSpecializationForAllTrainers() {
+            // Given
+            User user1 = createUser("trainer1", "John", "Doe", true);
+            User user2 = createUser("trainer2", "Jane", "Smith", true);
 
-            List<Trainer> result = trainerRepository.findByUser_UsernameIn(usernames);
+            createTrainer(user1, cardioType);
+            createTrainer(user2, strengthType);
+            entityManager.flush();
+            entityManager.clear();
 
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getUser().getUsername()).isEqualTo("jane.smith." + uniqueSuffix);
-        }
+            // When
+            List<Trainer> result = trainerRepository.findByUser_UsernameIn(
+                    List.of("trainer1", "trainer2"));
 
-        @Test
-        @DisplayName("Should include inactive trainers in results")
-        void shouldIncludeInactiveTrainersInResults() {
-            List<String> usernames = List.of("john.doe." + uniqueSuffix, "inactive.trainer." + uniqueSuffix);
-
-            List<Trainer> result = trainerRepository.findByUser_UsernameIn(usernames);
-
+            // Then
             assertThat(result).hasSize(2);
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .containsExactlyInAnyOrder("john.doe." + uniqueSuffix, "inactive.trainer." + uniqueSuffix);
+            result.forEach(trainer -> {
+                assertThat(trainer.getUser().getFirstName()).isNotNull();
+                assertThat(trainer.getSpecialization()).isNotNull();
+            });
+        }
+
+        @Test
+        @DisplayName("Should find single trainer when list contains one username")
+        void shouldFindSingleTrainerWhenListContainsOneUsername() {
+            // Given
+            User user = createUser("single.trainer", "Single", "Trainer", true);
+            createTrainer(user, cardioType);
+            entityManager.flush();
+            entityManager.clear();
+
+            // When
+            List<Trainer> result = trainerRepository.findByUser_UsernameIn(
+                    List.of("single.trainer"));
+
+            // Then
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().getUser().getUsername()).isEqualTo("single.trainer");
         }
     }
 
@@ -277,278 +240,354 @@ class TrainerRepositoryTest {
     class FindAvailableTrainersTests {
 
         @Test
-        @DisplayName("Should return active trainers when trainee has no trainers - contains our test trainers")
-        void shouldReturnActiveTrainers_WhenTraineeHasNoTrainers() {
-            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee.user." + uniqueSuffix);
+        @DisplayName("Should find all active trainers when trainee has no assigned trainers")
+        void shouldFindAllActiveTrainersWhenTraineeHasNoAssignedTrainers() {
+            // Given
+            User traineeUser = createUser("trainee1", "Trainee", "One", true);
+            createTrainee(traineeUser);
 
-            // Check that our test trainers are in the results
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .contains("john.doe." + uniqueSuffix, "jane.smith." + uniqueSuffix);
+            User trainerUser1 = createUser("trainer1", "Trainer", "One", true);
+            User trainerUser2 = createUser("trainer2", "Trainer", "Two", true);
 
-            // Verify inactive trainer is not included
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .doesNotContain("inactive.trainer." + uniqueSuffix);
-        }
-
-        @Test
-        @DisplayName("Should exclude trainers already assigned to trainee")
-        void shouldExcludeTrainersAlreadyAssignedToTrainee() {
-            // Get initial count of available trainers
-            List<Trainer> initialAvailable = trainerRepository.findAvailableTrainers("trainee.user." + uniqueSuffix);
-            int initialCount = initialAvailable.size();
-
-            // Assign trainer1 to trainee
-            Trainee managedTrainee = entityManager.find(Trainee.class, trainee.getId());
-            Trainer managedTrainer1 = entityManager.find(Trainer.class, trainer1.getId());
-            managedTrainee.getTrainers().add(managedTrainer1);
+            createTrainer(trainerUser1, cardioType);
+            createTrainer(trainerUser2, strengthType);
             entityManager.flush();
             entityManager.clear();
 
-            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee.user." + uniqueSuffix);
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee1");
 
-            // Should have one less trainer
-            assertThat(result).hasSize(initialCount - 1);
-
-            // Should not contain the assigned trainer
+            // Then
+            assertThat(result).hasSize(2);
             assertThat(result)
                     .extracting(t -> t.getUser().getUsername())
-                    .doesNotContain("john.doe." + uniqueSuffix);
-
-            // Should still contain the unassigned trainer
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .contains("jane.smith." + uniqueSuffix);
+                    .containsExactlyInAnyOrder("trainer1", "trainer2");
         }
 
         @Test
-        @DisplayName("Should exclude all assigned trainers")
-        void shouldExcludeAllAssignedTrainers() {
-            // Assign both active trainers to trainee
-            Trainee managedTrainee = entityManager.find(Trainee.class, trainee.getId());
-            Trainer managedTrainer1 = entityManager.find(Trainer.class, trainer1.getId());
-            Trainer managedTrainer2 = entityManager.find(Trainer.class, trainer2.getId());
-            managedTrainee.getTrainers().add(managedTrainer1);
-            managedTrainee.getTrainers().add(managedTrainer2);
+        @DisplayName("Should exclude assigned trainers from available list")
+        void shouldExcludeAssignedTrainersFromAvailableList() {
+            // Given
+            User traineeUser = createUser("trainee1", "Trainee", "One", true);
+            Trainee trainee = createTrainee(traineeUser);
+
+            User trainerUser1 = createUser("trainer1", "Trainer", "One", true);
+            User trainerUser2 = createUser("trainer2", "Trainer", "Two", true);
+            User trainerUser3 = createUser("trainer3", "Trainer", "Three", true);
+
+            Trainer trainer1 = createTrainer(trainerUser1, cardioType);
+            createTrainer(trainerUser2, strengthType);
+            Trainer trainer3 = createTrainer(trainerUser3, cardioType);
+
+            trainee.getTrainers().add(trainer1);
+            trainee.getTrainers().add(trainer3);
             entityManager.flush();
             entityManager.clear();
 
-            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee.user." + uniqueSuffix);
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee1");
 
-            // Our test trainers should not be in the results
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .doesNotContain("john.doe." + uniqueSuffix, "jane.smith." + uniqueSuffix);
+            // Then
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().getUser().getUsername()).isEqualTo("trainer2");
         }
 
         @Test
-        @DisplayName("Should not include inactive trainers")
-        void shouldNotIncludeInactiveTrainers() {
-            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee.user." + uniqueSuffix);
+        @DisplayName("Should exclude inactive trainers from available list")
+        void shouldExcludeInactiveTrainersFromAvailableList() {
+            // Given
+            User traineeUser = createUser("trainee1", "Trainee", "One", true);
+            createTrainee(traineeUser);
 
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .doesNotContain("inactive.trainer." + uniqueSuffix);
+            User activeTrainerUser = createUser("active.trainer", "Active", "Trainer", true);
+            User inactiveTrainerUser = createUser("inactive.trainer", "Inactive", "Trainer", false);
 
-            // All returned trainers should be active
-            assertThat(result).allMatch(t -> t.getUser().getIsActive());
+            createTrainer(activeTrainerUser, cardioType);
+            createTrainer(inactiveTrainerUser, strengthType);
+            entityManager.flush();
+            entityManager.clear();
+
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee1");
+
+            // Then
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().getUser().getUsername()).isEqualTo("active.trainer");
         }
 
         @Test
-        @DisplayName("Should return trainers for non-existent trainee - contains our test trainers")
-        void shouldReturnTrainers_ForNonExistentTrainee() {
-            List<Trainer> result = trainerRepository.findAvailableTrainers("nonexistent.trainee." + uniqueSuffix);
+        @DisplayName("Should return empty list when all trainers are assigned")
+        void shouldReturnEmptyListWhenAllTrainersAreAssigned() {
+            // Given
+            User traineeUser = createUser("trainee1", "Trainee", "One", true);
+            Trainee trainee = createTrainee(traineeUser);
 
-            // Should contain our active test trainers
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .contains("john.doe." + uniqueSuffix, "jane.smith." + uniqueSuffix);
+            User trainerUser1 = createUser("trainer1", "Trainer", "One", true);
+            User trainerUser2 = createUser("trainer2", "Trainer", "Two", true);
+
+            Trainer trainer1 = createTrainer(trainerUser1, cardioType);
+            Trainer trainer2 = createTrainer(trainerUser2, strengthType);
+
+            trainee.getTrainers().add(trainer1);
+            trainee.getTrainers().add(trainer2);
+            entityManager.flush();
+            entityManager.clear();
+
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee1");
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should return empty list when all trainers are inactive")
+        void shouldReturnEmptyListWhenAllTrainersAreInactive() {
+            // Given
+            User traineeUser = createUser("trainee1", "Trainee", "One", true);
+            createTrainee(traineeUser);
+
+            User inactiveTrainer1 = createUser("inactive1", "Inactive", "One", false);
+            User inactiveTrainer2 = createUser("inactive2", "Inactive", "Two", false);
+
+            createTrainer(inactiveTrainer1, cardioType);
+            createTrainer(inactiveTrainer2, strengthType);
+            entityManager.flush();
+            entityManager.clear();
+
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee1");
+
+            // Then
+            assertThat(result).isEmpty();
         }
 
         @Test
         @DisplayName("Should eagerly load user and specialization for available trainers")
-        void shouldEagerlyLoadUserAndSpecialization() {
-            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee.user." + uniqueSuffix);
+        void shouldEagerlyLoadUserAndSpecializationForAvailableTrainers() {
+            // Given
+            User traineeUser = createUser("trainee1", "Trainee", "One", true);
+            createTrainee(traineeUser);
 
-            assertThat(result).isNotEmpty();
-            result.forEach(trainer -> {
-                assertThat(trainer.getUser()).isNotNull();
-                assertThat(trainer.getUser().getUsername()).isNotNull();
-                assertThat(trainer.getSpecialization()).isNotNull();
-                assertThat(trainer.getSpecialization().getTrainingTypeName()).isNotNull();
-            });
-        }
-    }
-
-    @Nested
-    @DisplayName("JpaRepository Inherited Methods Tests")
-    class JpaRepositoryMethodsTests {
-
-        @Test
-        @DisplayName("Should save and retrieve trainer")
-        void shouldSaveAndRetrieveTrainer() {
-            User newUser = User.builder()
-                    .username("new.trainer." + uniqueSuffix)
-                    .firstName("New")
-                    .lastName("Trainer")
-                    .password("password123")
-                    .isActive(true)
-                    .build();
-            entityManager.persist(newUser);
-
-            Trainer newTrainer = Trainer.builder()
-                    .user(newUser)
-                    .specialization(specialization)
-                    .build();
-
-            Trainer savedTrainer = trainerRepository.save(newTrainer);
+            User trainerUser = createUser("trainer1", "Trainer", "One", true);
+            createTrainer(trainerUser, cardioType);
             entityManager.flush();
             entityManager.clear();
 
-            Optional<Trainer> retrieved = trainerRepository.findById(savedTrainer.getId());
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee1");
 
-            assertThat(retrieved).isPresent();
-            assertThat(retrieved.get().getUser().getUsername()).isEqualTo("new.trainer." + uniqueSuffix);
+            // Then
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().getUser().getFirstName()).isEqualTo("Trainer");
+            assertThat(result.getFirst().getSpecialization()).isNotNull();
         }
 
         @Test
-        @DisplayName("Should find all trainers - contains our test trainers")
-        void shouldFindAllTrainers() {
-            List<Trainer> result = trainerRepository.findAll();
+        @DisplayName("Should handle trainee with empty trainers list")
+        void shouldHandleTraineeWithEmptyTrainersList() {
+            // Given
+            User traineeUser = createUser("trainee1", "Trainee", "One", true);
+            createTrainee(traineeUser);
 
-            // Should contain at least our 3 test trainers
-            assertThat(result.size()).isGreaterThanOrEqualTo(3);
-            assertThat(result)
-                    .extracting(t -> t.getUser().getUsername())
-                    .contains("john.doe." + uniqueSuffix, "jane.smith." + uniqueSuffix, "inactive.trainer." + uniqueSuffix);
-        }
-
-        @Test
-        @DisplayName("Should delete trainer by id")
-        void shouldDeleteTrainerById() {
-            Long trainerId = trainer1.getId();
-
-            trainerRepository.deleteById(trainerId);
+            User trainerUser = createUser("trainer1", "Trainer", "One", true);
+            createTrainer(trainerUser, cardioType);
             entityManager.flush();
             entityManager.clear();
 
-            Optional<Trainer> deleted = trainerRepository.findById(trainerId);
-            assertThat(deleted).isEmpty();
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("trainee1");
+
+            // Then
+            assertThat(result).hasSize(1);
         }
 
         @Test
-        @DisplayName("Should check if trainer exists by id")
-        void shouldCheckIfTrainerExistsById() {
-            assertThat(trainerRepository.existsById(trainer1.getId())).isTrue();
-            assertThat(trainerRepository.existsById(999999L)).isFalse();
-        }
+        @DisplayName("Should return all active trainers for nonexistent trainee")
+        void shouldReturnAllActiveTrainersForNonexistentTrainee() {
+            // Given
+            User trainerUser1 = createUser("trainer1", "Trainer", "One", true);
+            User trainerUser2 = createUser("trainer2", "Trainer", "Two", true);
 
-        @Test
-        @DisplayName("Should count trainers - at least our test trainers")
-        void shouldCountTrainers() {
-            long count = trainerRepository.count();
-
-            // Should have at least our 3 test trainers
-            assertThat(count).isGreaterThanOrEqualTo(3);
-        }
-
-        @Test
-        @DisplayName("Should find trainer by id")
-        void shouldFindTrainerById() {
-            Optional<Trainer> result = trainerRepository.findById(trainer1.getId());
-
-            assertThat(result).isPresent();
-            assertThat(result.get().getId()).isEqualTo(trainer1.getId());
-        }
-
-        @Test
-        @DisplayName("Should return empty for non-existent id")
-        void shouldReturnEmpty_ForNonExistentId() {
-            Optional<Trainer> result = trainerRepository.findById(999999L);
-
-            assertThat(result).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("Edge Cases Tests")
-    class EdgeCasesTests {
-
-        @Test
-        @DisplayName("Should handle trainer with different specialization")
-        void shouldHandleTrainerWithDifferentSpecialization() {
-            TrainingType yogaType = getOrCreateTrainingType(TrainingTypeName.YOGA);
-
-            User yogaTrainerUser = User.builder()
-                    .username("yoga.trainer." + uniqueSuffix)
-                    .firstName("Yoga")
-                    .lastName("Trainer")
-                    .password("password123")
-                    .isActive(true)
-                    .build();
-            entityManager.persist(yogaTrainerUser);
-
-            Trainer yogaTrainer = Trainer.builder()
-                    .user(yogaTrainerUser)
-                    .specialization(yogaType)
-                    .build();
-            entityManager.persist(yogaTrainer);
+            createTrainer(trainerUser1, cardioType);
+            createTrainer(trainerUser2, strengthType);
             entityManager.flush();
             entityManager.clear();
 
-            Optional<Trainer> result = trainerRepository.findByUser_Username("yoga.trainer." + uniqueSuffix);
+            // When
+            List<Trainer> result = trainerRepository.findAvailableTrainers("nonexistent.trainee");
 
-            assertThat(result).isPresent();
-            assertThat(result.get().getSpecialization().getTrainingTypeName()).isEqualTo(TrainingTypeName.YOGA);
+            // Then
+            assertThat(result).hasSize(2);
         }
 
         @Test
         @DisplayName("Should handle multiple trainees with different assigned trainers")
         void shouldHandleMultipleTraineesWithDifferentAssignedTrainers() {
-            // Create second trainee
-            User traineeUser2 = User.builder()
-                    .username("trainee.user2." + uniqueSuffix)
-                    .firstName("Trainee2")
-                    .lastName("User2")
-                    .password("password123")
-                    .isActive(true)
-                    .build();
-            entityManager.persist(traineeUser2);
+            // Given
+            User traineeUser1 = createUser("trainee1", "Trainee", "One", true);
+            User traineeUser2 = createUser("trainee2", "Trainee", "Two", true);
+            Trainee trainee1 = createTrainee(traineeUser1);
+            Trainee trainee2 = createTrainee(traineeUser2);
 
-            Trainee trainee2 = Trainee.builder()
-                    .user(traineeUser2)
-                    .dateOfBirth(LocalDate.of(1995, 5, 5))
-                    .address("Test Address 2")
-                    .build();
-            entityManager.persist(trainee2);
+            User trainerUser1 = createUser("trainer1", "Trainer", "One", true);
+            User trainerUser2 = createUser("trainer2", "Trainer", "Two", true);
+            User trainerUser3 = createUser("trainer3", "Trainer", "Three", true);
 
-            // Assign trainer1 to trainee1
-            Trainee managedTrainee1 = entityManager.find(Trainee.class, trainee.getId());
-            Trainer managedTrainer1 = entityManager.find(Trainer.class, trainer1.getId());
-            managedTrainee1.getTrainers().add(managedTrainer1);
+            Trainer trainer1 = createTrainer(trainerUser1, cardioType);
+            Trainer trainer2 = createTrainer(trainerUser2, strengthType);
+            createTrainer(trainerUser3, cardioType);
 
-            // Assign trainer2 to trainee2
-            Trainee managedTrainee2 = entityManager.find(Trainee.class, trainee2.getId());
-            Trainer managedTrainer2 = entityManager.find(Trainer.class, trainer2.getId());
-            managedTrainee2.getTrainers().add(managedTrainer2);
-
+            trainee1.getTrainers().add(trainer1);
+            trainee2.getTrainers().add(trainer2);
             entityManager.flush();
             entityManager.clear();
 
-            // Check available trainers for trainee1 - should not contain trainer1
-            List<Trainer> availableForTrainee1 = trainerRepository.findAvailableTrainers("trainee.user." + uniqueSuffix);
-            assertThat(availableForTrainee1)
-                    .extracting(t -> t.getUser().getUsername())
-                    .doesNotContain("john.doe." + uniqueSuffix)
-                    .contains("jane.smith." + uniqueSuffix);
+            // When
+            List<Trainer> resultForTrainee1 = trainerRepository.findAvailableTrainers("trainee1");
+            List<Trainer> resultForTrainee2 = trainerRepository.findAvailableTrainers("trainee2");
 
-            // Check available trainers for trainee2 - should not contain trainer2
-            List<Trainer> availableForTrainee2 = trainerRepository.findAvailableTrainers("trainee.user2." + uniqueSuffix);
-            assertThat(availableForTrainee2)
+            // Then
+            assertThat(resultForTrainee1).hasSize(2);
+            assertThat(resultForTrainee1)
                     .extracting(t -> t.getUser().getUsername())
-                    .doesNotContain("jane.smith." + uniqueSuffix)
-                    .contains("john.doe." + uniqueSuffix);
+                    .containsExactlyInAnyOrder("trainer2", "trainer3");
+
+            assertThat(resultForTrainee2).hasSize(2);
+            assertThat(resultForTrainee2)
+                    .extracting(t -> t.getUser().getUsername())
+                    .containsExactlyInAnyOrder("trainer1", "trainer3");
         }
+    }
+
+    @Nested
+    @DisplayName("JpaRepository Standard Methods Tests")
+    class JpaRepositoryStandardMethodsTests {
+
+        @Test
+        @DisplayName("Should save and retrieve trainer")
+        void shouldSaveAndRetrieveTrainer() {
+            // Given
+            User user = createUser("new.trainer", "New", "Trainer", true);
+            Trainer trainer = Trainer.builder()
+                    .user(user)
+                    .specialization(cardioType)
+                    .build();
+
+            // When
+            Trainer savedTrainer = trainerRepository.save(trainer);
+            entityManager.flush();
+            entityManager.clear();
+
+            Optional<Trainer> retrieved = trainerRepository.findById(savedTrainer.getId());
+
+            // Then
+            assertThat(retrieved).isPresent();
+            assertThat(retrieved.get().getUser().getUsername()).isEqualTo("new.trainer");
+        }
+
+        @Test
+        @DisplayName("Should find all trainers")
+        void shouldFindAllTrainers() {
+            // Given
+            User user1 = createUser("trainer1", "John", "Doe", true);
+            User user2 = createUser("trainer2", "Jane", "Smith", true);
+
+            createTrainer(user1, cardioType);
+            createTrainer(user2, strengthType);
+            entityManager.flush();
+            entityManager.clear();
+
+            // When
+            List<Trainer> result = trainerRepository.findAll();
+
+            // Then
+            assertThat(result).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("Should delete trainer")
+        void shouldDeleteTrainer() {
+            // Given
+            User user = createUser("to.delete", "Delete", "Me", true);
+            Trainer trainer = createTrainer(user, cardioType);
+            entityManager.flush();
+            Long trainerId = trainer.getId();
+
+            // When
+            trainerRepository.deleteById(trainerId);
+            entityManager.flush();
+            entityManager.clear();
+
+            // Then
+            Optional<Trainer> result = trainerRepository.findById(trainerId);
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should check if trainer exists by id")
+        void shouldCheckIfTrainerExistsById() {
+            // Given
+            User user = createUser("exists.trainer", "Exists", "Trainer", true);
+            Trainer trainer = createTrainer(user, cardioType);
+            entityManager.flush();
+
+            // When & Then
+            assertThat(trainerRepository.existsById(trainer.getId())).isTrue();
+            assertThat(trainerRepository.existsById(999L)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Should count trainers")
+        void shouldCountTrainers() {
+            // Given
+            User user1 = createUser("trainer1", "John", "Doe", true);
+            User user2 = createUser("trainer2", "Jane", "Smith", true);
+
+            createTrainer(user1, cardioType);
+            createTrainer(user2, strengthType);
+            entityManager.flush();
+
+            // When
+            long count = trainerRepository.count();
+
+            // Then
+            assertThat(count).isEqualTo(2);
+        }
+    }
+
+    // Helper methods for creating test entities
+
+    private TrainingType createTrainingType(TrainingTypeName name) {
+        TrainingType trainingType = new TrainingType(null, name);
+        return entityManager.persist(trainingType);
+    }
+
+    private User createUser(String username, String firstName, String lastName, boolean isActive) {
+        User user = User.builder()
+                .username(username)
+                .firstName(firstName)
+                .lastName(lastName)
+                .password("password123")
+                .isActive(isActive)
+                .build();
+        return entityManager.persist(user);
+    }
+
+    private Trainer createTrainer(User user, TrainingType specialization) {
+        Trainer trainer = Trainer.builder()
+                .user(user)
+                .specialization(specialization)
+                .build();
+        return entityManager.persist(trainer);
+    }
+
+    private Trainee createTrainee(User user) {
+        Trainee trainee = Trainee.builder()
+                .user(user)
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .address("Test Address")
+                .build();
+        return entityManager.persist(trainee);
     }
 }

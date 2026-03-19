@@ -10,6 +10,7 @@ import com.epam.gym.entity.User;
 import com.epam.gym.enums.TrainingTypeName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -18,365 +19,708 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@DisplayName("TraineeMapper Unit Tests")
 class TraineeMapperTest {
 
     private TraineeMapper traineeMapper;
 
+    private static final Long TRAINEE_ID = 1L;
+    private static final Long USER_ID = 1L;
+    private static final String USERNAME = "john.doe";
+    private static final String PASSWORD = "password123";
+    private static final String FIRST_NAME = "John";
+    private static final String LAST_NAME = "Doe";
+    private static final LocalDate DATE_OF_BIRTH = LocalDate.of(1990, 5, 15);
+    private static final String ADDRESS = "123 Main St, New York";
+    private static final Boolean IS_ACTIVE = true;
+
+    private static final String TRAINER_USERNAME = "alice.smith";
+    private static final String TRAINER_FIRST_NAME = "Alice";
+    private static final String TRAINER_LAST_NAME = "Smith";
+
     @BeforeEach
     void setUp() {
-        // Get the MapStruct generated implementation
         traineeMapper = Mappers.getMapper(TraineeMapper.class);
     }
 
-    // ==================== toProfileResponse Tests ====================
+    @Nested
+    @DisplayName("toProfileResponse Tests")
+    class ToProfileResponseTests {
 
-    @Test
-    @DisplayName("Should map Trainee to TraineeProfileResponse with all fields")
-    void shouldMapToProfileResponse() {
-        // Given
-        User user = User.builder()
-                .username("john.doe")
-                .firstName("John")
-                .lastName("Doe")
-                .isActive(true)
-                .build();
+        @Test
+        @DisplayName("Should map Trainee to TraineeProfileResponse correctly")
+        void toProfileResponse_ValidTrainee_MapsCorrectly() {
+            Trainee trainee = createTrainee();
 
-        Trainer trainer = createSampleTrainer("jane.smith", "Jane", "Smith", TrainingTypeName.YOGA);
-        List<Trainer> trainers = new ArrayList<>();
-        trainers.add(trainer);
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        Trainee trainee = Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(1990, 1, 15))
-                .address("123 Main St, New York")
-                .trainers(trainers)
-                .build();
+            assertThat(response).isNotNull();
+            assertThat(response.getUsername()).isEqualTo(USERNAME);
+            assertThat(response.getFirstName()).isEqualTo(FIRST_NAME);
+            assertThat(response.getLastName()).isEqualTo(LAST_NAME);
+            assertThat(response.getDateOfBirth()).isEqualTo(DATE_OF_BIRTH);
+            assertThat(response.getAddress()).isEqualTo(ADDRESS);
+            assertThat(response.getIsActive()).isEqualTo(IS_ACTIVE);
+        }
 
-        // When
-        TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+        @Test
+        @DisplayName("Should map username from nested user object")
+        void toProfileResponse_ValidTrainee_MapsUsername() {
+            Trainee trainee = createTraineeWithUsername("bob.wilson");
 
-        // Then
-        assertNotNull(response);
-        assertEquals("john.doe", response.getUsername());
-        assertEquals("John", response.getFirstName());
-        assertEquals("Doe", response.getLastName());
-        assertTrue(response.getIsActive());
-        assertNotNull(response.getTrainers());
-        assertEquals(1, response.getTrainers().size());
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        // Verify nested trainer mapping
-        TrainerSummaryResponse trainerResponse = response.getTrainers().get(0);
-        assertEquals("jane.smith", trainerResponse.getUsername());
-        assertEquals("Jane", trainerResponse.getFirstName());
-        assertEquals("Smith", trainerResponse.getLastName());
-        assertEquals(TrainingTypeName.YOGA, trainerResponse.getSpecialization());
-    }
+            assertThat(response.getUsername()).isEqualTo("bob.wilson");
+        }
 
-    @Test
-    @DisplayName("Should map Trainee with empty trainers list")
-    void shouldMapWithEmptyTrainersList() {
-        // Given
-        User user = User.builder()
-                .username("empty.trainee")
-                .firstName("Empty")
-                .lastName("Trainee")
-                .isActive(false)
-                .build();
+        @Test
+        @DisplayName("Should map first name from nested user object")
+        void toProfileResponse_ValidTrainee_MapsFirstName() {
+            Trainee trainee = createTraineeWithName("Robert", LAST_NAME);
 
-        Trainee trainee = Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(1985, 5, 20))
-                .address("456 Empty Ave")
-                .trainers(Collections.emptyList())
-                .build();
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        // When
-        TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+            assertThat(response.getFirstName()).isEqualTo("Robert");
+        }
 
-        // Then
-        assertNotNull(response);
-        assertEquals("empty.trainee", response.getUsername());
-        assertFalse(response.getIsActive());
-        assertNotNull(response.getTrainers());
-        assertTrue(response.getTrainers().isEmpty());
-    }
+        @Test
+        @DisplayName("Should map last name from nested user object")
+        void toProfileResponse_ValidTrainee_MapsLastName() {
+            Trainee trainee = createTraineeWithName(FIRST_NAME, "Wilson");
 
-    @Test
-    @DisplayName("Should map Trainee with null trainers")
-    void shouldMapWithNullTrainers() {
-        // Given
-        User user = User.builder()
-                .username("null.trainers")
-                .firstName("Null")
-                .lastName("Trainers")
-                .isActive(true)
-                .build();
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        Trainee trainee = Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(1988, 3, 10))
-                .address("789 Null Blvd")
-                .trainers(null)
-                .build();
+            assertThat(response.getLastName()).isEqualTo("Wilson");
+        }
 
-        // When
-        TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+        @Test
+        @DisplayName("Should map date of birth correctly")
+        void toProfileResponse_ValidTrainee_MapsDateOfBirth() {
+            LocalDate specificDate = LocalDate.of(1985, 12, 25);
+            Trainee trainee = createTraineeWithDateOfBirth(specificDate);
 
-        // Then
-        assertNotNull(response);
-        assertEquals("null.trainers", response.getUsername());
-        // Trainers list should be null when source is null
-        assertNull(response.getTrainers());
-    }
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-    // ==================== toSummaryResponse Tests ====================
+            assertThat(response.getDateOfBirth()).isEqualTo(specificDate);
+        }
 
-    @Test
-    @DisplayName("Should map Trainee to TraineeSummaryResponse")
-    void shouldMapToSummaryResponse() {
-        // Given
-        User user = User.builder()
-                .username("summary.user")
-                .firstName("Summary")
-                .lastName("User")
-                .isActive(true)
-                .build();
+        @Test
+        @DisplayName("Should map null date of birth")
+        void toProfileResponse_NullDateOfBirth_MapsNull() {
+            Trainee trainee = createTraineeWithDateOfBirth(null);
 
-        Trainee trainee = Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(1992, 7, 25))
-                .address("321 Summary Lane")
-                .build();
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        // When
-        TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
+            assertThat(response.getDateOfBirth()).isNull();
+        }
 
-        // Then
-        assertNotNull(response);
-        assertEquals("summary.user", response.getUsername());
-        assertEquals("Summary", response.getFirstName());
-        assertEquals("User", response.getLastName());
-        // Note: isActive is not mapped in toSummaryResponse based on the interface
-    }
+        @Test
+        @DisplayName("Should map address correctly")
+        void toProfileResponse_ValidTrainee_MapsAddress() {
+            Trainee trainee = createTraineeWithAddress("456 Oak Ave, Boston");
 
-    // ==================== toSummaryResponseList Tests ====================
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-    @Test
-    @DisplayName("Should map list of Trainees to list of TraineeSummaryResponse")
-    void shouldMapToSummaryResponseList() {
-        // Given
-        Trainee trainee1 = createSampleTrainee("user1", "First1", "Last1");
-        Trainee trainee2 = createSampleTrainee("user2", "First2", "Last2");
-        Trainee trainee3 = createSampleTrainee("user3", "First3", "Last3");
+            assertThat(response.getAddress()).isEqualTo("456 Oak Ave, Boston");
+        }
 
-        List<Trainee> trainees = List.of(trainee1, trainee2, trainee3);
+        @Test
+        @DisplayName("Should map null address")
+        void toProfileResponse_NullAddress_MapsNull() {
+            Trainee trainee = createTraineeWithAddress(null);
 
-        // When
-        List<TraineeSummaryResponse> responses = traineeMapper.toSummaryResponseList(trainees);
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        // Then
-        assertNotNull(responses);
-        assertEquals(3, responses.size());
+            assertThat(response.getAddress()).isNull();
+        }
 
-        assertEquals("user1", responses.get(0).getUsername());
-        assertEquals("First1", responses.get(0).getFirstName());
-        assertEquals("Last1", responses.get(0).getLastName());
+        @Test
+        @DisplayName("Should map isActive status correctly when true")
+        void toProfileResponse_ActiveTrainee_MapsIsActiveTrue() {
+            Trainee trainee = createTraineeWithActiveStatus(true);
 
-        assertEquals("user2", responses.get(1).getUsername());
-        assertEquals("user3", responses.get(2).getUsername());
-    }
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-    @Test
-    @DisplayName("Should handle empty list in toSummaryResponseList")
-    void shouldHandleEmptyList() {
-        // When
-        List<TraineeSummaryResponse> responses = traineeMapper.toSummaryResponseList(Collections.emptyList());
+            assertThat(response.getIsActive()).isTrue();
+        }
 
-        // Then
-        assertNotNull(responses);
-        assertTrue(responses.isEmpty());
-    }
+        @Test
+        @DisplayName("Should map isActive status correctly when false")
+        void toProfileResponse_InactiveTrainee_MapsIsActiveFalse() {
+            Trainee trainee = createTraineeWithActiveStatus(false);
 
-    @Test
-    @DisplayName("Should handle null list in toSummaryResponseList")
-    void shouldHandleNullList() {
-        // When
-        List<TraineeSummaryResponse> responses = traineeMapper.toSummaryResponseList(null);
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        // Then
-        assertNull(responses);
-    }
+            assertThat(response.getIsActive()).isFalse();
+        }
 
-    // ==================== toTrainerSummary Tests ====================
+        @Test
+        @DisplayName("Should map empty trainers list")
+        void toProfileResponse_NoTrainers_MapsEmptyList() {
+            Trainee trainee = createTrainee();
 
-    @Test
-    @DisplayName("Should map Trainer to TrainerSummaryResponse")
-    void shouldMapTrainerToSummary() {
-        // Given
-        Trainer trainer = createSampleTrainer("trainer.pro", "Pro", "Trainer", TrainingTypeName.FITNESS);
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        // When
-        TrainerSummaryResponse response = traineeMapper.toTrainerSummary(trainer);
+            assertThat(response.getTrainers()).isNotNull();
+            assertThat(response.getTrainers()).isEmpty();
+        }
 
-        // Then
-        assertNotNull(response);
-        assertEquals("trainer.pro", response.getUsername());
-        assertEquals("Pro", response.getFirstName());
-        assertEquals("Trainer", response.getLastName());
-        assertEquals(TrainingTypeName.FITNESS, response.getSpecialization());
-    }
+        @Test
+        @DisplayName("Should map trainers list correctly")
+        void toProfileResponse_WithTrainers_MapsTrainersList() {
+            Trainee trainee = createTraineeWithTrainers(List.of(
+                    createTrainer("alice.smith", "Alice", "Smith", TrainingTypeName.FITNESS),
+                    createTrainer("bob.jones", "Bob", "Jones", TrainingTypeName.YOGA)
+            ));
 
-    @Test
-    @DisplayName("Should map Trainer with different specializations")
-    void shouldMapTrainerWithDifferentSpecializations() {
-        // Test all training types dynamically using values()
-        TrainingTypeName[] types = TrainingTypeName.values();
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
 
-        for (TrainingTypeName type : types) {
-            // Given
-            Trainer trainer = createSampleTrainer("trainer." + type.name().toLowerCase(),
-                    "Trainer", type.name(), type);
+            assertThat(response.getTrainers()).isNotNull();
+            assertThat(response.getTrainers()).hasSize(2);
+            assertThat(response.getTrainers().get(0).getUsername()).isEqualTo("alice.smith");
+            assertThat(response.getTrainers().get(1).getUsername()).isEqualTo("bob.jones");
+        }
 
-            // When
-            TrainerSummaryResponse response = traineeMapper.toTrainerSummary(trainer);
+        @Test
+        @DisplayName("Should map single trainer correctly")
+        void toProfileResponse_SingleTrainer_MapsCorrectly() {
+            Trainee trainee = createTraineeWithTrainers(List.of(
+                    createTrainer("alice.smith", "Alice", "Smith", TrainingTypeName.FITNESS)
+            ));
 
-            // Then
-            assertEquals(type, response.getSpecialization(),
-                    "Specialization should be mapped correctly for " + type);
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+
+            assertThat(response.getTrainers()).hasSize(1);
+            assertThat(response.getTrainers().getFirst().getUsername()).isEqualTo("alice.smith");
+            assertThat(response.getTrainers().getFirst().getFirstName()).isEqualTo("Alice");
+            assertThat(response.getTrainers().getFirst().getLastName()).isEqualTo("Smith");
+            assertThat(response.getTrainers().getFirst().getSpecialization()).isEqualTo(TrainingTypeName.FITNESS);
+        }
+
+        @Test
+        @DisplayName("Should return null when trainee is null")
+        void toProfileResponse_NullTrainee_ReturnsNull() {
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(null);
+
+            assertThat(response).isNull();
+        }
+
+        @Test
+        @DisplayName("Should map trainee with many trainers")
+        void toProfileResponse_ManyTrainers_MapsCorrectly() {
+            List<Trainer> trainers = new ArrayList<>();
+            for (int i = 0; i < 20; i++) {
+                trainers.add(createTrainer("trainer" + i, "First" + i, "Last" + i, TrainingTypeName.FITNESS));
+            }
+            Trainee trainee = createTraineeWithTrainers(trainers);
+
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+
+            assertThat(response.getTrainers()).hasSize(20);
+        }
+
+        @Test
+        @DisplayName("Should map trainee with special characters in address")
+        void toProfileResponse_SpecialCharactersInAddress_MapsCorrectly() {
+            Trainee trainee = createTraineeWithAddress("123 Main St, Apt #4B, New York, NY 10001");
+
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+
+            assertThat(response.getAddress()).isEqualTo("123 Main St, Apt #4B, New York, NY 10001");
+        }
+
+        @Test
+        @DisplayName("Should map trainee with past date of birth")
+        void toProfileResponse_PastDateOfBirth_MapsCorrectly() {
+            LocalDate pastDate = LocalDate.of(1950, 1, 1);
+            Trainee trainee = createTraineeWithDateOfBirth(pastDate);
+
+            TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+
+            assertThat(response.getDateOfBirth()).isEqualTo(pastDate);
         }
     }
 
-    // ==================== toTrainerSummaryList Tests ====================
+    @Nested
+    @DisplayName("toSummaryResponse Tests")
+    class ToSummaryResponseTests {
 
-    @Test
-    @DisplayName("Should map list of Trainers to list of TrainerSummaryResponse")
-    void shouldMapTrainerListToSummaryList() {
-        // Given - use only enum values that actually exist
-        Trainer trainer1 = createSampleTrainer("t1", "Trainer", "One", TrainingTypeName.YOGA);
-        Trainer trainer2 = createSampleTrainer("t2", "Trainer", "Two", TrainingTypeName.FITNESS);
+        @Test
+        @DisplayName("Should map Trainee to TraineeSummaryResponse correctly")
+        void toSummaryResponse_ValidTrainee_MapsCorrectly() {
+            Trainee trainee = createTrainee();
 
-        List<Trainer> trainers = List.of(trainer1, trainer2);
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
 
-        // When
-        List<TrainerSummaryResponse> responses = traineeMapper.toTrainerSummaryList(trainers);
+            assertThat(response).isNotNull();
+            assertThat(response.getUsername()).isEqualTo(USERNAME);
+            assertThat(response.getFirstName()).isEqualTo(FIRST_NAME);
+            assertThat(response.getLastName()).isEqualTo(LAST_NAME);
+        }
 
-        // Then
-        assertNotNull(responses);
-        assertEquals(2, responses.size());
+        @Test
+        @DisplayName("Should map username correctly")
+        void toSummaryResponse_ValidTrainee_MapsUsername() {
+            Trainee trainee = createTraineeWithUsername("charlie.brown");
 
-        assertEquals("t1", responses.get(0).getUsername());
-        assertEquals(TrainingTypeName.YOGA, responses.get(0).getSpecialization());
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
 
-        assertEquals("t2", responses.get(1).getUsername());
-        assertEquals(TrainingTypeName.FITNESS, responses.get(1).getSpecialization());
+            assertThat(response.getUsername()).isEqualTo("charlie.brown");
+        }
+
+        @Test
+        @DisplayName("Should map first name correctly")
+        void toSummaryResponse_ValidTrainee_MapsFirstName() {
+            Trainee trainee = createTraineeWithName("Charlie", LAST_NAME);
+
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
+
+            assertThat(response.getFirstName()).isEqualTo("Charlie");
+        }
+
+        @Test
+        @DisplayName("Should map last name correctly")
+        void toSummaryResponse_ValidTrainee_MapsLastName() {
+            Trainee trainee = createTraineeWithName(FIRST_NAME, "Brown");
+
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
+
+            assertThat(response.getLastName()).isEqualTo("Brown");
+        }
+
+        @Test
+        @DisplayName("Should return null when trainee is null")
+        void toSummaryResponse_NullTrainee_ReturnsNull() {
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(null);
+
+            assertThat(response).isNull();
+        }
+
+        @Test
+        @DisplayName("Should map trainee with special characters in name")
+        void toSummaryResponse_SpecialCharactersInName_MapsCorrectly() {
+            Trainee trainee = createTraineeWithName("Mary-Jane", "O'Connor");
+
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
+
+            assertThat(response.getFirstName()).isEqualTo("Mary-Jane");
+            assertThat(response.getLastName()).isEqualTo("O'Connor");
+        }
+
+        @Test
+        @DisplayName("Should map trainee with accented characters")
+        void toSummaryResponse_AccentedCharacters_MapsCorrectly() {
+            Trainee trainee = createTraineeWithName("José", "García");
+
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
+
+            assertThat(response.getFirstName()).isEqualTo("José");
+            assertThat(response.getLastName()).isEqualTo("García");
+        }
+
+        @Test
+        @DisplayName("Should map trainee with long names")
+        void toSummaryResponse_LongNames_MapsCorrectly() {
+            Trainee trainee = createTraineeWithName("Christopher", "Bartholomew");
+
+            TraineeSummaryResponse response = traineeMapper.toSummaryResponse(trainee);
+
+            assertThat(response.getFirstName()).isEqualTo("Christopher");
+            assertThat(response.getLastName()).isEqualTo("Bartholomew");
+        }
     }
 
-    @Test
-    @DisplayName("Should handle empty trainer list")
-    void shouldHandleEmptyTrainerList() {
-        // When
-        List<TrainerSummaryResponse> responses = traineeMapper.toTrainerSummaryList(Collections.emptyList());
+    @Nested
+    @DisplayName("trainerToSummary Tests")
+    class TrainerToSummaryTests {
 
-        // Then
-        assertNotNull(responses);
-        assertTrue(responses.isEmpty());
+        @Test
+        @DisplayName("Should map Trainer to TrainerSummaryResponse correctly")
+        void trainerToSummary_ValidTrainer_MapsCorrectly() {
+            Trainer trainer = createTrainer(TRAINER_USERNAME, TRAINER_FIRST_NAME, TRAINER_LAST_NAME, TrainingTypeName.FITNESS);
+
+            TrainerSummaryResponse response = traineeMapper.trainerToSummary(trainer);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getUsername()).isEqualTo(TRAINER_USERNAME);
+            assertThat(response.getFirstName()).isEqualTo(TRAINER_FIRST_NAME);
+            assertThat(response.getLastName()).isEqualTo(TRAINER_LAST_NAME);
+            assertThat(response.getSpecialization()).isEqualTo(TrainingTypeName.FITNESS);
+        }
+
+        @Test
+        @DisplayName("Should map username correctly")
+        void trainerToSummary_ValidTrainer_MapsUsername() {
+            Trainer trainer = createTrainer("bob.johnson", "Bob", "Johnson", TrainingTypeName.YOGA);
+
+            TrainerSummaryResponse response = traineeMapper.trainerToSummary(trainer);
+
+            assertThat(response.getUsername()).isEqualTo("bob.johnson");
+        }
+
+        @Test
+        @DisplayName("Should map first name correctly")
+        void trainerToSummary_ValidTrainer_MapsFirstName() {
+            Trainer trainer = createTrainer(TRAINER_USERNAME, "Robert", TRAINER_LAST_NAME, TrainingTypeName.FITNESS);
+
+            TrainerSummaryResponse response = traineeMapper.trainerToSummary(trainer);
+
+            assertThat(response.getFirstName()).isEqualTo("Robert");
+        }
+
+        @Test
+        @DisplayName("Should map last name correctly")
+        void trainerToSummary_ValidTrainer_MapsLastName() {
+            Trainer trainer = createTrainer(TRAINER_USERNAME, TRAINER_FIRST_NAME, "Johnson", TrainingTypeName.FITNESS);
+
+            TrainerSummaryResponse response = traineeMapper.trainerToSummary(trainer);
+
+            assertThat(response.getLastName()).isEqualTo("Johnson");
+        }
+
+        @Test
+        @DisplayName("Should map specialization correctly")
+        void trainerToSummary_ValidTrainer_MapsSpecialization() {
+            Trainer trainer = createTrainer(TRAINER_USERNAME, TRAINER_FIRST_NAME, TRAINER_LAST_NAME, TrainingTypeName.CARDIO);
+
+            TrainerSummaryResponse response = traineeMapper.trainerToSummary(trainer);
+
+            assertThat(response.getSpecialization()).isEqualTo(TrainingTypeName.CARDIO);
+        }
+
+        @Test
+        @DisplayName("Should return null when trainer is null")
+        void trainerToSummary_NullTrainer_ReturnsNull() {
+            TrainerSummaryResponse response = traineeMapper.trainerToSummary(null);
+
+            assertThat(response).isNull();
+        }
+
+        @Test
+        @DisplayName("Should map all specialization types correctly")
+        void trainerToSummary_AllSpecializations_MapsCorrectly() {
+            for (TrainingTypeName typeName : TrainingTypeName.values()) {
+                Trainer trainer = createTrainer(TRAINER_USERNAME, TRAINER_FIRST_NAME, TRAINER_LAST_NAME, typeName);
+
+                TrainerSummaryResponse response = traineeMapper.trainerToSummary(trainer);
+
+                assertThat(response.getSpecialization()).isEqualTo(typeName);
+            }
+        }
+
+        @Test
+        @DisplayName("Should map trainer with special characters in name")
+        void trainerToSummary_SpecialCharactersInName_MapsCorrectly() {
+            Trainer trainer = createTrainer("mary.oconnor", "Mary-Jane", "O'Connor", TrainingTypeName.YOGA);
+
+            TrainerSummaryResponse response = traineeMapper.trainerToSummary(trainer);
+
+            assertThat(response.getFirstName()).isEqualTo("Mary-Jane");
+            assertThat(response.getLastName()).isEqualTo("O'Connor");
+        }
     }
 
-    @Test
-    @DisplayName("Should handle null trainer list")
-    void shouldHandleNullTrainerList() {
-        // When
-        List<TrainerSummaryResponse> responses = traineeMapper.toTrainerSummaryList(null);
+    @Nested
+    @DisplayName("trainersToSummaryList Tests")
+    class TrainersToSummaryListTests {
 
-        // Then
-        assertNull(responses);
-    }
+        @Test
+        @DisplayName("Should map list of trainers correctly")
+        void trainersToSummaryList_ValidList_MapsCorrectly() {
+            List<Trainer> trainers = List.of(
+                    createTrainer("trainer1", "First1", "Last1", TrainingTypeName.FITNESS),
+                    createTrainer("trainer2", "First2", "Last2", TrainingTypeName.YOGA),
+                    createTrainer("trainer3", "First3", "Last3", TrainingTypeName.CARDIO)
+            );
 
-    // ==================== Edge Cases ====================
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
 
-    @Test
-    @DisplayName("Should handle Trainee with null User")
-    void shouldHandleNullUser() {
-        // Given
-        Trainee trainee = Trainee.builder()
-                .user(null)
-                .dateOfBirth(LocalDate.now())
-                .address("Address")
-                .build();
+            assertThat(responses).isNotNull();
+            assertThat(responses).hasSize(3);
+            assertThat(responses.get(0).getUsername()).isEqualTo("trainer1");
+            assertThat(responses.get(1).getUsername()).isEqualTo("trainer2");
+            assertThat(responses.get(2).getUsername()).isEqualTo("trainer3");
+        }
 
-        // When
-        TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
+        @Test
+        @DisplayName("Should return empty list when input is empty")
+        void trainersToSummaryList_EmptyList_ReturnsEmptyList() {
+            List<Trainer> trainers = Collections.emptyList();
 
-        // Then - MapStruct will handle null source by setting null targets
-        assertNotNull(response);
-        assertNull(response.getUsername());
-        assertNull(response.getFirstName());
-        assertNull(response.getLastName());
-        assertNull(response.getIsActive());
-    }
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
 
-    @Test
-    @DisplayName("Should handle Trainer with null specialization")
-    void shouldHandleNullSpecialization() {
-        // Given
-        User user = User.builder()
-                .username("no.spec")
-                .firstName("No")
-                .lastName("Specialization")
-                .build();
+            assertThat(responses).isNotNull();
+            assertThat(responses).isEmpty();
+        }
 
-        Trainer trainer = Trainer.builder()
-                .user(user)
-                .specialization(null)
-                .build();
+        @Test
+        @DisplayName("Should return null when input list is null")
+        void trainersToSummaryList_NullList_ReturnsNull() {
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(null);
 
-        // When
-        TrainerSummaryResponse response = traineeMapper.toTrainerSummary(trainer);
+            assertThat(responses).isNull();
+        }
 
-        // Then
-        assertNotNull(response);
-        assertEquals("no.spec", response.getUsername());
-        assertNull(response.getSpecialization());
+        @Test
+        @DisplayName("Should map single item list correctly")
+        void trainersToSummaryList_SingleItem_MapsCorrectly() {
+            List<Trainer> trainers = List.of(
+                    createTrainer(TRAINER_USERNAME, TRAINER_FIRST_NAME, TRAINER_LAST_NAME, TrainingTypeName.FITNESS)
+            );
+
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
+
+            assertThat(responses).hasSize(1);
+            assertThat(responses.getFirst().getUsername()).isEqualTo(TRAINER_USERNAME);
+            assertThat(responses.getFirst().getFirstName()).isEqualTo(TRAINER_FIRST_NAME);
+            assertThat(responses.getFirst().getLastName()).isEqualTo(TRAINER_LAST_NAME);
+            assertThat(responses.getFirst().getSpecialization()).isEqualTo(TrainingTypeName.FITNESS);
+        }
+
+        @Test
+        @DisplayName("Should preserve order when mapping list")
+        void trainersToSummaryList_ValidList_PreservesOrder() {
+            List<Trainer> trainers = List.of(
+                    createTrainer("first", "First", "User", TrainingTypeName.FITNESS),
+                    createTrainer("second", "Second", "User", TrainingTypeName.YOGA),
+                    createTrainer("third", "Third", "User", TrainingTypeName.CARDIO)
+            );
+
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
+
+            assertThat(responses.get(0).getUsername()).isEqualTo("first");
+            assertThat(responses.get(1).getUsername()).isEqualTo("second");
+            assertThat(responses.get(2).getUsername()).isEqualTo("third");
+        }
+
+        @Test
+        @DisplayName("Should map list with different specializations")
+        void trainersToSummaryList_DifferentSpecializations_MapsCorrectly() {
+            List<Trainer> trainers = List.of(
+                    createTrainer("trainer1", "First1", "Last1", TrainingTypeName.FITNESS),
+                    createTrainer("trainer2", "First2", "Last2", TrainingTypeName.YOGA),
+                    createTrainer("trainer3", "First3", "Last3", TrainingTypeName.PILATES)
+            );
+
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
+
+            assertThat(responses).hasSize(3);
+            assertThat(responses.get(0).getSpecialization()).isEqualTo(TrainingTypeName.FITNESS);
+            assertThat(responses.get(1).getSpecialization()).isEqualTo(TrainingTypeName.YOGA);
+            assertThat(responses.get(2).getSpecialization()).isEqualTo(TrainingTypeName.PILATES);
+        }
+
+        @Test
+        @DisplayName("Should map large list correctly")
+        void trainersToSummaryList_LargeList_MapsCorrectly() {
+            List<Trainer> trainers = new ArrayList<>();
+            for (int i = 0; i < 100; i++) {
+                trainers.add(createTrainer("trainer" + i, "First" + i, "Last" + i, TrainingTypeName.FITNESS));
+            }
+
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
+
+            assertThat(responses).hasSize(100);
+            for (int i = 0; i < 100; i++) {
+                assertThat(responses.get(i).getUsername()).isEqualTo("trainer" + i);
+                assertThat(responses.get(i).getFirstName()).isEqualTo("First" + i);
+                assertThat(responses.get(i).getLastName()).isEqualTo("Last" + i);
+            }
+        }
+
+        @Test
+        @DisplayName("Should map all trainer fields correctly in list")
+        void trainersToSummaryList_ValidList_MapsAllFields() {
+            List<Trainer> trainers = List.of(
+                    createTrainer("alice.smith", "Alice", "Smith", TrainingTypeName.FITNESS),
+                    createTrainer("bob.jones", "Bob", "Jones", TrainingTypeName.YOGA)
+            );
+
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
+
+            assertThat(responses.getFirst().getUsername()).isEqualTo("alice.smith");
+            assertThat(responses.getFirst().getFirstName()).isEqualTo("Alice");
+            assertThat(responses.get(0).getLastName()).isEqualTo("Smith");
+            assertThat(responses.get(0).getSpecialization()).isEqualTo(TrainingTypeName.FITNESS);
+
+            assertThat(responses.get(1).getUsername()).isEqualTo("bob.jones");
+            assertThat(responses.get(1).getFirstName()).isEqualTo("Bob");
+            assertThat(responses.get(1).getLastName()).isEqualTo("Jones");
+            assertThat(responses.get(1).getSpecialization()).isEqualTo(TrainingTypeName.YOGA);
+        }
+
+        @Test
+        @DisplayName("Should map trainers with all specialization types")
+        void trainersToSummaryList_AllSpecializations_MapsCorrectly() {
+            List<Trainer> trainers = new ArrayList<>();
+            int index = 0;
+            for (TrainingTypeName typeName : TrainingTypeName.values()) {
+                trainers.add(createTrainer("trainer" + index, "First" + index, "Last" + index, typeName));
+                index++;
+            }
+
+            List<TrainerSummaryResponse> responses = traineeMapper.trainersToSummaryList(trainers);
+
+            assertThat(responses).hasSize(TrainingTypeName.values().length);
+            index = 0;
+            for (TrainingTypeName typeName : TrainingTypeName.values()) {
+                assertThat(responses.get(index).getSpecialization()).isEqualTo(typeName);
+                index++;
+            }
+        }
     }
 
     // ==================== Helper Methods ====================
 
-    private Trainee createSampleTrainee(String username, String firstName, String lastName) {
+    private Trainee createTrainee() {
         User user = User.builder()
-                .username(username)
-                .firstName(firstName)
-                .lastName(lastName)
-                .isActive(true)
+                .id(USER_ID)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(IS_ACTIVE)
                 .build();
 
         return Trainee.builder()
+                .id(TRAINEE_ID)
                 .user(user)
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .address("123 Test St")
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .trainers(new ArrayList<>())
                 .build();
     }
 
-    private Trainer createSampleTrainer(String username, String firstName, String lastName,
-                                        TrainingTypeName specialization) {
+    private Trainee createTraineeWithUsername(String username) {
         User user = User.builder()
+                .id(USER_ID)
                 .username(username)
+                .password(PASSWORD)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(IS_ACTIVE)
+                .build();
+
+        return Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(user)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .trainers(new ArrayList<>())
+                .build();
+    }
+
+    private Trainee createTraineeWithName(String firstName, String lastName) {
+        User user = User.builder()
+                .id(USER_ID)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .firstName(firstName)
+                .lastName(lastName)
+                .isActive(IS_ACTIVE)
+                .build();
+
+        return Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(user)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .trainers(new ArrayList<>())
+                .build();
+    }
+
+    private Trainee createTraineeWithDateOfBirth(LocalDate dateOfBirth) {
+        User user = User.builder()
+                .id(USER_ID)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(IS_ACTIVE)
+                .build();
+
+        return Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(user)
+                .dateOfBirth(dateOfBirth)
+                .address(ADDRESS)
+                .trainers(new ArrayList<>())
+                .build();
+    }
+
+    private Trainee createTraineeWithAddress(String address) {
+        User user = User.builder()
+                .id(USER_ID)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(IS_ACTIVE)
+                .build();
+
+        return Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(user)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(address)
+                .trainers(new ArrayList<>())
+                .build();
+    }
+
+    private Trainee createTraineeWithActiveStatus(boolean isActive) {
+        User user = User.builder()
+                .id(USER_ID)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(isActive)
+                .build();
+
+        return Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(user)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .trainers(new ArrayList<>())
+                .build();
+    }
+
+    private Trainee createTraineeWithTrainers(List<Trainer> trainers) {
+        User user = User.builder()
+                .id(USER_ID)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(IS_ACTIVE)
+                .build();
+
+        return Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(user)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .trainers(new ArrayList<>(trainers))
+                .build();
+    }
+
+    private Trainer createTrainer(String username, String firstName, String lastName, TrainingTypeName specialization) {
+        User user = User.builder()
+                .id(2L)
+                .username(username)
+                .password(PASSWORD)
                 .firstName(firstName)
                 .lastName(lastName)
                 .isActive(true)
                 .build();
 
-        // Use mock instead of builder since TrainingType has no @Builder
-        TrainingType trainingType = mock(TrainingType.class);
-        when(trainingType.getId()).thenReturn(1L);
-        when(trainingType.getTrainingTypeName()).thenReturn(specialization);
-
         return Trainer.builder()
+                .id(1L)
                 .user(user)
-                .specialization(trainingType)
+                .specialization(new TrainingType(1L, specialization))
                 .build();
     }
 }

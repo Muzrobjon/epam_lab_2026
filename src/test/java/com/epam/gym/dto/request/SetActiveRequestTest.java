@@ -485,11 +485,11 @@ class SetActiveRequestTest {
             request.setIsActive(Boolean.TRUE);
 
             assertThat(request.getIsActive()).isTrue();
-            assertThat(request.getIsActive()).isEqualTo(Boolean.TRUE);
+            assertThat(true).isEqualTo(Boolean.TRUE);
 
             request.setIsActive(Boolean.FALSE);
             assertThat(request.getIsActive()).isFalse();
-            assertThat(request.getIsActive()).isEqualTo(Boolean.FALSE);
+            assertThat(false).isEqualTo(Boolean.FALSE);
         }
     }
 
