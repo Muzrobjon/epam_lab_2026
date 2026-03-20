@@ -67,7 +67,7 @@ public class TrainerService {
     public Trainer updateProfile(String username, UpdateTrainerRequest request) {
         log.info("Updating trainer profile for username: {}", username);
 
-        userService.authenticate(username, request.getPassword());
+        userService.isAuthenticated(request.getUsername());
 
         Trainer trainer = getByUsername(username);
 
@@ -86,20 +86,12 @@ public class TrainerService {
         return saved;
     }
 
-    public void authenticate(String username, String password) {
-        log.info("Authenticating trainer: {}", username);
-
-        userService.authenticate(username, password);
-
-        Trainer trainer = getByUsername(username);
-        log.info("Trainer authenticated successfully: {}", trainer.getUser().getUsername());
-    }
 
     @Transactional(readOnly = true)
-    public List<Trainer> getUnassignedTrainers(String traineeUsername, String password) {
+    public List<Trainer> getUnassignedTrainers(String traineeUsername) {
         log.info("Retrieving unassigned trainers for trainee: {}", traineeUsername);
 
-        userService.authenticate(traineeUsername, password);
+        userService.isAuthenticated(traineeUsername);
 
         traineeRepository.findByUser_Username(traineeUsername)
                 .orElseThrow(() -> new NotFoundException("Trainee not found: " + traineeUsername));

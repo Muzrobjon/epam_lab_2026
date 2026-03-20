@@ -8,12 +8,12 @@ import com.epam.gym.dto.response.TrainerSummaryResponse;
 import com.epam.gym.dto.response.TrainingResponse;
 import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.Training;
-import com.epam.gym.exception.ValidationException;
 import com.epam.gym.mapper.TrainerMapper;
 import com.epam.gym.mapper.TrainingMapper;
 import com.epam.gym.mapper.UserMapper;
 import com.epam.gym.service.TrainerService;
 import com.epam.gym.service.TrainingService;
+import com.epam.gym.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,6 +47,7 @@ public class TrainerController {
     private final TrainerMapper trainerMapper;
     private final TrainingMapper trainingMapper;
     private final UserMapper userMapper;
+    private final UserService userService;
 
     @Operation(summary = "Register trainer", description = "Create a new trainer profile")
     @PostMapping
@@ -68,13 +68,11 @@ public class TrainerController {
     @GetMapping("/{username}")
     public ResponseEntity<TrainerProfileResponse> getTrainerProfile(
             @Parameter(description = "Username of the trainer", required = true)
-            @PathVariable String username,
-            @Parameter(description = "Password for authentication", required = true)
-            @RequestHeader("X-Password") String password) {
+            @PathVariable String username) {
 
         log.info("Fetching trainer profile: {}", username);
 
-        trainerService.authenticate(username, password);
+        userService.isAuthenticated(username);
         Trainer trainer = trainerService.getByUsername(username);
 
         TrainerProfileResponse response = trainerMapper.toProfileResponse(trainer);
@@ -92,10 +90,7 @@ public class TrainerController {
 
         log.info("Updating trainer profile: {}", username);
 
-        if (!username.equals(request.getUsername())) {
-            throw new ValidationException("Username in path does not match username in request body");
-        }
-
+        userService.isAuthenticated(username);
         Trainer updated = trainerService.updateProfile(username, request);
 
         TrainerProfileResponse response = trainerMapper.toProfileResponse(updated);
@@ -109,13 +104,12 @@ public class TrainerController {
     @GetMapping("/{traineeUsername}/trainers/unassigned")
     public ResponseEntity<List<TrainerSummaryResponse>> getUnassignedTrainers(
             @Parameter(description = "Username of the trainee", required = true)
-            @PathVariable String traineeUsername,
-            @Parameter(description = "Password for authentication", required = true)
-            @RequestHeader("X-Password") String traineePassword) {
+            @PathVariable String traineeUsername)
+    {
 
         log.info("Fetching unassigned trainers for trainee: {}", traineeUsername);
 
-        List<Trainer> trainers = trainerService.getUnassignedTrainers(traineeUsername, traineePassword);
+        List<Trainer> trainers = trainerService.getUnassignedTrainers(traineeUsername);
         List<TrainerSummaryResponse> response = trainerMapper.toSummaryResponseList(trainers);
 
         log.info("Found {} unassigned trainers for trainee: {}", response.size(), traineeUsername);
@@ -128,8 +122,6 @@ public class TrainerController {
     public ResponseEntity<List<TrainingResponse>> getTrainerTrainings(
             @Parameter(description = "Username of the trainer", required = true)
             @PathVariable String username,
-            @Parameter(description = "Password for authentication", required = true)
-            @RequestHeader("X-Password") String password,
             @Parameter(description = "Filter by start date")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @Parameter(description = "Filter by end date")
@@ -140,7 +132,7 @@ public class TrainerController {
         log.info("Fetching trainings for trainer: {}", username);
 
         List<Training> trainings = trainingService.getTrainerTrainingsByCriteria(
-                username, password, fromDate, toDate, traineeName
+                username, fromDate, toDate, traineeName
         );
 
         List<TrainingResponse> response = trainingMapper.toResponseList(trainings);

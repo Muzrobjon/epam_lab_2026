@@ -17,6 +17,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
+    private User currentUser;
 
     @Transactional
     public User createUser(String firstName, String lastName) {
@@ -56,7 +57,7 @@ public class UserService {
         if (!user.getPassword().equals(password)) {
             throw new AuthenticationException("Invalid username or password");
         }
-
+        currentUser = user;
         log.info("User authenticated successfully: {}", username);
     }
 
@@ -64,8 +65,8 @@ public class UserService {
     public void changePassword(String username, String oldPassword, String newPassword) {
         log.info("Changing password for user: {}", username);
 
+        isAuthenticated(username);
         authenticate(username, oldPassword);
-
         User user = findByUsername(username);
         user.setPassword(newPassword);
         userRepository.save(user);
@@ -74,10 +75,10 @@ public class UserService {
     }
 
     @Transactional
-    public void setActiveStatus(String username, String password, Boolean isActive) {
+    public void setActiveStatus(String username, Boolean isActive) {
         log.info("Setting active status for user: {} to {}", username, isActive);
 
-        authenticate(username, password);
+        isAuthenticated(username);
 
         User user = findByUsername(username);
         user.setIsActive(isActive);
@@ -95,6 +96,12 @@ public class UserService {
         }
         if (isActive != null) {
             existingUser.setIsActive(isActive);
+        }
+    }
+
+    public void isAuthenticated(String username) {
+        if (currentUser == null || !currentUser.getUsername().equals(username)) {
+            throw new AuthenticationException("User is not authenticated: " + username);
         }
     }
 }

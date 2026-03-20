@@ -19,14 +19,8 @@ public class AddTrainingRequest {
     @NotBlank(message = "Trainee username is required")
     private String traineeUsername;
 
-    @NotBlank(message = "Trainee password is required")
-    private String traineePassword;
-
     @NotBlank(message = "Trainer username is required")
     private String trainerUsername;
-
-    @NotBlank(message = "Trainer password is required")
-    private String trainerPassword;
 
     @NotBlank(message = "Training name is required")
     private String trainingName;

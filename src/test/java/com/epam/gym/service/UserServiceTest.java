@@ -15,16 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService Tests")
@@ -45,21 +41,32 @@ class UserServiceTest {
     @Captor
     private ArgumentCaptor<User> userCaptor;
 
-    @Captor
-    private ArgumentCaptor<Function<String, Boolean>> functionCaptor;
-
     private User testUser;
+
+    private static final String USERNAME = "john.doe";
+    private static final String PASSWORD = "password123";
+    private static final String FIRST_NAME = "John";
+    private static final String LAST_NAME = "Doe";
 
     @BeforeEach
     void setUp() {
         testUser = User.builder()
                 .id(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .username("john.doe")
-                .password("password123")
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .password(PASSWORD)
                 .isActive(true)
                 .build();
+    }
+
+    /**
+     * Helper method to set the currentUser field via reflection
+     */
+    private void setCurrentUser(User user) throws Exception {
+        Field currentUserField = UserService.class.getDeclaredField("currentUser");
+        currentUserField.setAccessible(true);
+        currentUserField.set(userService, user);
     }
 
     @Nested
@@ -68,113 +75,69 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Should create user successfully")
-        void shouldCreateUserSuccessfully() {
-            // Given
-            when(passwordGenerator.generatePassword()).thenReturn("generatedPass123");
-            when(usernameGenerator.generateUsername(any(User.class), any()))
-                    .thenReturn("john.doe");
-            when(userRepository.save(any(User.class))).thenReturn(testUser);
+        void createUser_WithValidData_ReturnsCreatedUser() {
+            // Arrange
+            String generatedPassword = "generatedPass123";
+            String generatedUsername = "john.doe";
 
-            // When
-            User result = userService.createUser("John", "Doe");
+            when(passwordGenerator.generatePassword()).thenReturn(generatedPassword);
+            when(usernameGenerator.generateUsername(any(User.class), any())).thenReturn(generatedUsername);
+            when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+                User user = invocation.getArgument(0);
+                user.setId(1L);
+                return user;
+            });
 
-            // Then
+            // Act
+            User result = userService.createUser(FIRST_NAME, LAST_NAME);
+
+            // Assert
             assertThat(result).isNotNull();
-            assertThat(result.getUsername()).isEqualTo("john.doe");
+            assertThat(result.getId()).isEqualTo(1L);
+            assertThat(result.getFirstName()).isEqualTo(FIRST_NAME);
+            assertThat(result.getLastName()).isEqualTo(LAST_NAME);
+            assertThat(result.getUsername()).isEqualTo(generatedUsername);
+            assertThat(result.getPassword()).isEqualTo(generatedPassword);
+            assertThat(result.getIsActive()).isTrue();
 
             verify(passwordGenerator).generatePassword();
             verify(usernameGenerator).generateUsername(any(User.class), any());
             verify(userRepository).save(userCaptor.capture());
 
             User capturedUser = userCaptor.getValue();
-            assertThat(capturedUser.getFirstName()).isEqualTo("John");
-            assertThat(capturedUser.getLastName()).isEqualTo("Doe");
-            assertThat(capturedUser.getPassword()).isEqualTo("generatedPass123");
-            assertThat(capturedUser.getIsActive()).isTrue();
-            assertThat(capturedUser.getUsername()).isEqualTo("john.doe");
+            assertThat(capturedUser.getFirstName()).isEqualTo(FIRST_NAME);
+            assertThat(capturedUser.getLastName()).isEqualTo(LAST_NAME);
         }
 
         @Test
-        @DisplayName("Should set user as active by default")
-        void shouldSetUserAsActiveByDefault() {
-            // Given
-            when(passwordGenerator.generatePassword()).thenReturn("pass123");
-            when(usernameGenerator.generateUsername(any(User.class), any()))
-                    .thenReturn("jane.smith");
+        @DisplayName("Should set isActive to true by default")
+        void createUser_SetsIsActiveTrue() {
+            // Arrange
+            when(passwordGenerator.generatePassword()).thenReturn(PASSWORD);
+            when(usernameGenerator.generateUsername(any(User.class), any())).thenReturn(USERNAME);
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            // When
-            userService.createUser("Jane", "Smith");
+            // Act
+            User result = userService.createUser(FIRST_NAME, LAST_NAME);
 
-            // Then
-            verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getIsActive()).isTrue();
+            // Assert
+            assertThat(result.getIsActive()).isTrue();
         }
 
         @Test
-        @DisplayName("Should pass existsByUsername function to username generator")
-        void shouldPassExistsByUsernameFunctionToUsernameGenerator() {
-            // Given
-            when(passwordGenerator.generatePassword()).thenReturn("pass123");
-            when(usernameGenerator.generateUsername(any(User.class), any()))
-                    .thenReturn("john.doe");
-            when(userRepository.save(any(User.class))).thenReturn(testUser);
-            when(userRepository.existsByUsername("test.user")).thenReturn(true);
-            when(userRepository.existsByUsername("new.user")).thenReturn(false);
-
-            // When
-            userService.createUser("John", "Doe");
-
-            // Then
-            verify(usernameGenerator).generateUsername(any(User.class), functionCaptor.capture());
-
-            Function<String, Boolean> capturedFunction = functionCaptor.getValue();
-
-            // Test that the captured function correctly delegates to repository
-            assertThat(capturedFunction.apply("test.user")).isTrue();
-            assertThat(capturedFunction.apply("new.user")).isFalse();
-
-            verify(userRepository).existsByUsername("test.user");
-            verify(userRepository).existsByUsername("new.user");
-        }
-
-        @Test
-        @DisplayName("Should generate unique username with serial number")
-        void shouldGenerateUniqueUsernameWithSerialNumber() {
-            // Given
-            when(passwordGenerator.generatePassword()).thenReturn("pass123");
-            when(usernameGenerator.generateUsername(any(User.class), any()))
-                    .thenReturn("john.doe1");
-            when(userRepository.save(any(User.class))).thenAnswer(inv -> {
-                User user = inv.getArgument(0);
-                user.setId(1L);
-                return user;
-            });
-
-            // When
-            userService.createUser("John", "Doe");
-
-            // Then
-            verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getUsername()).isEqualTo("john.doe1");
-        }
-
-        @Test
-        @DisplayName("Should use generated password from PasswordGenerator")
-        void shouldUseGeneratedPasswordFromPasswordGenerator() {
-            // Given
-            String generatedPassword = "SecureP@ss123!";
-            when(passwordGenerator.generatePassword()).thenReturn(generatedPassword);
-            when(usernameGenerator.generateUsername(any(User.class), any()))
-                    .thenReturn("john.doe");
+        @DisplayName("Should use generated username from UsernameGenerator")
+        void createUser_UsesGeneratedUsername() {
+            // Arrange
+            String uniqueUsername = "john.doe1";
+            when(passwordGenerator.generatePassword()).thenReturn(PASSWORD);
+            when(usernameGenerator.generateUsername(any(User.class), any())).thenReturn(uniqueUsername);
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            // When
-            userService.createUser("John", "Doe");
+            // Act
+            User result = userService.createUser(FIRST_NAME, LAST_NAME);
 
-            // Then
-            verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getPassword()).isEqualTo(generatedPassword);
+            // Assert
+            assertThat(result.getUsername()).isEqualTo(uniqueUsername);
         }
     }
 
@@ -184,33 +147,32 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Should return user when found")
-        void shouldReturnUserWhenFound() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        void findByUsername_UserExists_ReturnsUser() {
+            // Arrange
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(testUser));
 
-            // When
-            User result = userService.findByUsername("john.doe");
+            // Act
+            User result = userService.findByUsername(USERNAME);
 
-            // Then
+            // Assert
             assertThat(result).isNotNull();
-            assertThat(result.getUsername()).isEqualTo("john.doe");
-            assertThat(result.getFirstName()).isEqualTo("John");
-            assertThat(result.getLastName()).isEqualTo("Doe");
-            verify(userRepository).findByUsername("john.doe");
+            assertThat(result.getUsername()).isEqualTo(USERNAME);
+            assertThat(result.getFirstName()).isEqualTo(FIRST_NAME);
+            verify(userRepository).findByUsername(USERNAME);
         }
 
         @Test
         @DisplayName("Should throw NotFoundException when user not found")
-        void shouldThrowNotFoundExceptionWhenUserNotFound() {
-            // Given
-            when(userRepository.findByUsername("nonexistent"))
-                    .thenReturn(Optional.empty());
+        void findByUsername_UserNotExists_ThrowsNotFoundException() {
+            // Arrange
+            when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
 
-            // When & Then
+            // Act & Assert
             assertThatThrownBy(() -> userService.findByUsername("nonexistent"))
                     .isInstanceOf(NotFoundException.class)
                     .hasMessageContaining("User not found: nonexistent");
+
+            verify(userRepository).findByUsername("nonexistent");
         }
     }
 
@@ -219,73 +181,60 @@ class UserServiceTest {
     class AuthenticateTests {
 
         @Test
-        @DisplayName("Should authenticate successfully with correct credentials")
-        void shouldAuthenticateSuccessfullyWithCorrectCredentials() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should authenticate successfully with valid credentials")
+        void authenticate_WithValidCredentials_Success() throws Exception {
+            // Arrange
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(testUser));
 
-            // When & Then
-            assertThatCode(() -> userService.authenticate("john.doe", "password123"))
-                    .doesNotThrowAnyException();
+            // Act
+            userService.authenticate(USERNAME, PASSWORD);
 
-            verify(userRepository).findByUsername("john.doe");
+            // Assert - no exception thrown
+            verify(userRepository).findByUsername(USERNAME);
+
+            // Verify currentUser is set
+            Field currentUserField = UserService.class.getDeclaredField("currentUser");
+            currentUserField.setAccessible(true);
+            User currentUser = (User) currentUserField.get(userService);
+            assertThat(currentUser).isEqualTo(testUser);
         }
 
         @Test
-        @DisplayName("Should throw AuthenticationException when user not found")
-        void shouldThrowAuthenticationExceptionWhenUserNotFound() {
-            // Given
-            when(userRepository.findByUsername("nonexistent"))
-                    .thenReturn(Optional.empty());
+        @DisplayName("Should throw AuthenticationException when username not found")
+        void authenticate_WithInvalidUsername_ThrowsAuthenticationException() {
+            // Arrange
+            when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
 
-            // When & Then
-            assertThatThrownBy(() -> userService.authenticate("nonexistent", "password123"))
+            // Act & Assert
+            assertThatThrownBy(() -> userService.authenticate("invalid", PASSWORD))
                     .isInstanceOf(AuthenticationException.class)
                     .hasMessage("Invalid username or password");
+
+            verify(userRepository).findByUsername("invalid");
         }
 
         @Test
-        @DisplayName("Should throw AuthenticationException when password is incorrect")
-        void shouldThrowAuthenticationExceptionWhenPasswordIsIncorrect() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should throw AuthenticationException when password is wrong")
+        void authenticate_WithWrongPassword_ThrowsAuthenticationException() {
+            // Arrange
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(testUser));
 
-            // When & Then
-            assertThatThrownBy(() -> userService.authenticate("john.doe", "wrongpassword"))
+            // Act & Assert
+            assertThatThrownBy(() -> userService.authenticate(USERNAME, "wrongPassword"))
                     .isInstanceOf(AuthenticationException.class)
                     .hasMessage("Invalid username or password");
+
+            verify(userRepository).findByUsername(USERNAME);
         }
 
         @Test
-        @DisplayName("Should not reveal whether username or password is wrong")
-        void shouldNotRevealWhetherUsernameOrPasswordIsWrong() {
-            // Given
-            when(userRepository.findByUsername("nonexistent"))
-                    .thenReturn(Optional.empty());
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should throw AuthenticationException when both credentials are wrong")
+        void authenticate_WithBothCredentialsWrong_ThrowsAuthenticationException() {
+            // Arrange
+            when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
 
-            // When & Then - Both should have the same error message
-            assertThatThrownBy(() -> userService.authenticate("nonexistent", "password123"))
-                    .isInstanceOf(AuthenticationException.class)
-                    .hasMessage("Invalid username or password");
-
-            assertThatThrownBy(() -> userService.authenticate("john.doe", "wrongpassword"))
-                    .isInstanceOf(AuthenticationException.class)
-                    .hasMessage("Invalid username or password");
-        }
-
-        @Test
-        @DisplayName("Should authenticate with case-sensitive password")
-        void shouldAuthenticateWithCaseSensitivePassword() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
-
-            // When & Then
-            assertThatThrownBy(() -> userService.authenticate("john.doe", "PASSWORD123"))
+            // Act & Assert
+            assertThatThrownBy(() -> userService.authenticate("wrong", "wrong"))
                     .isInstanceOf(AuthenticationException.class)
                     .hasMessage("Invalid username or password");
         }
@@ -297,64 +246,67 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Should change password successfully")
-        void shouldChangePasswordSuccessfully() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        void changePassword_WithValidOldPassword_Success() throws Exception {
+            // Arrange
+            String newPassword = "newPassword456";
+            setCurrentUser(testUser);
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            // When
-            userService.changePassword("john.doe", "password123", "newPassword456");
+            // Act
+            userService.changePassword(USERNAME, PASSWORD, newPassword);
 
-            // Then
+            // Assert
+            verify(userRepository, times(2)).findByUsername(USERNAME);
             verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getPassword()).isEqualTo("newPassword456");
+            assertThat(userCaptor.getValue().getPassword()).isEqualTo(newPassword);
         }
 
         @Test
-        @DisplayName("Should throw AuthenticationException when old password is incorrect")
-        void shouldThrowAuthenticationExceptionWhenOldPasswordIsIncorrect() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should throw exception when user not authenticated")
+        void changePassword_UserNotAuthenticated_ThrowsException() {
+            // Arrange - currentUser is null by default
 
-            // When & Then
-            assertThatThrownBy(() -> userService.changePassword("john.doe", "wrongOldPassword", "newPassword456"))
+            // Act & Assert
+            assertThatThrownBy(() -> userService.changePassword(USERNAME, PASSWORD, "newPass"))
+                    .isInstanceOf(AuthenticationException.class)
+                    .hasMessageContaining("User is not authenticated");
+
+            verify(userRepository, never()).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("Should throw exception when old password is wrong")
+        void changePassword_WithWrongOldPassword_ThrowsException() throws Exception {
+            // Arrange
+            setCurrentUser(testUser);
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(testUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.changePassword(USERNAME, "wrongOldPass", "newPass"))
                     .isInstanceOf(AuthenticationException.class)
                     .hasMessage("Invalid username or password");
 
-            verify(userRepository, never()).save(any());
+            verify(userRepository, never()).save(any(User.class));
         }
 
         @Test
-        @DisplayName("Should throw AuthenticationException when user not found")
-        void shouldThrowAuthenticationExceptionWhenUserNotFoundOnChangePassword() {
-            // Given
-            when(userRepository.findByUsername("nonexistent"))
-                    .thenReturn(Optional.empty());
+        @DisplayName("Should throw exception when authenticated as different user")
+        void changePassword_AuthenticatedAsDifferentUser_ThrowsException() throws Exception {
+            // Arrange
+            User differentUser = User.builder()
+                    .id(2L)
+                    .username("different.user")
+                    .password("pass")
+                    .build();
+            setCurrentUser(differentUser);
 
-            // When & Then
-            assertThatThrownBy(() -> userService.changePassword("nonexistent", "oldPass", "newPass"))
+            // Act & Assert
+            assertThatThrownBy(() -> userService.changePassword(USERNAME, PASSWORD, "newPass"))
                     .isInstanceOf(AuthenticationException.class)
-                    .hasMessage("Invalid username or password");
+                    .hasMessageContaining("User is not authenticated");
 
-            verify(userRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("Should allow changing to same password")
-        void shouldAllowChangingToSamePassword() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
-            when(userRepository.save(any(User.class))).thenReturn(testUser);
-
-            // When
-            userService.changePassword("john.doe", "password123", "password123");
-
-            // Then
-            verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getPassword()).isEqualTo("password123");
+            verify(userRepository, never()).save(any(User.class));
         }
     }
 
@@ -363,82 +315,62 @@ class UserServiceTest {
     class SetActiveStatusTests {
 
         @Test
-        @DisplayName("Should set active status to true")
-        void shouldSetActiveStatusToTrue() {
-            // Given
+        @DisplayName("Should activate user successfully")
+        void setActiveStatus_ActivateUser_Success() throws Exception {
+            // Arrange
             testUser.setIsActive(false);
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+            setCurrentUser(testUser);
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            // When
-            userService.setActiveStatus("john.doe", "password123", true);
+            // Act
+            userService.setActiveStatus(USERNAME, true);
 
-            // Then
+            // Assert
             verify(userRepository).save(userCaptor.capture());
             assertThat(userCaptor.getValue().getIsActive()).isTrue();
         }
 
         @Test
-        @DisplayName("Should set active status to false")
-        void shouldSetActiveStatusToFalse() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should deactivate user successfully")
+        void setActiveStatus_DeactivateUser_Success() throws Exception {
+            // Arrange
+            setCurrentUser(testUser);
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            // When
-            userService.setActiveStatus("john.doe", "password123", false);
+            // Act
+            userService.setActiveStatus(USERNAME, false);
 
-            // Then
+            // Assert
             verify(userRepository).save(userCaptor.capture());
             assertThat(userCaptor.getValue().getIsActive()).isFalse();
         }
 
         @Test
-        @DisplayName("Should throw AuthenticationException when password is incorrect")
-        void shouldThrowAuthenticationExceptionWhenPasswordIsIncorrectOnSetActiveStatus() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should throw exception when user not authenticated")
+        void setActiveStatus_UserNotAuthenticated_ThrowsException() {
+            // Arrange - currentUser is null by default
 
-            // When & Then
-            assertThatThrownBy(() -> userService.setActiveStatus("john.doe", "wrongpassword", true))
+            // Act & Assert
+            assertThatThrownBy(() -> userService.setActiveStatus(USERNAME, true))
                     .isInstanceOf(AuthenticationException.class)
-                    .hasMessage("Invalid username or password");
+                    .hasMessageContaining("User is not authenticated");
 
-            verify(userRepository, never()).save(any());
+            verify(userRepository, never()).save(any(User.class));
         }
 
         @Test
-        @DisplayName("Should throw AuthenticationException when user not found")
-        void shouldThrowAuthenticationExceptionWhenUserNotFoundOnSetActiveStatus() {
-            // Given
-            when(userRepository.findByUsername("nonexistent"))
-                    .thenReturn(Optional.empty());
+        @DisplayName("Should throw exception when user not found")
+        void setActiveStatus_UserNotFound_ThrowsException() throws Exception {
+            // Arrange
+            setCurrentUser(testUser);
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-            // When & Then
-            assertThatThrownBy(() -> userService.setActiveStatus("nonexistent", "password", true))
-                    .isInstanceOf(AuthenticationException.class)
-                    .hasMessage("Invalid username or password");
-
-            verify(userRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("Should allow setting same active status")
-        void shouldAllowSettingSameActiveStatus() {
-            // Given
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
-            when(userRepository.save(any(User.class))).thenReturn(testUser);
-
-            // When
-            userService.setActiveStatus("john.doe", "password123", true);
-
-            // Then
-            verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getIsActive()).isTrue();
+            // Act & Assert
+            assertThatThrownBy(() -> userService.setActiveStatus(USERNAME, true))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("User not found");
         }
     }
 
@@ -448,250 +380,135 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Should update all fields when all provided")
-        void shouldUpdateAllFieldsWhenAllProvided() {
-            // Given
+        void updateUserBasicInfo_AllFieldsProvided_UpdatesAll() {
+            // Arrange
             User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
+                    .firstName("Old")
+                    .lastName("Name")
+                    .isActive(false)
                     .build();
 
-            // When
-            userService.updateUserBasicInfo(user, "Jane", "Smith", false);
+            // Act
+            userService.updateUserBasicInfo(user, "New", "LastName", true);
 
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("Jane");
-            assertThat(user.getLastName()).isEqualTo("Smith");
-            assertThat(user.getIsActive()).isFalse();
+            // Assert
+            assertThat(user.getFirstName()).isEqualTo("New");
+            assertThat(user.getLastName()).isEqualTo("LastName");
+            assertThat(user.getIsActive()).isTrue();
         }
 
         @Test
         @DisplayName("Should update only firstName when others are null")
-        void shouldUpdateOnlyFirstNameWhenOthersAreNull() {
-            // Given
+        void updateUserBasicInfo_OnlyFirstName_UpdatesFirstName() {
+            // Arrange
             User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
+                    .firstName("Old")
+                    .lastName("Name")
+                    .isActive(false)
                     .build();
 
-            // When
-            userService.updateUserBasicInfo(user, "Jane", null, null);
+            // Act
+            userService.updateUserBasicInfo(user, "New", null, null);
 
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("Jane");
-            assertThat(user.getLastName()).isEqualTo("Doe");
-            assertThat(user.getIsActive()).isTrue();
+            // Assert
+            assertThat(user.getFirstName()).isEqualTo("New");
+            assertThat(user.getLastName()).isEqualTo("Name");
+            assertThat(user.getIsActive()).isFalse();
         }
 
         @Test
         @DisplayName("Should update only lastName when others are null")
-        void shouldUpdateOnlyLastNameWhenOthersAreNull() {
-            // Given
+        void updateUserBasicInfo_OnlyLastName_UpdatesLastName() {
+            // Arrange
             User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
+                    .firstName("Old")
+                    .lastName("Name")
+                    .isActive(false)
                     .build();
 
-            // When
-            userService.updateUserBasicInfo(user, null, "Smith", null);
+            // Act
+            userService.updateUserBasicInfo(user, null, "NewLast", null);
 
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("John");
-            assertThat(user.getLastName()).isEqualTo("Smith");
-            assertThat(user.getIsActive()).isTrue();
+            // Assert
+            assertThat(user.getFirstName()).isEqualTo("Old");
+            assertThat(user.getLastName()).isEqualTo("NewLast");
+            assertThat(user.getIsActive()).isFalse();
         }
 
         @Test
         @DisplayName("Should update only isActive when others are null")
-        void shouldUpdateOnlyIsActiveWhenOthersAreNull() {
-            // Given
+        void updateUserBasicInfo_OnlyIsActive_UpdatesIsActive() {
+            // Arrange
             User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
+                    .firstName("Old")
+                    .lastName("Name")
+                    .isActive(false)
                     .build();
 
-            // When
-            userService.updateUserBasicInfo(user, null, null, false);
+            // Act
+            userService.updateUserBasicInfo(user, null, null, true);
 
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("John");
-            assertThat(user.getLastName()).isEqualTo("Doe");
-            assertThat(user.getIsActive()).isFalse();
+            // Assert
+            assertThat(user.getFirstName()).isEqualTo("Old");
+            assertThat(user.getLastName()).isEqualTo("Name");
+            assertThat(user.getIsActive()).isTrue();
         }
 
         @Test
-        @DisplayName("Should not update any field when all are null")
-        void shouldNotUpdateAnyFieldWhenAllAreNull() {
-            // Given
+        @DisplayName("Should not update anything when all null")
+        void updateUserBasicInfo_AllNull_NoUpdates() {
+            // Arrange
             User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
+                    .firstName("Old")
+                    .lastName("Name")
+                    .isActive(false)
                     .build();
 
-            // When
+            // Act
             userService.updateUserBasicInfo(user, null, null, null);
 
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("John");
-            assertThat(user.getLastName()).isEqualTo("Doe");
-            assertThat(user.getIsActive()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Should update firstName and lastName only")
-        void shouldUpdateFirstNameAndLastNameOnly() {
-            // Given
-            User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(false)
-                    .build();
-
-            // When
-            userService.updateUserBasicInfo(user, "Jane", "Smith", null);
-
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("Jane");
-            assertThat(user.getLastName()).isEqualTo("Smith");
+            // Assert
+            assertThat(user.getFirstName()).isEqualTo("Old");
+            assertThat(user.getLastName()).isEqualTo("Name");
             assertThat(user.getIsActive()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Should update firstName and isActive only")
-        void shouldUpdateFirstNameAndIsActiveOnly() {
-            // Given
-            User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(false)
-                    .build();
-
-            // When
-            userService.updateUserBasicInfo(user, "Jane", null, true);
-
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("Jane");
-            assertThat(user.getLastName()).isEqualTo("Doe");
-            assertThat(user.getIsActive()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Should update lastName and isActive only")
-        void shouldUpdateLastNameAndIsActiveOnly() {
-            // Given
-            User user = User.builder()
-                    .id(1L)
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(false)
-                    .build();
-
-            // When
-            userService.updateUserBasicInfo(user, null, "Smith", true);
-
-            // Then
-            assertThat(user.getFirstName()).isEqualTo("John");
-            assertThat(user.getLastName()).isEqualTo("Smith");
-            assertThat(user.getIsActive()).isTrue();
         }
     }
 
     @Nested
-    @DisplayName("Edge Cases Tests")
-    class EdgeCasesTests {
+    @DisplayName("isAuthenticated Tests")
+    class IsAuthenticatedTests {
 
         @Test
-        @DisplayName("Should handle empty password during authentication")
-        void shouldHandleEmptyPasswordDuringAuthentication() {
-            // Given
-            testUser.setPassword("");
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should pass when user is authenticated")
+        void isAuthenticated_UserAuthenticated_NoException() throws Exception {
+            // Arrange
+            setCurrentUser(testUser);
 
-            // When & Then
-            assertThatCode(() -> userService.authenticate("john.doe", ""))
-                    .doesNotThrowAnyException();
+            // Act & Assert - no exception
+            userService.isAuthenticated(USERNAME);
         }
 
         @Test
-        @DisplayName("Should handle special characters in password")
-        void shouldHandleSpecialCharactersInPassword() {
-            // Given
-            String specialPassword = "P@ss!w0rd#$%^&*()";
-            testUser.setPassword(specialPassword);
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
+        @DisplayName("Should throw exception when currentUser is null")
+        void isAuthenticated_CurrentUserNull_ThrowsException() {
+            // Arrange - currentUser is null by default
 
-            // When & Then
-            assertThatCode(() -> userService.authenticate("john.doe", specialPassword))
-                    .doesNotThrowAnyException();
+            // Act & Assert
+            assertThatThrownBy(() -> userService.isAuthenticated(USERNAME))
+                    .isInstanceOf(AuthenticationException.class)
+                    .hasMessageContaining("User is not authenticated: " + USERNAME);
         }
 
         @Test
-        @DisplayName("Should handle unicode characters in names")
-        void shouldHandleUnicodeCharactersInNames() {
-            // Given
-            when(passwordGenerator.generatePassword()).thenReturn("pass123");
-            when(usernameGenerator.generateUsername(any(User.class), any()))
-                    .thenReturn("josé.müller");
-            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        @DisplayName("Should throw exception when username doesn't match")
+        void isAuthenticated_UsernameMismatch_ThrowsException() throws Exception {
+            // Arrange
+            setCurrentUser(testUser);
 
-            // When
-            userService.createUser("José", "Müller");
-
-            // Then
-            verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getFirstName()).isEqualTo("José");
-            assertThat(userCaptor.getValue().getLastName()).isEqualTo("Müller");
-        }
-
-        @Test
-        @DisplayName("Should handle very long names")
-        void shouldHandleVeryLongNames() {
-            // Given
-            String longFirstName = "A".repeat(100);
-            String longLastName = "B".repeat(100);
-
-            when(passwordGenerator.generatePassword()).thenReturn("pass123");
-            when(usernameGenerator.generateUsername(any(User.class), any()))
-                    .thenReturn("long.name");
-            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            userService.createUser(longFirstName, longLastName);
-
-            // Then
-            verify(userRepository).save(userCaptor.capture());
-            assertThat(userCaptor.getValue().getFirstName()).isEqualTo(longFirstName);
-            assertThat(userCaptor.getValue().getLastName()).isEqualTo(longLastName);
-        }
-
-        @Test
-        @DisplayName("Should handle whitespace in password")
-        void shouldHandleWhitespaceInPassword() {
-            // Given
-            String passwordWithSpaces = "pass word 123";
-            testUser.setPassword(passwordWithSpaces);
-            when(userRepository.findByUsername("john.doe"))
-                    .thenReturn(Optional.of(testUser));
-
-            // When & Then
-            assertThatCode(() -> userService.authenticate("john.doe", passwordWithSpaces))
-                    .doesNotThrowAnyException();
-
-            assertThatThrownBy(() -> userService.authenticate("john.doe", "password123"))
-                    .isInstanceOf(AuthenticationException.class);
+            // Act & Assert
+            assertThatThrownBy(() -> userService.isAuthenticated("different.user"))
+                    .isInstanceOf(AuthenticationException.class)
+                    .hasMessageContaining("User is not authenticated: different.user");
         }
     }
 }

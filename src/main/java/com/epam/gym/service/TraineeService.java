@@ -62,7 +62,7 @@ public class TraineeService {
     public Trainee updateProfile(String username, UpdateTraineeRequest request) {
         log.info("Updating trainee profile: {}", username);
 
-        userService.authenticate(username, request.getPassword());
+        userService.isAuthenticated(request.getUsername());
 
         Trainee existing = getByUsername(username);
 
@@ -89,10 +89,10 @@ public class TraineeService {
     }
 
     @Transactional
-    public void deleteByUsername(String username, String password) {
+    public void deleteByUsername(String username) {
         log.info("Deleting trainee profile: {}", username);
 
-        userService.authenticate(username, password);
+        userService.isAuthenticated(username);
 
         Trainee trainee = getByUsername(username);
         traineeRepository.delete(trainee);
@@ -101,10 +101,10 @@ public class TraineeService {
     }
 
     @Transactional
-    public List<Trainer> updateTrainersList(String traineeUsername, String password, List<String> trainerUsernames) {
+    public List<Trainer> updateTrainersList(String traineeUsername, List<String> trainerUsernames) {
         log.info("Updating trainers list for trainee: {}", traineeUsername);
 
-        userService.authenticate(traineeUsername, password);
+        userService.isAuthenticated(traineeUsername);
 
         Trainee trainee = getByUsername(traineeUsername);
         List<Trainer> trainers = fetchTrainersByUsernames(trainerUsernames);
@@ -118,10 +118,6 @@ public class TraineeService {
         return trainers;
     }
 
-    public void authenticate(String username, String password) {
-        userService.authenticate(username, password);
-        getByUsername(username);
-    }
 
     private List<Trainer> fetchTrainersByUsernames(List<String> trainerUsernames) {
         if (trainerUsernames == null || trainerUsernames.isEmpty()) {

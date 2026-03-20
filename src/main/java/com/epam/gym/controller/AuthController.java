@@ -3,7 +3,6 @@ package com.epam.gym.controller;
 import com.epam.gym.dto.request.ChangePasswordRequest;
 import com.epam.gym.dto.request.LoginRequest;
 import com.epam.gym.dto.request.ToggleActiveRequest;
-import com.epam.gym.exception.ValidationException;
 import com.epam.gym.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -64,11 +63,9 @@ public class AuthController {
 
         log.info("Toggling active status for user: {}", username);
 
-        if (!username.equals(request.getUsername())) {
-            throw new ValidationException("Username in path does not match username in request body");
-        }
+        userService.isAuthenticated(username);
 
-        userService.setActiveStatus(username, request.getPassword(), request.getIsActive());
+        userService.setActiveStatus(username, request.getIsActive());
 
         log.info("Active status changed for user: {}", username);
         return ResponseEntity.ok().build();

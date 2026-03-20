@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -78,13 +77,11 @@ public class TraineeController {
     @GetMapping("/{username}")
     public ResponseEntity<TraineeProfileResponse> getTraineeProfile(
             @Parameter(description = "Username of the trainee", required = true)
-            @PathVariable String username,
-            @Parameter(description = "Password for authentication", required = true)
-            @RequestHeader("X-Password") String password) {
+            @PathVariable String username) {
 
         log.info("Fetching trainee profile: {}", username);
 
-        traineeService.authenticate(username, password);
+        userService.isAuthenticated(username);
         Trainee trainee = traineeService.getByUsername(username);
 
         TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
@@ -102,10 +99,7 @@ public class TraineeController {
 
         log.info("Updating trainee profile: {}", username);
 
-        if (!username.equals(request.getUsername())) {
-            throw new ValidationException("Username in path does not match username in request body");
-        }
-
+        userService.isAuthenticated(username);
         Trainee updated = traineeService.updateProfile(username, request);
 
         TraineeProfileResponse response = traineeMapper.toProfileResponse(updated);
@@ -118,13 +112,12 @@ public class TraineeController {
     @DeleteMapping("/{username}")
     public ResponseEntity<Void> deleteTraineeProfile(
             @Parameter(description = "Username of the trainee", required = true)
-            @PathVariable String username,
-            @Parameter(description = "Password for authentication", required = true)
-            @RequestHeader("X-Password") String password) {
-
+            @PathVariable String username)
+            {
+        userService.isAuthenticated(username);
         log.info("Deleting trainee profile: {}", username);
 
-        traineeService.deleteByUsername(username, password);
+        traineeService.deleteByUsername(username);
 
         log.info("Trainee profile deleted: {}", username);
         return ResponseEntity.noContent().build();
@@ -139,11 +132,9 @@ public class TraineeController {
 
         log.info("Toggling active status for trainee: {}", username);
 
-        if (!username.equals(request.getUsername())) {
-            throw new ValidationException("Username in path does not match username in request body");
-        }
+        userService.isAuthenticated(username);
 
-        userService.setActiveStatus(username, request.getPassword(), request.getIsActive());
+        userService.setActiveStatus(username, request.getIsActive());
 
         log.info("Active status changed for trainee: {}", username);
         return ResponseEntity.ok().build();
@@ -164,7 +155,6 @@ public class TraineeController {
 
         List<Trainer> trainers = traineeService.updateTrainersList(
                 request.getTraineeUsername(),
-                request.getPassword(),
                 request.getTrainerUsernames()
         );
 
@@ -179,8 +169,6 @@ public class TraineeController {
     public ResponseEntity<List<TrainingResponse>> getTraineeTrainings(
             @Parameter(description = "Username of the trainee", required = true)
             @PathVariable String username,
-            @Parameter(description = "Password for authentication", required = true)
-            @RequestHeader("X-Password") String password,
             @Parameter(description = "Filter by start date")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @Parameter(description = "Filter by end date")
@@ -193,7 +181,7 @@ public class TraineeController {
         log.info("Fetching trainings for trainee: {}", username);
 
         List<Training> trainings = trainingService.getTraineeTrainingsByCriteria(
-                username, password, fromDate, toDate, trainerName, trainingType
+                username, fromDate, toDate, trainerName, trainingType
         );
 
         List<TrainingResponse> response = trainingMapper.toResponseList(trainings);

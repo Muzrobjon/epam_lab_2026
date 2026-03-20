@@ -31,16 +31,16 @@ public class TrainingService {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final Validator validator;
+    private final UserService userService;
 
     @Transactional
     public void createTraining(AddTrainingRequest request) {
+        userService.isAuthenticated(request.getTraineeUsername());
         log.info("Creating training: {} for trainee: {} and trainer: {}",
                 request.getTrainingName(),
                 request.getTraineeUsername(),
                 request.getTrainerUsername());
 
-        traineeService.authenticate(request.getTraineeUsername(), request.getTraineePassword());
-        trainerService.authenticate(request.getTrainerUsername(), request.getTrainerPassword());
 
         Trainee trainee = traineeService.getByUsername(request.getTraineeUsername());
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
@@ -65,12 +65,12 @@ public class TrainingService {
 
     @Transactional(readOnly = true)
     public List<Training> getTraineeTrainingsByCriteria(
-            String traineeUsername, String traineePassword,
+            String traineeUsername,
             LocalDate fromDate, LocalDate toDate,
             String trainerName, TrainingTypeName trainingTypeName) {
 
         log.info("Getting trainee trainings by criteria for: {}", traineeUsername);
-        traineeService.authenticate(traineeUsername, traineePassword);
+        userService.isAuthenticated(traineeUsername);
 
         List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
                 traineeUsername, null, fromDate, toDate);
@@ -95,12 +95,12 @@ public class TrainingService {
 
     @Transactional(readOnly = true)
     public List<Training> getTrainerTrainingsByCriteria(
-            String trainerUsername, String trainerPassword,
+            String trainerUsername,
             LocalDate fromDate, LocalDate toDate,
             String traineeName) {
 
         log.info("Getting trainer trainings by criteria for: {}", trainerUsername);
-        trainerService.authenticate(trainerUsername, trainerPassword);
+        userService.isAuthenticated(trainerUsername);
 
         List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
                 null, trainerUsername, fromDate, toDate);

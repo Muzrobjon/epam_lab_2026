@@ -19,10 +19,6 @@ public class UpdateTrainerRequest {
     @Schema(description = "Username", example = "Alice.Smith", required = true)
     private String username;
 
-    @NotBlank(message = "Password is required")
-    @Schema(description = "Password for authentication", example = "password123", required = true)
-    private String password;
-
     @NotBlank(message = "First name is required")
     @Schema(description = "First name", example = "Alice", required = true)
     private String firstName;
