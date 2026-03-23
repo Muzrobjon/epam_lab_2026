@@ -1,108 +1,83 @@
 package com.epam.gym.service;
 
-import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.dto.request.TraineeRegistrationRequest;
+import com.epam.gym.dto.request.UpdateTraineeRequest;
 import com.epam.gym.entity.Trainee;
 import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.User;
+import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.exception.ValidationException;
 import com.epam.gym.repository.TraineeRepository;
 import com.epam.gym.repository.TrainerRepository;
-import com.epam.gym.repository.UserRepository;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class TraineeService extends AbstractUserService<Trainee> {
+@RequiredArgsConstructor
+public class TraineeService {
 
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
-
-    public TraineeService(
-            TraineeRepository traineeRepository,
-            TrainerRepository trainerRepository,
-            UserRepository userRepository,
-            UsernameGenerator usernameGenerator,
-            PasswordGenerator passwordGenerator,
-            Validator validator
-    ) {
-        super(userRepository, usernameGenerator, passwordGenerator, validator);
-        this.traineeRepository = traineeRepository;
-        this.trainerRepository = trainerRepository;
-    }
+    private final UserService userService;
+    private final Validator validator;
 
     @Transactional
-    public Trainee createProfile(String firstName, String lastName, LocalDate dateOfBirth, String address) {
-        log.info("Creating trainee profile for {} {}", firstName, lastName);
+    public Trainee createProfile(TraineeRegistrationRequest request)  {
+        log.info("Creating trainee profile for {} {}", request.getFirstName(), request.getLastName());
 
-        String rawPassword = passwordGenerator.generatePassword();
-
-        User user = User.builder()
-                .firstName(firstName)
-                .lastName(lastName)
-                .isActive(true)
-                .password(rawPassword)
-                .build();
-
-        String username = usernameGenerator.generateUsername(user, userRepository::existsByUsername);
-        user.setUsername(username);
-
-        User savedUser = userRepository.save(user);
+        User savedUser = userService.createUser(request.getFirstName(), request.getLastName());
 
         Trainee trainee = Trainee.builder()
-                .id(savedUser.getId())
                 .user(savedUser)
-                .dateOfBirth(dateOfBirth)
-                .address(address)
+                .dateOfBirth(request.getDateOfBirth())
+                .address(request.getAddress())
+                .trainers(new ArrayList<>())
                 .build();
 
         validateEntity(trainee);
 
         Trainee saved = traineeRepository.save(trainee);
-        log.info("Created trainee: {} with username: {} and password: {}",
-                saved.getId(), savedUser.getUsername(), rawPassword);
+        log.info("Created trainee: {} with username: {}", saved.getId(), savedUser.getUsername());
 
         return saved;
     }
 
     @Transactional(readOnly = true)
-    public Trainee selectByUsername(String username) {
-        log.info("Selecting trainee by username: {}", username);
+    public Trainee getByUsername(String username) {
+        log.debug("Selecting trainee by username: {}", username);
         return traineeRepository.findByUser_Username(username)
                 .orElseThrow(() -> new NotFoundException("Trainee not found: " + username));
     }
 
     @Transactional
-    public Trainee updateProfile(String username, String password, Trainee updatedTrainee) {
+    public Trainee updateProfile(String username, UpdateTraineeRequest request) {
         log.info("Updating trainee profile: {}", username);
 
-        authenticateUser(username, password);
+        userService.isAuthenticated(request.getUsername());
 
-        Trainee existing = selectByUsername(username);
+        Trainee existing = getByUsername(username);
 
-        User user = existing.getUser();
+        userService.updateUserBasicInfo(
+                existing.getUser(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getIsActive()
+        );
 
-        if (updatedTrainee.getUser() != null) {
-            if (updatedTrainee.getUser().getFirstName() != null) {
-                user.setFirstName(updatedTrainee.getUser().getFirstName());
-            }
-            if (updatedTrainee.getUser().getLastName() != null) {
-                user.setLastName(updatedTrainee.getUser().getLastName());
-            }
+        if (request.getDateOfBirth() != null) {
+            existing.setDateOfBirth(request.getDateOfBirth());
         }
-
-        if (updatedTrainee.getDateOfBirth() != null) {
-            existing.setDateOfBirth(updatedTrainee.getDateOfBirth());
-        }
-        if (updatedTrainee.getAddress() != null) {
-            existing.setAddress(updatedTrainee.getAddress());
+        if (request.getAddress() != null) {
+            existing.setAddress(request.getAddress());
         }
 
         validateEntity(existing);
@@ -114,76 +89,65 @@ public class TraineeService extends AbstractUserService<Trainee> {
     }
 
     @Transactional
-    public void deleteByUsername(String username, String password) {
+    public void deleteByUsername(String username) {
         log.info("Deleting trainee profile: {}", username);
 
-        authenticateUser(username, password);
+        userService.isAuthenticated(username);
 
-        Trainee trainee = selectByUsername(username);
-
+        Trainee trainee = getByUsername(username);
         traineeRepository.delete(trainee);
 
         log.info("Deleted trainee profile: {}", username);
     }
 
     @Transactional
-    public void updateTrainersList(String traineeUsername, String password, List<String> trainerUsernames) {
+    public List<Trainer> updateTrainersList(String traineeUsername, List<String> trainerUsernames) {
         log.info("Updating trainers list for trainee: {}", traineeUsername);
 
-        authenticateUser(traineeUsername, password);
+        userService.isAuthenticated(traineeUsername);
 
-        Trainee trainee = selectByUsername(traineeUsername);
-
-        // TODO: N+1 problem FIXED!
-        // OLD: Loop with individual queries - very inefficient for large collections
-        // NEW: Single query with findByUser_UsernameIn
-
+        Trainee trainee = getByUsername(traineeUsername);
         List<Trainer> trainers = fetchTrainersByUsernames(trainerUsernames);
 
         trainee.getTrainers().clear();
-        trainee.setTrainers(trainers);
+        trainee.getTrainers().addAll(trainers);
         traineeRepository.save(trainee);
 
-        log.info("Updated trainers list for trainee: {} with {} trainers",
-                traineeUsername, trainers.size());
+        log.info("Updated trainers list for trainee: {} with {} trainers", traineeUsername, trainers.size());
+
+        return trainers;
     }
 
-    /**
-     * FIXED: N+1 problem - fetches all trainers in a single query
-     * Validates that all usernames exist, throws if any missing
-     */
+
     private List<Trainer> fetchTrainersByUsernames(List<String> trainerUsernames) {
         if (trainerUsernames == null || trainerUsernames.isEmpty()) {
-            return List.of();
+            return new ArrayList<>();
         }
 
-        // Single query instead of N queries
         List<Trainer> foundTrainers = trainerRepository.findByUser_UsernameIn(trainerUsernames);
 
-        // Validate all usernames exist
         if (foundTrainers.size() != trainerUsernames.size()) {
             Set<String> foundUsernames = foundTrainers.stream()
                     .map(t -> t.getUser().getUsername())
                     .collect(Collectors.toSet());
 
             List<String> missingUsernames = trainerUsernames.stream()
-                    .filter(username -> !foundUsernames.contains(username))
+                    .filter(u -> !foundUsernames.contains(u))
                     .toList();
 
-            throw new NotFoundException("Trainers not found for usernames: " + missingUsernames);
+            throw new NotFoundException("Trainers not found: " + missingUsernames);
         }
 
         return foundTrainers;
     }
 
-    @Override
-    protected Function<String, Trainee> findByUsername() {
-        return username -> traineeRepository.findByUser_Username(username)
-                .orElseThrow(() -> new NotFoundException("Trainee not found: " + username));
-    }
-
-    @Override
-    protected User extractUser(Trainee entity) {
-        return entity != null ? entity.getUser() : null;
+    private void validateEntity(Trainee entity) {
+        Set<ConstraintViolation<Trainee>> violations = validator.validate(entity);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+            throw new ValidationException("Validation failed: " + message);
+        }
     }
 }
