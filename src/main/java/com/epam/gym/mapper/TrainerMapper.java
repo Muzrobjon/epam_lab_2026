@@ -32,7 +32,7 @@ public interface TrainerMapper {
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "user.firstName", target = "firstName")
     @Mapping(source = "user.lastName", target = "lastName")
-    TraineeSummaryResponse toTraineeSummary(Trainee trainee);
+    TraineeSummaryResponse traineeToSummary(Trainee trainee);
 
-    List<TraineeSummaryResponse> toTraineeSummaryList(List<Trainee> trainees);
+    List<TraineeSummaryResponse> traineesToSummaryList(List<Trainee> trainees);
 }

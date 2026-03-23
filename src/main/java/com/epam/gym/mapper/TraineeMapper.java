@@ -16,6 +16,8 @@ public interface TraineeMapper {
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "user.firstName", target = "firstName")
     @Mapping(source = "user.lastName", target = "lastName")
+    @Mapping(source = "dateOfBirth", target = "dateOfBirth")
+    @Mapping(source = "address", target = "address")
     @Mapping(source = "user.isActive", target = "isActive")
     @Mapping(source = "trainers", target = "trainers")
     TraineeProfileResponse toProfileResponse(Trainee trainee);
@@ -25,13 +27,12 @@ public interface TraineeMapper {
     @Mapping(source = "user.lastName", target = "lastName")
     TraineeSummaryResponse toSummaryResponse(Trainee trainee);
 
-    List<TraineeSummaryResponse> toSummaryResponseList(List<Trainee> trainees);
 
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "user.firstName", target = "firstName")
     @Mapping(source = "user.lastName", target = "lastName")
     @Mapping(source = "specialization.trainingTypeName", target = "specialization")
-    TrainerSummaryResponse toTrainerSummary(Trainer trainer);
+    TrainerSummaryResponse trainerToSummary(Trainer trainer);
 
-    List<TrainerSummaryResponse> toTrainerSummaryList(List<Trainer> trainers);
+    List<TrainerSummaryResponse> trainersToSummaryList(List<Trainer> trainers);
 }

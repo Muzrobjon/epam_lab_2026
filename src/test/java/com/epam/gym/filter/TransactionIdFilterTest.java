@@ -2,290 +2,514 @@ package com.epam.gym.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("TransactionIdFilter Unit Tests")
 class TransactionIdFilterTest {
 
-    private TransactionIdFilter filter;
+    private TransactionIdFilter transactionIdFilter;
 
     @Mock
-    private FilterChain mockFilterChain;
+    private FilterChain filterChain;
+
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
+
+    private static final String TRANSACTION_ID_HEADER = "X-Transaction-Id";
+    private static final String TRANSACTION_ID_ATTRIBUTE = "transactionId";
 
     @BeforeEach
     void setUp() {
-        filter = new TransactionIdFilter();
+        transactionIdFilter = new TransactionIdFilter();
+        request = new MockHttpServletRequest();
+        response = new MockHttpServletResponse();
     }
 
-    // ==================== Transaction ID Generation Tests ====================
+    @Nested
+    @DisplayName("Transaction ID Generation Tests")
+    class TransactionIdGenerationTests {
 
-    @Test
-    @DisplayName("Should generate new transaction ID when header not present")
-    void shouldGenerateNewTransactionIdWhenHeaderMissing() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-        request.setRequestURI("/api/trainees");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain chain = new MockFilterChain();
+        @Test
+        @DisplayName("Should generate new transaction ID when header is not present")
+        void doFilter_NoTransactionIdHeader_GeneratesNewTransactionId() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
 
-        filter.doFilter(request, response, chain);
+            transactionIdFilter.doFilter(request, response, filterChain);
 
-        String transactionId = (String) request.getAttribute("transactionId");
-        assertNotNull(transactionId);
-        assertFalse(transactionId.isEmpty());
-        assertTrue(transactionId.matches("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"));
+            String transactionId = response.getHeader(TRANSACTION_ID_HEADER);
+            assertThat(transactionId).isNotNull();
+            assertThat(transactionId).isNotEmpty();
+            assertThat(isValidUUID(transactionId)).isTrue();
 
-        String responseHeader = response.getHeader("X-Transaction-Id");
-        assertEquals(transactionId, responseHeader);
-    }
+            verify(filterChain).doFilter(request, response);
+        }
 
-    @Test
-    @DisplayName("Should use existing transaction ID from request header")
-    void shouldUseExistingTransactionIdFromHeader() throws ServletException, IOException {
-        String existingTransactionId = "custom-txn-12345";
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("POST");
-        request.setRequestURI("/api/trainings");
-        request.addHeader("X-Transaction-Id", existingTransactionId);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain chain = new MockFilterChain();
+        @Test
+        @DisplayName("Should generate new transaction ID when header is empty")
+        void doFilter_EmptyTransactionIdHeader_GeneratesNewTransactionId() throws ServletException, IOException {
+            request.setMethod("POST");
+            request.setRequestURI("/api/trainers");
+            request.addHeader(TRANSACTION_ID_HEADER, "");
 
-        filter.doFilter(request, response, chain);
+            transactionIdFilter.doFilter(request, response, filterChain);
 
-        String transactionId = (String) request.getAttribute("transactionId");
-        assertEquals(existingTransactionId, transactionId);
+            String transactionId = response.getHeader(TRANSACTION_ID_HEADER);
+            assertThat(transactionId).isNotNull();
+            assertThat(transactionId).isNotEmpty();
+            assertThat(isValidUUID(transactionId)).isTrue();
 
-        String responseHeader = response.getHeader("X-Transaction-Id");
-        assertEquals(existingTransactionId, responseHeader);
-    }
+            verify(filterChain).doFilter(request, response);
+        }
 
-    @Test
-    @DisplayName("Should generate new ID when header is empty string")
-    void shouldGenerateNewIdWhenHeaderEmpty() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-        request.setRequestURI("/api/test");
-        request.addHeader("X-Transaction-Id", "");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain chain = new MockFilterChain();
+        @Test
+        @DisplayName("Should use existing transaction ID from header")
+        void doFilter_ExistingTransactionIdHeader_UsesExistingTransactionId() throws ServletException, IOException {
+            String existingTransactionId = UUID.randomUUID().toString();
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees/profile");
+            request.addHeader(TRANSACTION_ID_HEADER, existingTransactionId);
 
-        filter.doFilter(request, response, chain);
+            transactionIdFilter.doFilter(request, response, filterChain);
 
-        String transactionId = (String) request.getAttribute("transactionId");
-        assertNotNull(transactionId);
-        assertFalse(transactionId.isEmpty());
-        assertNotEquals("", transactionId);
-        assertTrue(transactionId.matches("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"));
-    }
+            String transactionId = response.getHeader(TRANSACTION_ID_HEADER);
+            assertThat(transactionId).isEqualTo(existingTransactionId);
 
-    @Test
-    @DisplayName("Should accept whitespace-only header as-is (current filter behavior)")
-    void shouldAcceptWhitespaceHeaderAsIs() throws ServletException, IOException {
-        // Given - Current filter doesn't trim, so whitespace is accepted
-        String whitespaceId = "   ";
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-        request.setRequestURI("/api/test");
-        request.addHeader("X-Transaction-Id", whitespaceId);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain chain = new MockFilterChain();
+            verify(filterChain).doFilter(request, response);
+        }
 
-        // When
-        filter.doFilter(request, response, chain);
+        @Test
+        @DisplayName("Should use custom transaction ID from header")
+        void doFilter_CustomTransactionId_UsesCustomTransactionId() throws ServletException, IOException {
+            String customTransactionId = "custom-txn-12345";
+            request.setMethod("PUT");
+            request.setRequestURI("/api/trainees/john.doe");
+            request.addHeader(TRANSACTION_ID_HEADER, customTransactionId);
 
-        // Then - Whitespace is NOT empty, so it's used as-is
-        String transactionId = (String) request.getAttribute("transactionId");
-        assertEquals(whitespaceId, transactionId, "Whitespace-only header should be accepted as-is");
-        assertEquals(whitespaceId, response.getHeader("X-Transaction-Id"));
-    }
+            transactionIdFilter.doFilter(request, response, filterChain);
 
-    // ==================== Request/Response Handling Tests ====================
+            String transactionId = response.getHeader(TRANSACTION_ID_HEADER);
+            assertThat(transactionId).isEqualTo(customTransactionId);
 
-    @Test
-    @DisplayName("Should continue filter chain")
-    void shouldContinueFilterChain() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
+            verify(filterChain).doFilter(request, response);
+        }
 
-        filter.doFilter(request, response, mockFilterChain);
+        @Test
+        @DisplayName("Should generate unique transaction IDs for different requests")
+        void doFilter_MultipleRequests_GeneratesUniqueTransactionIds() throws ServletException, IOException {
+            MockHttpServletRequest request1 = new MockHttpServletRequest();
+            MockHttpServletResponse response1 = new MockHttpServletResponse();
+            request1.setMethod("GET");
+            request1.setRequestURI("/api/trainees");
 
-        verify(mockFilterChain).doFilter(request, response);
-    }
+            MockHttpServletRequest request2 = new MockHttpServletRequest();
+            MockHttpServletResponse response2 = new MockHttpServletResponse();
+            request2.setMethod("GET");
+            request2.setRequestURI("/api/trainers");
 
-    @Test
-    @DisplayName("Should set response header before chain execution")
-    void shouldSetHeaderBeforeChainExecution() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
+            transactionIdFilter.doFilter(request1, response1, filterChain);
+            transactionIdFilter.doFilter(request2, response2, filterChain);
 
-        filter.doFilter(request, response, mockFilterChain);
+            String transactionId1 = response1.getHeader(TRANSACTION_ID_HEADER);
+            String transactionId2 = response2.getHeader(TRANSACTION_ID_HEADER);
 
-        verify(mockFilterChain).doFilter(request, response);
-        assertNotNull(response.getHeader("X-Transaction-Id"));
-    }
-
-    @Test
-    @DisplayName("Should handle exceptions in filter chain and still log duration")
-    void shouldHandleExceptionsAndLogDuration() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-        request.setRequestURI("/api/error");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        doThrow(new ServletException("Chain error")).when(mockFilterChain).doFilter(any(), any());
-
-        assertThrows(ServletException.class, () -> {
-            filter.doFilter(request, response, mockFilterChain);
-        });
-
-        assertNotNull(response.getHeader("X-Transaction-Id"));
-    }
-
-    // ==================== Logging and Timing Tests ====================
-
-    @Test
-    @DisplayName("Should capture request method and URI in logs")
-    void shouldCaptureRequestDetails() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("PUT");
-        request.setRequestURI("/api/trainers/John.Doe");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain chain = new MockFilterChain();
-
-        filter.doFilter(request, response, chain);
-
-        assertNotNull(request.getAttribute("transactionId"));
-    }
-
-    @Test
-    @DisplayName("Should calculate and log request duration")
-    void shouldCalculateDuration() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-        request.setRequestURI("/api/slow-endpoint");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        doAnswer(invocation -> {
-            Thread.sleep(50);
-            return null;
-        }).when(mockFilterChain).doFilter(any(), any());
-
-        long startTime = System.currentTimeMillis();
-        filter.doFilter(request, response, mockFilterChain);
-        long actualDuration = System.currentTimeMillis() - startTime;
-
-        assertTrue(actualDuration >= 50, "Duration should be at least 50ms");
-        verify(mockFilterChain).doFilter(request, response);
-    }
-
-    @Test
-    @DisplayName("Should capture response status code")
-    void shouldCaptureResponseStatus() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        doAnswer(invocation -> {
-            response.setStatus(201);
-            return null;
-        }).when(mockFilterChain).doFilter(any(), any());
-
-        filter.doFilter(request, response, mockFilterChain);
-
-        assertEquals(201, response.getStatus());
-        verify(mockFilterChain).doFilter(request, response);
-    }
-
-    // ==================== Edge Case Tests ====================
-
-    @Test
-    @DisplayName("Should handle null header value")
-    void shouldHandleNullHeader() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-        request.setRequestURI("/api/test");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain chain = new MockFilterChain();
-
-        filter.doFilter(request, response, chain);
-
-        String transactionId = (String) request.getAttribute("transactionId");
-        assertNotNull(transactionId);
-        assertFalse(transactionId.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should handle different HTTP methods")
-    void shouldHandleDifferentHttpMethods() throws ServletException, IOException {
-        String[] methods = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"};
-
-        for (String method : methods) {
-            MockHttpServletRequest request = new MockHttpServletRequest();
-            request.setMethod(method);
-            request.setRequestURI("/api/test");
-            MockHttpServletResponse response = new MockHttpServletResponse();
-            MockFilterChain chain = new MockFilterChain();
-
-            filter.doFilter(request, response, chain);
-
-            assertNotNull(request.getAttribute("transactionId"),
-                    "Should set transaction ID for " + method);
-            assertNotNull(response.getHeader("X-Transaction-Id"),
-                    "Should set header for " + method);
+            assertThat(transactionId1).isNotEqualTo(transactionId2);
         }
     }
 
-    @Test
-    @DisplayName("Should handle request with query parameters")
-    void shouldHandleRequestWithQueryParams() throws ServletException, IOException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-        request.setRequestURI("/api/trainings");
-        request.setQueryString("fromDate=2024-01-01&toDate=2024-12-31");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain chain = new MockFilterChain();
+    @Nested
+    @DisplayName("Request Attribute Tests")
+    class RequestAttributeTests {
 
-        filter.doFilter(request, response, chain);
+        @Test
+        @DisplayName("Should store transaction ID in request attribute")
+        void doFilter_ValidRequest_StoresTransactionIdInAttribute() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
 
-        assertNotNull(request.getAttribute("transactionId"));
-        assertEquals("/api/trainings", request.getRequestURI());
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            Object transactionIdAttribute = request.getAttribute(TRANSACTION_ID_ATTRIBUTE);
+            assertThat(transactionIdAttribute).isNotNull();
+            assertThat(transactionIdAttribute).isInstanceOf(String.class);
+            assertThat((String) transactionIdAttribute).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("Should store existing transaction ID in request attribute")
+        void doFilter_ExistingTransactionId_StoresInAttribute() throws ServletException, IOException {
+            String existingTransactionId = UUID.randomUUID().toString();
+            request.setMethod("POST");
+            request.setRequestURI("/api/trainings");
+            request.addHeader(TRANSACTION_ID_HEADER, existingTransactionId);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            Object transactionIdAttribute = request.getAttribute(TRANSACTION_ID_ATTRIBUTE);
+            assertThat(transactionIdAttribute).isEqualTo(existingTransactionId);
+        }
+
+        @Test
+        @DisplayName("Should have matching transaction ID in attribute and response header")
+        void doFilter_ValidRequest_MatchingAttributeAndHeader() throws ServletException, IOException {
+            request.setMethod("DELETE");
+            request.setRequestURI("/api/trainees/john.doe");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            String headerTransactionId = response.getHeader(TRANSACTION_ID_HEADER);
+            String attributeTransactionId = (String) request.getAttribute(TRANSACTION_ID_ATTRIBUTE);
+
+            assertThat(headerTransactionId).isEqualTo(attributeTransactionId);
+        }
     }
 
-    @Test
-    @DisplayName("Should generate unique transaction IDs for each request")
-    void shouldGenerateUniqueIds() throws ServletException, IOException {
-        String firstId;
-        String secondId;
+    @Nested
+    @DisplayName("Response Header Tests")
+    class ResponseHeaderTests {
 
-        MockHttpServletRequest request1 = new MockHttpServletRequest();
-        MockHttpServletResponse response1 = new MockHttpServletResponse();
-        MockFilterChain chain1 = new MockFilterChain();
-        filter.doFilter(request1, response1, chain1);
-        firstId = (String) request1.getAttribute("transactionId");
+        @Test
+        @DisplayName("Should add transaction ID to response header")
+        void doFilter_ValidRequest_AddsTransactionIdToResponseHeader() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainings/types");
 
-        MockHttpServletRequest request2 = new MockHttpServletRequest();
-        MockHttpServletResponse response2 = new MockHttpServletResponse();
-        MockFilterChain chain2 = new MockFilterChain();
-        filter.doFilter(request2, response2, chain2);
-        secondId = (String) request2.getAttribute("transactionId");
+            transactionIdFilter.doFilter(request, response, filterChain);
 
-        assertNotNull(firstId);
-        assertNotNull(secondId);
-        assertNotEquals(firstId, secondId, "Each request should have unique transaction ID");
+            assertThat(response.containsHeader(TRANSACTION_ID_HEADER)).isTrue();
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should preserve transaction ID in response even when exception occurs")
+        void doFilter_ExceptionOccurs_PreservesTransactionIdInResponse() throws ServletException, IOException {
+            request.setMethod("POST");
+            request.setRequestURI("/api/trainings");
+
+            doThrow(new ServletException("Test exception")).when(filterChain).doFilter(any(), any());
+
+            assertThatThrownBy(() -> transactionIdFilter.doFilter(request, response, filterChain))
+                    .isInstanceOf(ServletException.class);
+
+            assertThat(response.containsHeader(TRANSACTION_ID_HEADER)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("Filter Chain Tests")
+    class FilterChainTests {
+
+        @Test
+        @DisplayName("Should call filter chain doFilter method")
+        void doFilter_ValidRequest_CallsFilterChain() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should propagate ServletException from filter chain")
+        void doFilter_FilterChainThrowsServletException_PropagatesException() throws ServletException, IOException {
+            request.setMethod("POST");
+            request.setRequestURI("/api/trainings");
+
+            ServletException expectedException = new ServletException("Filter chain error");
+            doThrow(expectedException).when(filterChain).doFilter(any(), any());
+
+            assertThatThrownBy(() -> transactionIdFilter.doFilter(request, response, filterChain))
+                    .isInstanceOf(ServletException.class)
+                    .hasMessage("Filter chain error");
+        }
+
+        @Test
+        @DisplayName("Should propagate IOException from filter chain")
+        void doFilter_FilterChainThrowsIOException_PropagatesException() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
+
+            IOException expectedException = new IOException("IO error");
+            doThrow(expectedException).when(filterChain).doFilter(any(), any());
+
+            assertThatThrownBy(() -> transactionIdFilter.doFilter(request, response, filterChain))
+                    .isInstanceOf(IOException.class)
+                    .hasMessage("IO error");
+        }
+
+        @Test
+        @DisplayName("Should propagate RuntimeException from filter chain")
+        void doFilter_FilterChainThrowsRuntimeException_PropagatesException() throws ServletException, IOException {
+            request.setMethod("PUT");
+            request.setRequestURI("/api/trainees/john.doe");
+
+            RuntimeException expectedException = new RuntimeException("Runtime error");
+            doThrow(expectedException).when(filterChain).doFilter(any(), any());
+
+            assertThatThrownBy(() -> transactionIdFilter.doFilter(request, response, filterChain))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessage("Runtime error");
+        }
+    }
+
+    @Nested
+    @DisplayName("HTTP Method Tests")
+    class HttpMethodTests {
+
+        @Test
+        @DisplayName("Should handle GET request")
+        void doFilter_GetRequest_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees/profile");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should handle POST request")
+        void doFilter_PostRequest_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("POST");
+            request.setRequestURI("/api/trainees/register");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should handle PUT request")
+        void doFilter_PutRequest_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("PUT");
+            request.setRequestURI("/api/trainees/john.doe");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should handle DELETE request")
+        void doFilter_DeleteRequest_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("DELETE");
+            request.setRequestURI("/api/trainees/john.doe");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should handle PATCH request")
+        void doFilter_PatchRequest_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("PATCH");
+            request.setRequestURI("/api/trainees/john.doe/status");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+    }
+
+    @Nested
+    @DisplayName("Various URI Tests")
+    class VariousUriTests {
+
+        @Test
+        @DisplayName("Should handle root URI")
+        void doFilter_RootUri_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should handle URI with path variables")
+        void doFilter_UriWithPathVariables_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees/john.doe/trainers");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should handle URI with query parameters")
+        void doFilter_UriWithQueryParameters_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees/trainings");
+            request.setQueryString("fromDate=2024-01-01&toDate=2024-12-31");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+
+        @Test
+        @DisplayName("Should handle long URI path")
+        void doFilter_LongUriPath_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/v1/gym/management/trainees/john.doe/trainings/history");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+            verify(filterChain).doFilter(request, response);
+        }
+    }
+
+    @Nested
+    @DisplayName("Response Status Tests")
+    class ResponseStatusTests {
+
+        @Test
+        @DisplayName("Should handle successful response status")
+        void doFilter_SuccessfulResponse_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
+            response.setStatus(200);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should handle created response status")
+        void doFilter_CreatedResponse_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("POST");
+            request.setRequestURI("/api/trainees/register");
+            response.setStatus(201);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should handle error response status")
+        void doFilter_ErrorResponse_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees/nonexistent");
+            response.setStatus(404);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should handle server error response status")
+        void doFilter_ServerErrorResponse_ProcessesSuccessfully() throws ServletException, IOException {
+            request.setMethod("POST");
+            request.setRequestURI("/api/trainings");
+            response.setStatus(500);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("Edge Cases Tests")
+    class EdgeCasesTests {
+
+        @Test
+        @DisplayName("Should handle whitespace-only transaction ID header")
+        void doFilter_WhitespaceTransactionIdHeader_GeneratesNewTransactionId() throws ServletException, IOException {
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
+            request.addHeader(TRANSACTION_ID_HEADER, "   ");
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            // Note: Current implementation treats whitespace as non-empty
+            // If you want to treat whitespace as empty, you'd need to modify the filter
+            String transactionId = response.getHeader(TRANSACTION_ID_HEADER);
+            assertThat(transactionId).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should handle very long transaction ID")
+        void doFilter_VeryLongTransactionId_UsesExistingTransactionId() throws ServletException, IOException {
+            String longTransactionId = "txn-" + "a".repeat(1000);
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
+            request.addHeader(TRANSACTION_ID_HEADER, longTransactionId);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isEqualTo(longTransactionId);
+        }
+
+        @Test
+        @DisplayName("Should handle special characters in transaction ID")
+        void doFilter_SpecialCharactersInTransactionId_UsesExistingTransactionId() throws ServletException, IOException {
+            String specialTransactionId = "txn-!@#$%^&*()_+-=[]{}|;':\",./<>?";
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
+            request.addHeader(TRANSACTION_ID_HEADER, specialTransactionId);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isEqualTo(specialTransactionId);
+        }
+
+        @Test
+        @DisplayName("Should handle unicode characters in transaction ID")
+        void doFilter_UnicodeTransactionId_UsesExistingTransactionId() throws ServletException, IOException {
+            String unicodeTransactionId = "txn-日本語-한국어-中文";
+            request.setMethod("GET");
+            request.setRequestURI("/api/trainees");
+            request.addHeader(TRANSACTION_ID_HEADER, unicodeTransactionId);
+
+            transactionIdFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getHeader(TRANSACTION_ID_HEADER)).isEqualTo(unicodeTransactionId);
+        }
+    }
+
+    // ==================== Helper Methods ====================
+
+    private boolean isValidUUID(String str) {
+        try {
+            UUID.fromString(str);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

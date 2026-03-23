@@ -1,21 +1,32 @@
 package com.epam.gym.controller;
 
-import com.epam.gym.dto.request.*;
-import com.epam.gym.dto.response.*;
+import com.epam.gym.dto.request.ToggleActiveRequest;
+import com.epam.gym.dto.request.TraineeRegistrationRequest;
+import com.epam.gym.dto.request.UpdateTraineeRequest;
+import com.epam.gym.dto.request.UpdateTraineeTrainersRequest;
+import com.epam.gym.dto.response.RegistrationResponse;
+import com.epam.gym.dto.response.TraineeProfileResponse;
+import com.epam.gym.dto.response.TrainerSummaryResponse;
+import com.epam.gym.dto.response.TrainingResponse;
 import com.epam.gym.entity.Trainee;
 import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.Training;
+import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
 import com.epam.gym.enums.TrainingTypeName;
-import com.epam.gym.exception.ValidationException;
-import com.epam.gym.facade.GymFacade;
 import com.epam.gym.mapper.TraineeMapper;
 import com.epam.gym.mapper.TrainerMapper;
 import com.epam.gym.mapper.TrainingMapper;
+import com.epam.gym.mapper.UserMapper;
+import com.epam.gym.service.TraineeService;
+import com.epam.gym.service.TrainingService;
+import com.epam.gym.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,23 +37,27 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("TraineeController Tests")
 class TraineeControllerTest {
 
     private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
 
     @Mock
-    private GymFacade gymFacade;
+    private TraineeService traineeService;
+
+    @Mock
+    private TrainingService trainingService;
+
+    @Mock
+    private UserService userService;
 
     @Mock
     private TraineeMapper traineeMapper;
@@ -53,348 +68,412 @@ class TraineeControllerTest {
     @Mock
     private TrainingMapper trainingMapper;
 
+    @Mock
+    private UserMapper userMapper;
+
     @InjectMocks
     private TraineeController traineeController;
+
+    private ObjectMapper objectMapper;
+
+    private Trainee testTrainee;
+    private Trainer testTrainer;
+    private TrainingType trainingType;
+    private TraineeProfileResponse profileResponse;
+    private RegistrationResponse registrationResponse;
+
+    private static final String USERNAME = "john.doe";
+    private static final String FIRST_NAME = "John";
+    private static final String LAST_NAME = "Doe";
+    private static final LocalDate DATE_OF_BIRTH = LocalDate.of(1990, 5, 15);
+    private static final String ADDRESS = "123 Main St";
+    private static final String PASSWORD = "password123";
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(traineeController).build();
+
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-    }
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    // ==================== Registration Tests ====================
-
-    @Test
-    @DisplayName("Register trainee should return 201 with credentials")
-    void registerTraineeShouldReturnCreatedWithCredentials() throws Exception {
-        TraineeRegistrationRequest request = new TraineeRegistrationRequest();
-        request.setFirstName("John");
-        request.setLastName("Doe");
-        request.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        request.setAddress("123 Main St");
-
-        User user = User.builder()
-                .username("john.doe")
-                .password("randomPass123")
-                .build();
-        Trainee trainee = Trainee.builder().user(user).build();
-
-        when(gymFacade.createTrainee("John", "Doe", LocalDate.of(1990, 1, 1), "123 Main St"))
-                .thenReturn(trainee);
-
-        mockMvc.perform(post("/api/trainees")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username").value("john.doe"))
-                .andExpect(jsonPath("$.password").value("randomPass123"));
-
-        verify(gymFacade).createTrainee("John", "Doe", LocalDate.of(1990, 1, 1), "123 Main St");
-    }
-
-    // ==================== Profile Retrieval Tests ====================
-
-    @Test
-    @DisplayName("Get trainee profile should return profile when authenticated")
-    void getTraineeProfileShouldReturnProfileWhenAuthenticated() throws Exception {
-        String username = "john.doe";
-        String password = "pass123";
-        Trainee trainee = createSampleTrainee(username);
-        TraineeProfileResponse profileResponse = createSampleProfileResponse();
-
-        doNothing().when(gymFacade).authenticateTrainee(username, password);
-        when(gymFacade.getTraineeByUsername(username)).thenReturn(trainee);
-        when(traineeMapper.toProfileResponse(trainee)).thenReturn(profileResponse);
-
-        mockMvc.perform(get("/api/trainees/{username}", username)
-                        .param("password", password))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).authenticateTrainee(username, password);
-        verify(gymFacade).getTraineeByUsername(username);
-        verify(traineeMapper).toProfileResponse(trainee);
-    }
-
-    // ==================== Profile Update Tests ====================
-
-    @Test
-    @DisplayName("Update trainee profile should succeed when usernames match")
-    void updateTraineeProfileShouldSucceedWhenUsernamesMatch() throws Exception {
-        String username = "john.doe";
-        UpdateTraineeRequest request = createValidUpdateRequest(username);
-
-        Trainee updatedTrainee = createSampleTrainee(username);
-        TraineeProfileResponse response = createSampleProfileResponse();
-
-        when(gymFacade.updateTrainee(eq(username), eq("pass123"), any(Trainee.class)))
-                .thenReturn(updatedTrainee);
-        when(traineeMapper.toProfileResponse(updatedTrainee)).thenReturn(response);
-
-        mockMvc.perform(put("/api/trainees/{username}", username)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).updateTrainee(eq(username), eq("pass123"), any(Trainee.class));
-    }
-
-    @Test
-    @DisplayName("Update trainee profile should throw ValidationException when usernames mismatch")
-    void updateTraineeProfileShouldThrowWhenUsernamesMismatch() {
-        String pathUsername = "john.doe";
-        String bodyUsername = "jane.doe";
-        UpdateTraineeRequest request = createValidUpdateRequest(bodyUsername); // Mismatched
-
-        Exception exception = assertThrows(Exception.class, () -> {
-            mockMvc.perform(put("/api/trainees/{username}", pathUsername)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-        });
-
-        Throwable rootCause = findRootCause(exception);
-        assertNotNull(rootCause, "Expected ValidationException in exception chain");
-        assertEquals("Username in path does not match username in request body", rootCause.getMessage());
-    }
-
-    // ==================== Delete Profile Tests ====================
-
-    @Test
-    @DisplayName("Delete trainee profile should return 204 when successful")
-    void deleteTraineeProfileShouldReturnNoContent() throws Exception {
-        String username = "john.doe";
-        String password = "pass123";
-
-        doNothing().when(gymFacade).deleteTrainee(username, password);
-
-        mockMvc.perform(delete("/api/trainees/{username}", username)
-                        .param("password", password))
-                .andExpect(status().isNoContent());
-
-        verify(gymFacade).deleteTrainee(username, password);
-    }
-
-    // ==================== Unassigned Trainers Tests ====================
-
-    @Test
-    @DisplayName("Get unassigned trainers should return list of trainers")
-    void getUnassignedTrainersShouldReturnTrainerList() throws Exception {
-        String username = "john.doe";
-        String password = "pass123";
-        List<Trainer> trainers = Collections.singletonList(createSampleTrainer());
-        List<TrainerSummaryResponse> responseList = Collections.singletonList(new TrainerSummaryResponse());
-
-        doNothing().when(gymFacade).authenticateTrainee(username, password);
-        when(gymFacade.getUnassignedTrainers(username)).thenReturn(trainers);
-        when(trainerMapper.toSummaryResponseList(trainers)).thenReturn(responseList);
-
-        mockMvc.perform(get("/api/trainees/{username}/trainers/unassigned", username)
-                        .param("password", password))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).authenticateTrainee(username, password);
-        verify(gymFacade).getUnassignedTrainers(username);
-        verify(trainerMapper).toSummaryResponseList(trainers);
-    }
-
-    // ==================== Update Trainers List Tests ====================
-
-    @Test
-    @DisplayName("Update trainee trainers list should succeed when usernames match")
-    void updateTraineeTrainersListShouldSucceedWhenUsernamesMatch() throws Exception {
-        String username = "john.doe";
-        List<String> trainerUsernames = List.of("trainer1", "trainer2");
-        UpdateTraineeTrainersRequest request = new UpdateTraineeTrainersRequest();
-        request.setTraineeUsername(username);
-        request.setPassword("pass123");
-        request.setTrainerUsernames(trainerUsernames);
-
-        Trainee trainee = createSampleTrainee(username);
-        List<TrainerSummaryResponse> responseList = Collections.emptyList();
-
-        doNothing().when(gymFacade).updateTraineeTrainersList(username, "pass123", trainerUsernames);
-        when(gymFacade.getTraineeByUsername(username)).thenReturn(trainee);
-        when(trainerMapper.toSummaryResponseList(anyList())).thenReturn(responseList);
-
-        mockMvc.perform(put("/api/trainees/{username}/trainers", username)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).updateTraineeTrainersList(username, "pass123", trainerUsernames);
-    }
-
-    @Test
-    @DisplayName("Update trainers list should throw ValidationException when usernames mismatch")
-    void updateTrainersListShouldThrowWhenUsernamesMismatch() {
-        String pathUsername = "john.doe";
-        String bodyUsername = "jane.doe";
-        UpdateTraineeTrainersRequest request = new UpdateTraineeTrainersRequest();
-        request.setTraineeUsername(bodyUsername);
-        request.setPassword("pass123");
-        request.setTrainerUsernames(List.of("trainer1"));
-
-        Exception exception = assertThrows(Exception.class, () -> {
-            mockMvc.perform(put("/api/trainees/{username}/trainers", pathUsername)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-        });
-
-        Throwable rootCause = findRootCause(exception);
-        assertNotNull(rootCause, "Expected ValidationException in exception chain");
-        assertEquals("Username in path does not match username in request body", rootCause.getMessage());
-    }
-
-    // ==================== Get Trainings Tests ====================
-
-    @Test
-    @DisplayName("Get trainee trainings without filters should return all trainings")
-    void getTraineeTrainingsWithoutFiltersShouldReturnAll() throws Exception {
-        String username = "john.doe";
-        String password = "pass123";
-        List<Training> trainings = Collections.singletonList(createSampleTraining());
-        List<TrainingResponse> responseList = Collections.singletonList(new TrainingResponse());
-
-        when(gymFacade.getTraineeTrainingsByCriteria(username, password, null, null, null, null))
-                .thenReturn(trainings);
-        when(trainingMapper.toResponseList(trainings)).thenReturn(responseList);
-
-        mockMvc.perform(get("/api/trainees/{username}/trainings", username)
-                        .param("password", password))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).getTraineeTrainingsByCriteria(username, password, null, null, null, null);
-    }
-
-    @Test
-    @DisplayName("Get trainee trainings with all filters should return filtered results")
-    void getTraineeTrainingsWithFiltersShouldReturnFiltered() throws Exception {
-        String username = "john.doe";
-        String password = "pass123";
-        LocalDate fromDate = LocalDate.of(2024, 1, 1);
-        LocalDate toDate = LocalDate.of(2024, 12, 31);
-        String trainerName = "Jane Smith";
-        TrainingTypeName trainingType = TrainingTypeName.YOGA;
-
-        List<Training> trainings = Collections.emptyList();
-        List<TrainingResponse> responseList = Collections.emptyList();
-
-        when(gymFacade.getTraineeTrainingsByCriteria(username, password, fromDate, toDate, trainerName, trainingType))
-                .thenReturn(trainings);
-        when(trainingMapper.toResponseList(trainings)).thenReturn(responseList);
-
-        mockMvc.perform(get("/api/trainees/{username}/trainings", username)
-                        .param("password", password)
-                        .param("fromDate", fromDate.toString())
-                        .param("toDate", toDate.toString())
-                        .param("trainerName", trainerName)
-                        .param("trainingType", trainingType.name()))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).getTraineeTrainingsByCriteria(username, password, fromDate, toDate, trainerName, trainingType);
-    }
-
-    // ==================== Toggle Status Tests ====================
-
-    @Test
-    @DisplayName("Toggle trainee status should succeed when usernames match")
-    void toggleTraineeStatusShouldSucceedWhenUsernamesMatch() throws Exception {
-        String username = "john.doe";
-        ToggleActiveRequest request = new ToggleActiveRequest();
-        request.setUsername(username);
-        request.setPassword("pass123");
-
-        doNothing().when(gymFacade).toggleTraineeStatus(username, "pass123");
-
-        mockMvc.perform(patch("/api/trainees/{username}/status", username)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).toggleTraineeStatus(username, "pass123");
-    }
-
-    @Test
-    @DisplayName("Toggle status should throw ValidationException when usernames mismatch")
-    void toggleStatusShouldThrowWhenUsernamesMismatch() {
-        String pathUsername = "john.doe";
-        String bodyUsername = "jane.doe";
-        ToggleActiveRequest request = new ToggleActiveRequest();
-        request.setUsername(bodyUsername);
-        request.setPassword("pass123");
-
-        Exception exception = assertThrows(Exception.class, () -> {
-            mockMvc.perform(patch("/api/trainees/{username}/status", pathUsername)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-        });
-
-        Throwable rootCause = findRootCause(exception);
-        assertNotNull(rootCause, "Expected ValidationException in exception chain");
-        assertEquals("Username in path does not match username in request body", rootCause.getMessage());
-    }
-
-    // ==================== Helper Methods ====================
-
-    private UpdateTraineeRequest createValidUpdateRequest(String username) {
-        UpdateTraineeRequest request = new UpdateTraineeRequest();
-        request.setUsername(username);
-        request.setPassword("pass123");
-        request.setFirstName("John");
-        request.setLastName("Doe");
-        request.setIsActive(true);
-        request.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        request.setAddress("123 Main St");
-        return request;
-    }
-
-    private Trainee createSampleTrainee(String username) {
-        User user = User.builder()
-                .username(username)
-                .firstName("John")
-                .lastName("Doe")
+        // Create User
+        User testUser = User.builder()
+                .id(1L)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .password(PASSWORD)
                 .isActive(true)
                 .build();
-        return Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .address("123 Main St")
+
+        // Create TrainingType (no builder, use constructor)
+        trainingType = new TrainingType(1L, TrainingTypeName.FITNESS);
+
+        // Create Trainee
+        testTrainee = Trainee.builder()
+                .id(1L)
+                .user(testUser)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
                 .build();
-    }
 
-    private TraineeProfileResponse createSampleProfileResponse() {
-        TraineeProfileResponse response = new TraineeProfileResponse();
-        response.setUsername("john.doe");
-        response.setFirstName("John");
-        response.setLastName("Doe");
-        return response;
-    }
-
-    private Trainer createSampleTrainer() {
-        User user = User.builder()
-                .username("trainer1")
+        // Create Trainer User
+        User trainerUser = User.builder()
+                .id(2L)
                 .firstName("Jane")
                 .lastName("Smith")
+                .username("jane.smith")
+                .password("trainerPass")
+                .isActive(true)
                 .build();
-        return Trainer.builder().user(user).build();
+
+        // Create Trainer
+        testTrainer = Trainer.builder()
+                .id(1L)
+                .user(trainerUser)
+                .specialization(trainingType)
+                .build();
+
+        // Create Response DTOs
+        profileResponse = TraineeProfileResponse.builder()
+                .username(USERNAME)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .isActive(true)
+                .trainers(new ArrayList<>())
+                .build();
+
+        registrationResponse = RegistrationResponse.builder()
+                .username(USERNAME)
+                .password(PASSWORD)
+                .build();
     }
 
-    private Training createSampleTraining() {
-        return Training.builder()
-                .trainingName("Morning Yoga")
-                .trainingDate(LocalDate.now())
-                .trainingDurationMinutes(60)
-                .build();
-    }
+    // ==================== REGISTER TRAINEE TESTS ====================
 
-    private Throwable findRootCause(Throwable throwable) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (ValidationException.class.isInstance(current)) {
-                return current;
-            }
-            current = current.getCause();
+    @Nested
+    @DisplayName("Register Trainee Tests")
+    class RegisterTraineeTests {
+
+        @Test
+        @DisplayName("Should return 201 CREATED when registration is successful")
+        void registerTrainee_WithValidRequest_ReturnsCreated() throws Exception {
+            // Arrange
+            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
+                    .firstName(FIRST_NAME)
+                    .lastName(LAST_NAME)
+                    .dateOfBirth(DATE_OF_BIRTH)
+                    .address(ADDRESS)
+                    .build();
+
+            when(traineeService.createProfile(any(TraineeRegistrationRequest.class))).thenReturn(testTrainee);
+            when(userMapper.toRegistrationResponse(any(Trainee.class))).thenReturn(registrationResponse);
+
+            // Act & Assert
+            mockMvc.perform(post("/api/trainees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.username").value(USERNAME))
+                    .andExpect(jsonPath("$.password").value(PASSWORD));
+
+            verify(traineeService).createProfile(any(TraineeRegistrationRequest.class));
+            verify(userMapper).toRegistrationResponse(any(Trainee.class));
         }
-        return null;
+
+        @Test
+        @DisplayName("Should return 201 CREATED without optional fields")
+        void registerTrainee_WithoutOptionalFields_ReturnsCreated() throws Exception {
+            // Arrange
+            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
+                    .firstName(FIRST_NAME)
+                    .lastName(LAST_NAME)
+                    .build();
+
+            when(traineeService.createProfile(any(TraineeRegistrationRequest.class))).thenReturn(testTrainee);
+            when(userMapper.toRegistrationResponse(any(Trainee.class))).thenReturn(registrationResponse);
+
+            // Act & Assert
+            mockMvc.perform(post("/api/trainees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated());
+
+            verify(traineeService).createProfile(any(TraineeRegistrationRequest.class));
+        }
+    }
+
+    // ==================== GET TRAINEE PROFILE TESTS ====================
+
+    @Nested
+    @DisplayName("Get Trainee Profile Tests")
+    class GetTraineeProfileTests {
+
+        @Test
+        @DisplayName("Should return 200 OK with trainee profile")
+        void getTraineeProfile_WithValidUsername_ReturnsProfile() throws Exception {
+            // Arrange
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            when(traineeService.getByUsername(USERNAME)).thenReturn(testTrainee);
+            when(traineeMapper.toProfileResponse(any(Trainee.class))).thenReturn(profileResponse);
+
+            // Act & Assert
+            mockMvc.perform(get("/api/trainees/{username}", USERNAME))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.username").value(USERNAME))
+                    .andExpect(jsonPath("$.firstName").value(FIRST_NAME))
+                    .andExpect(jsonPath("$.lastName").value(LAST_NAME))
+                    .andExpect(jsonPath("$.isActive").value(true));
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(traineeService).getByUsername(USERNAME);
+            verify(traineeMapper).toProfileResponse(any(Trainee.class));
+        }
+    }
+
+    // ==================== UPDATE TRAINEE PROFILE TESTS ====================
+
+    @Nested
+    @DisplayName("Update Trainee Profile Tests")
+    class UpdateTraineeProfileTests {
+
+        @Test
+        @DisplayName("Should return 200 OK when update is successful")
+        void updateTraineeProfile_WithValidRequest_ReturnsUpdatedProfile() throws Exception {
+            // Arrange
+            UpdateTraineeRequest request = UpdateTraineeRequest.builder()
+                    .username(USERNAME)
+                    .firstName("UpdatedFirst")
+                    .lastName("UpdatedLast")
+                    .isActive(true)
+                    .dateOfBirth(DATE_OF_BIRTH)
+                    .address("New Address")
+                    .build();
+
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            when(traineeService.updateProfile(eq(USERNAME), any(UpdateTraineeRequest.class)))
+                    .thenReturn(testTrainee);
+            when(traineeMapper.toProfileResponse(any(Trainee.class))).thenReturn(profileResponse);
+
+            // Act & Assert
+            mockMvc.perform(put("/api/trainees/{username}", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(traineeService).updateProfile(eq(USERNAME), any(UpdateTraineeRequest.class));
+        }
+    }
+
+    // ==================== DELETE TRAINEE PROFILE TESTS ====================
+
+    @Nested
+    @DisplayName("Delete Trainee Profile Tests")
+    class DeleteTraineeProfileTests {
+
+        @Test
+        @DisplayName("Should return 204 NO CONTENT when delete is successful")
+        void deleteTraineeProfile_WithValidUsername_ReturnsNoContent() throws Exception {
+            // Arrange
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            doNothing().when(traineeService).deleteByUsername(USERNAME);
+
+            // Act & Assert
+            mockMvc.perform(delete("/api/trainees/{username}", USERNAME))
+                    .andExpect(status().isNoContent());
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(traineeService).deleteByUsername(USERNAME);
+        }
+    }
+
+    // ==================== TOGGLE TRAINEE STATUS TESTS ====================
+
+    @Nested
+    @DisplayName("Toggle Trainee Status Tests")
+    class ToggleTraineeStatusTests {
+
+        @Test
+        @DisplayName("Should return 200 OK when activating trainee")
+        void toggleTraineeStatus_Activate_ReturnsOk() throws Exception {
+            // Arrange - ToggleActiveRequest has username and isActive fields
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username(USERNAME)
+                    .isActive(true)
+                    .build();
+
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            doNothing().when(userService).setActiveStatus(USERNAME, true);
+
+            // Act & Assert
+            mockMvc.perform(patch("/api/trainees/{username}/status", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(userService).setActiveStatus(USERNAME, true);
+        }
+
+        @Test
+        @DisplayName("Should return 200 OK when deactivating trainee")
+        void toggleTraineeStatus_Deactivate_ReturnsOk() throws Exception {
+            // Arrange
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username(USERNAME)
+                    .isActive(false)
+                    .build();
+
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            doNothing().when(userService).setActiveStatus(USERNAME, false);
+
+            // Act & Assert
+            mockMvc.perform(patch("/api/trainees/{username}/status", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(userService).setActiveStatus(USERNAME, false);
+        }
+    }
+
+    // ==================== UPDATE TRAINEE TRAINERS LIST TESTS ====================
+
+    @Nested
+    @DisplayName("Update Trainee Trainers List Tests")
+    class UpdateTraineeTrainersListTests {
+
+        @Test
+        @DisplayName("Should return 200 OK with updated trainers list")
+        void updateTraineeTrainersList_WithValidRequest_ReturnsTrainersList() throws Exception {
+            // Arrange
+            UpdateTraineeTrainersRequest request = UpdateTraineeTrainersRequest.builder()
+                    .traineeUsername(USERNAME)
+                    .trainerUsernames(List.of("jane.smith"))
+                    .build();
+
+            List<Trainer> trainers = List.of(testTrainer);
+
+            TrainerSummaryResponse trainerSummary = TrainerSummaryResponse.builder()
+                    .username("jane.smith")
+                    .firstName("Jane")
+                    .lastName("Smith")
+                    .specialization(TrainingTypeName.FITNESS)
+                    .build();
+
+            List<TrainerSummaryResponse> trainerResponses = List.of(trainerSummary);
+
+            when(traineeService.updateTrainersList(eq(USERNAME), anyList())).thenReturn(trainers);
+            when(trainerMapper.toSummaryResponseList(anyList())).thenReturn(trainerResponses);
+
+            // Act & Assert
+            mockMvc.perform(put("/api/trainees/{username}/trainers", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].username").value("jane.smith"))
+                    .andExpect(jsonPath("$[0].firstName").value("Jane"))
+                    .andExpect(jsonPath("$[0].lastName").value("Smith"));
+
+            verify(traineeService).updateTrainersList(eq(USERNAME), anyList());
+            verify(trainerMapper).toSummaryResponseList(anyList());
+        }
+    }
+
+    // ==================== GET TRAINEE TRAININGS TESTS ====================
+
+    @Nested
+    @DisplayName("Get Trainee Trainings Tests")
+    class GetTraineeTrainingsTests {
+
+        @Test
+        @DisplayName("Should return 200 OK with trainings list")
+        void getTraineeTrainings_WithValidRequest_ReturnsTrainingsList() throws Exception {
+            // Arrange
+            Training training = Training.builder()
+                    .id(1L)
+                    .trainee(testTrainee)
+                    .trainer(testTrainer)
+                    .trainingName("Morning Workout")
+                    .trainingType(trainingType)
+                    .trainingDate(LocalDate.now())
+                    .trainingDurationMinutes(60)
+                    .build();
+
+            List<Training> trainings = List.of(training);
+
+            TrainingResponse trainingResponse = TrainingResponse.builder()
+                    .trainingName("Morning Workout")
+                    .trainingDate(LocalDate.now())
+                    .trainingType(TrainingTypeName.FITNESS)
+                    .trainingDuration(60)
+                    .trainerName("Jane Smith")
+                    .traineeName("John Doe")
+                    .build();
+
+            List<TrainingResponse> trainingResponses = List.of(trainingResponse);
+
+            when(trainingService.getTraineeTrainingsByCriteria(
+                    eq(USERNAME), isNull(), isNull(), isNull(), isNull()))
+                    .thenReturn(trainings);
+            when(trainingMapper.toResponseList(anyList())).thenReturn(trainingResponses);
+
+            // Act & Assert
+            mockMvc.perform(get("/api/trainees/{username}/trainings", USERNAME))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].trainingName").value("Morning Workout"))
+                    .andExpect(jsonPath("$[0].trainingDuration").value(60));
+
+            verify(trainingService).getTraineeTrainingsByCriteria(
+                    eq(USERNAME), isNull(), isNull(), isNull(), isNull());
+            verify(trainingMapper).toResponseList(anyList());
+        }
+
+        @Test
+        @DisplayName("Should return 200 OK with filters applied")
+        void getTraineeTrainings_WithFilters_ReturnsFilteredTrainingsList() throws Exception {
+            // Arrange
+            LocalDate fromDate = LocalDate.of(2024, 1, 1);
+            LocalDate toDate = LocalDate.of(2024, 12, 31);
+            String trainerName = "Jane";
+
+            when(trainingService.getTraineeTrainingsByCriteria(
+                    eq(USERNAME), eq(fromDate), eq(toDate), eq(trainerName), eq(TrainingTypeName.FITNESS)))
+                    .thenReturn(List.of());
+            when(trainingMapper.toResponseList(anyList())).thenReturn(List.of());
+
+            // Act & Assert
+            mockMvc.perform(get("/api/trainees/{username}/trainings", USERNAME)
+                            .param("fromDate", "2024-01-01")
+                            .param("toDate", "2024-12-31")
+                            .param("trainerName", trainerName)
+                            .param("trainingType", "FITNESS"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray());
+
+            verify(trainingService).getTraineeTrainingsByCriteria(
+                    eq(USERNAME), eq(fromDate), eq(toDate), eq(trainerName), eq(TrainingTypeName.FITNESS));
+        }
+
+        @Test
+        @DisplayName("Should return empty list when no trainings found")
+        void getTraineeTrainings_NoTrainings_ReturnsEmptyList() throws Exception {
+            // Arrange
+            when(trainingService.getTraineeTrainingsByCriteria(
+                    eq(USERNAME), isNull(), isNull(), isNull(), isNull()))
+                    .thenReturn(List.of());
+            when(trainingMapper.toResponseList(anyList())).thenReturn(List.of());
+
+            // Act & Assert
+            mockMvc.perform(get("/api/trainees/{username}/trainings", USERNAME))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$").isEmpty());
+        }
     }
 }

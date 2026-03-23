@@ -2,76 +2,72 @@ package com.epam.gym.controller;
 
 import com.epam.gym.dto.request.ChangePasswordRequest;
 import com.epam.gym.dto.request.LoginRequest;
-import com.epam.gym.dto.response.ErrorResponse;
-import com.epam.gym.facade.GymFacade;
+import com.epam.gym.dto.request.ToggleActiveRequest;
+import com.epam.gym.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Authentication management APIs")
+@Tag(name = "Authentication", description = "Authentication and password management APIs")
 public class AuthController {
 
-    private final GymFacade gymFacade;
+    private final UserService userService;
 
     @Operation(summary = "User login", description = "Authenticate user with username and password")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Login successful"),
-            @ApiResponse(responseCode = "401", description = "Invalid credentials",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/login")
-    public ResponseEntity<Void> login(@Valid @ModelAttribute LoginRequest request) {
+    @PostMapping("/login")
+    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request) {
         log.info("Login attempt for user: {}", request.getUsername());
 
-        // Try trainee first, then trainer
-        try {
-            gymFacade.authenticateTrainee(request.getUsername(), request.getPassword());
-        } catch (Exception e) {
-            gymFacade.authenticateTrainer(request.getUsername(), request.getPassword());
-        }
+        userService.authenticate(request.getUsername(), request.getPassword());
 
         log.info("User {} logged in successfully", request.getUsername());
         return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Change password", description = "Change user password")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Password changed successfully"),
-            @ApiResponse(responseCode = "401", description = "Invalid credentials",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
     @PutMapping("/change-password")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         log.info("Password change request for user: {}", request.getUsername());
 
-        // Try trainee first, then trainer
-        try {
-            gymFacade.changeTraineePassword(
-                    request.getUsername(),
-                    request.getOldPassword(),
-                    request.getNewPassword()
-            );
-        } catch (Exception e) {
-            gymFacade.changeTrainerPassword(
-                    request.getUsername(),
-                    request.getOldPassword(),
-                    request.getNewPassword()
-            );
-        }
+        userService.changePassword(
+                request.getUsername(),
+                request.getOldPassword(),
+                request.getNewPassword()
+        );
 
         log.info("Password changed successfully for user: {}", request.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Activate/Deactivate user", description = "Change user's active status")
+    @PatchMapping("/users/{username}/status")
+    public ResponseEntity<Void> toggleUserStatus(
+            @Parameter(description = "Username of the user", required = true)
+            @PathVariable String username,
+            @Valid @RequestBody ToggleActiveRequest request) {
+
+        log.info("Toggling active status for user: {}", username);
+
+        userService.isAuthenticated(username);
+
+        userService.setActiveStatus(username, request.getIsActive());
+
+        log.info("Active status changed for user: {}", username);
         return ResponseEntity.ok().build();
     }
 }

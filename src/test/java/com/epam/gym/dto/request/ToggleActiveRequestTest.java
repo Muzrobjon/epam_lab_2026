@@ -27,33 +27,18 @@ class ToggleActiveRequestTest {
         validator = factory.getValidator();
     }
 
-    private ToggleActiveRequest createValidRequest() {
-        return ToggleActiveRequest.builder()
-                .username("John.Doe")
-                .password("password123")
-                .build();
-    }
+    // ==================== VALID REQUEST TESTS ====================
 
     @Nested
     @DisplayName("Valid Request Tests")
     class ValidRequestTests {
 
         @Test
-        @DisplayName("Should pass validation with all valid fields")
-        void shouldPassValidationWithAllValidFields() {
-            ToggleActiveRequest request = createValidRequest();
-
-            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with single character values")
-        void shouldPassValidationWithSingleCharacterValues() {
+        @DisplayName("Should pass validation when activating user")
+        void shouldPassValidation_WhenActivatingUser() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("a")
-                    .password("b")
+                    .username("john.doe")
+                    .isActive(true)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
@@ -62,11 +47,25 @@ class ToggleActiveRequestTest {
         }
 
         @Test
-        @DisplayName("Should pass validation with long values")
-        void shouldPassValidationWithLongValues() {
+        @DisplayName("Should pass validation when deactivating user")
+        void shouldPassValidation_WhenDeactivatingUser() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("a".repeat(255))
-                    .password("b".repeat(255))
+                    .username("john.doe")
+                    .isActive(false)
+                    .build();
+
+            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
+
+            assertThat(violations).isEmpty();
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"a", "john.doe", "user123", "trainer.smith.1"})
+        @DisplayName("Should pass validation with various valid usernames")
+        void shouldPassValidation_WithVariousValidUsernames(String username) {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username(username)
+                    .isActive(true)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
@@ -74,6 +73,8 @@ class ToggleActiveRequestTest {
             assertThat(violations).isEmpty();
         }
     }
+
+    // ==================== USERNAME VALIDATION TESTS ====================
 
     @Nested
     @DisplayName("Username Validation Tests")
@@ -81,150 +82,173 @@ class ToggleActiveRequestTest {
 
         @ParameterizedTest
         @NullAndEmptySource
-        @ValueSource(strings = {"   ", "\t", "\n", "\r", "  \t\n  "})
+        @ValueSource(strings = {"   ", "\t", "\n", "  \t\n  "})
         @DisplayName("Should fail validation when username is blank or null")
-        void shouldFailValidationWhenUsernameIsBlankOrNull(String username) {
-            ToggleActiveRequest request = createValidRequest();
-            request.setUsername(username);
+        void shouldFailValidation_WhenUsernameIsBlankOrNull(String username) {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username(username)
+                    .isActive(true)
+                    .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
             assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("username"));
+        }
+
+        @Test
+        @DisplayName("Should have correct error message for null username")
+        void shouldHaveCorrectErrorMessage_WhenUsernameIsNull() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username(null)
+                    .isActive(true)
+                    .build();
+
+            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
+
             assertThat(violations)
                     .extracting(ConstraintViolation::getMessage)
                     .contains("Username is required");
         }
 
         @Test
-        @DisplayName("Should pass validation with valid username")
-        void shouldPassValidationWithValidUsername() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setUsername("valid.username");
+        @DisplayName("Should have correct error message for empty username")
+        void shouldHaveCorrectErrorMessage_WhenUsernameIsEmpty() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("")
+                    .isActive(true)
+                    .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
-            assertThat(violations).isEmpty();
+            assertThat(violations)
+                    .extracting(ConstraintViolation::getMessage)
+                    .contains("Username is required");
         }
 
         @Test
-        @DisplayName("Should pass validation with username containing special characters")
-        void shouldPassValidationWithUsernameContainingSpecialCharacters() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setUsername("john.doe@test_123-user");
+        @DisplayName("Should have correct error message for blank username")
+        void shouldHaveCorrectErrorMessage_WhenUsernameIsBlank() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("   ")
+                    .isActive(false)
+                    .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with numeric username")
-        void shouldPassValidationWithNumericUsername() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setUsername("123456789");
-
-            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
+            assertThat(violations)
+                    .extracting(ConstraintViolation::getMessage)
+                    .contains("Username is required");
         }
     }
 
-    @Nested
-    @DisplayName("Password Validation Tests")
-    class PasswordValidationTests {
+    // ==================== IS_ACTIVE VALIDATION TESTS ====================
 
-        @ParameterizedTest
-        @NullAndEmptySource
-        @ValueSource(strings = {"   ", "\t", "\n", "\r", "  \t\n  "})
-        @DisplayName("Should fail validation when password is blank or null")
-        void shouldFailValidationWhenPasswordIsBlankOrNull(String password) {
-            ToggleActiveRequest request = createValidRequest();
-            request.setPassword(password);
+    @Nested
+    @DisplayName("IsActive Validation Tests")
+    class IsActiveValidationTests {
+
+        @Test
+        @DisplayName("Should fail validation when isActive is null")
+        void shouldFailValidation_WhenIsActiveIsNull() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(null)
+                    .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
             assertThat(violations).isNotEmpty();
             assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("isActive"));
+        }
+
+        @Test
+        @DisplayName("Should have correct error message for null isActive")
+        void shouldHaveCorrectErrorMessage_WhenIsActiveIsNull() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(null)
+                    .build();
+
+            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
+
+            assertThat(violations)
                     .extracting(ConstraintViolation::getMessage)
-                    .contains("Password is required");
+                    .contains("IsActive is required");
         }
 
         @Test
-        @DisplayName("Should pass validation with valid password")
-        void shouldPassValidationWithValidPassword() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setPassword("validPassword");
+        @DisplayName("Should pass validation when isActive is true")
+        void shouldPassValidation_WhenIsActiveIsTrue() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(Boolean.TRUE)
+                    .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
             assertThat(violations).isEmpty();
+            assertThat(request.getIsActive()).isTrue();
         }
 
         @Test
-        @DisplayName("Should pass validation with password containing special characters")
-        void shouldPassValidationWithPasswordContainingSpecialCharacters() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setPassword("P@$$w0rd!#%&*()");
+        @DisplayName("Should pass validation when isActive is false")
+        void shouldPassValidation_WhenIsActiveIsFalse() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(Boolean.FALSE)
+                    .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
             assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with password containing whitespace in middle")
-        void shouldPassValidationWithPasswordContainingWhitespaceInMiddle() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setPassword("pass word 123");
-
-            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
+            assertThat(request.getIsActive()).isFalse();
         }
     }
 
+    // ==================== MULTIPLE VALIDATION ERRORS TESTS ====================
+
     @Nested
-    @DisplayName("Multiple Violations Tests")
-    class MultipleViolationsTests {
+    @DisplayName("Multiple Validation Errors Tests")
+    class MultipleValidationErrorsTests {
 
         @Test
-        @DisplayName("Should return all violations when all fields are null")
-        void shouldReturnAllViolationsWhenAllFieldsAreNull() {
+        @DisplayName("Should return all violations when both fields are invalid")
+        void shouldReturnAllViolations_WhenBothFieldsAreInvalid() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username(null)
-                    .password(null)
+                    .username("")
+                    .isActive(null)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
             assertThat(violations).hasSize(2);
             assertThat(violations)
-                    .extracting(ConstraintViolation::getMessage)
-                    .containsExactlyInAnyOrder(
-                            "Username is required",
-                            "Password is required"
-                    );
+                    .extracting(v -> v.getPropertyPath().toString())
+                    .containsExactlyInAnyOrder("username", "isActive");
         }
 
         @Test
-        @DisplayName("Should return all violations when all fields are empty")
-        void shouldReturnAllViolationsWhenAllFieldsAreEmpty() {
-            ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("")
-                    .password("")
-                    .build();
+        @DisplayName("Should return all violations when both fields are null")
+        void shouldReturnAllViolations_WhenBothFieldsAreNull() {
+            ToggleActiveRequest request = new ToggleActiveRequest();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
 
             assertThat(violations).hasSize(2);
+            assertThat(violations)
+                    .extracting(ConstraintViolation::getMessage)
+                    .containsExactlyInAnyOrder("Username is required", "IsActive is required");
         }
 
         @Test
-        @DisplayName("Should return all violations when all fields are blank")
-        void shouldReturnAllViolationsWhenAllFieldsAreBlank() {
+        @DisplayName("Should return all violations with blank username and null isActive")
+        void shouldReturnAllViolations_WhenUsernameIsBlankAndIsActiveIsNull() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
                     .username("   ")
-                    .password("   ")
+                    .isActive(null)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
@@ -233,119 +257,134 @@ class ToggleActiveRequestTest {
         }
     }
 
+    // ==================== LOMBOK FUNCTIONALITY TESTS ====================
+
     @Nested
-    @DisplayName("Builder and Lombok Tests")
-    class BuilderAndLombokTests {
+    @DisplayName("Lombok Functionality Tests")
+    class LombokFunctionalityTests {
 
         @Test
-        @DisplayName("Should create request using builder")
-        void shouldCreateRequestUsingBuilder() {
+        @DisplayName("Should create object using builder")
+        void shouldCreateObject_UsingBuilder() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("test.user")
-                    .password("testPass")
+                    .username("john.doe")
+                    .isActive(true)
                     .build();
 
-            assertThat(request.getUsername()).isEqualTo("test.user");
-            assertThat(request.getPassword()).isEqualTo("testPass");
+            assertThat(request.getUsername()).isEqualTo("john.doe");
+            assertThat(request.getIsActive()).isTrue();
         }
 
         @Test
-        @DisplayName("Should create request using no-args constructor")
-        void shouldCreateRequestUsingNoArgsConstructor() {
+        @DisplayName("Should create object using no-args constructor and setters")
+        void shouldCreateObject_UsingNoArgsConstructorAndSetters() {
             ToggleActiveRequest request = new ToggleActiveRequest();
+            request.setUsername("john.doe");
+            request.setIsActive(false);
 
-            assertThat(request.getUsername()).isNull();
-            assertThat(request.getPassword()).isNull();
+            assertThat(request.getUsername()).isEqualTo("john.doe");
+            assertThat(request.getIsActive()).isFalse();
         }
 
         @Test
-        @DisplayName("Should create request using all-args constructor")
-        void shouldCreateRequestUsingAllArgsConstructor() {
-            ToggleActiveRequest request = new ToggleActiveRequest("test.user", "testPass");
+        @DisplayName("Should create object using all-args constructor")
+        void shouldCreateObject_UsingAllArgsConstructor() {
+            ToggleActiveRequest request = new ToggleActiveRequest("john.doe", true);
 
-            assertThat(request.getUsername()).isEqualTo("test.user");
-            assertThat(request.getPassword()).isEqualTo("testPass");
+            assertThat(request.getUsername()).isEqualTo("john.doe");
+            assertThat(request.getIsActive()).isTrue();
         }
 
         @Test
-        @DisplayName("Should set and get all fields using setters and getters")
-        void shouldSetAndGetAllFieldsUsingSettersAndGetters() {
-            ToggleActiveRequest request = new ToggleActiveRequest();
+        @DisplayName("Should have correct equals for identical objects")
+        void shouldHaveCorrectEquals_ForIdenticalObjects() {
+            ToggleActiveRequest request1 = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(true)
+                    .build();
 
-            request.setUsername("test.user");
-            request.setPassword("testPass");
-
-            assertThat(request.getUsername()).isEqualTo("test.user");
-            assertThat(request.getPassword()).isEqualTo("testPass");
-        }
-
-        @Test
-        @DisplayName("Should have correct equals implementation")
-        void shouldHaveCorrectEqualsImplementation() {
-            ToggleActiveRequest request1 = createValidRequest();
-            ToggleActiveRequest request2 = createValidRequest();
+            ToggleActiveRequest request2 = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(true)
+                    .build();
 
             assertThat(request1).isEqualTo(request2);
             assertThat(request1.hashCode()).isEqualTo(request2.hashCode());
         }
 
         @Test
-        @DisplayName("Should have correct equals for different objects")
-        void shouldHaveCorrectEqualsForDifferentObjects() {
-            ToggleActiveRequest request1 = createValidRequest();
-            ToggleActiveRequest request2 = createValidRequest();
-            request2.setPassword("differentPassword");
+        @DisplayName("Should have correct equals for different usernames")
+        void shouldHaveCorrectEquals_ForDifferentUsernames() {
+            ToggleActiveRequest request1 = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(true)
+                    .build();
+
+            ToggleActiveRequest request2 = ToggleActiveRequest.builder()
+                    .username("jane.doe")
+                    .isActive(true)
+                    .build();
 
             assertThat(request1).isNotEqualTo(request2);
         }
 
         @Test
-        @DisplayName("Should not be equal to null")
-        void shouldNotBeEqualToNull() {
-            ToggleActiveRequest request = createValidRequest();
+        @DisplayName("Should have correct equals for different isActive values")
+        void shouldHaveCorrectEquals_ForDifferentIsActiveValues() {
+            ToggleActiveRequest request1 = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(true)
+                    .build();
 
-            assertThat(request).isNotEqualTo(null);
+            ToggleActiveRequest request2 = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(false)
+                    .build();
+
+            assertThat(request1).isNotEqualTo(request2);
         }
 
         @Test
-        @DisplayName("Should not be equal to different type")
-        void shouldNotBeEqualToDifferentType() {
-            ToggleActiveRequest request = createValidRequest();
-
-            assertThat(request).isNotEqualTo("string");
-        }
-
-        @Test
-        @DisplayName("Should be equal to itself")
-        void shouldBeEqualToItself() {
-            ToggleActiveRequest request = createValidRequest();
-
-            assertThat(request).isEqualTo(request);
-        }
-
-        @Test
-        @DisplayName("Should have correct toString implementation")
-        void shouldHaveCorrectToStringImplementation() {
-            ToggleActiveRequest request = createValidRequest();
+        @DisplayName("Should have correct toString with true value")
+        void shouldHaveCorrectToString_WithTrueValue() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(true)
+                    .build();
 
             String toString = request.toString();
 
-            assertThat(toString).contains("ToggleActiveRequest");
-            assertThat(toString).contains("username=John.Doe");
-            assertThat(toString).contains("password=password123");
+            assertThat(toString).contains("john.doe");
+            assertThat(toString).contains("true");
+        }
+
+        @Test
+        @DisplayName("Should have correct toString with false value")
+        void shouldHaveCorrectToString_WithFalseValue() {
+            ToggleActiveRequest request = ToggleActiveRequest.builder()
+                    .username("john.doe")
+                    .isActive(false)
+                    .build();
+
+            String toString = request.toString();
+
+            assertThat(toString).contains("john.doe");
+            assertThat(toString).contains("false");
         }
     }
+
+    // ==================== EDGE CASES TESTS ====================
 
     @Nested
     @DisplayName("Edge Cases Tests")
     class EdgeCasesTests {
 
         @Test
-        @DisplayName("Should pass validation with unicode characters")
-        void shouldPassValidationWithUnicodeCharacters() {
+        @DisplayName("Should handle username with special characters")
+        void shouldHandle_UsernameWithSpecialCharacters() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("josé.müller")
-                    .password("пароль密码")
+                    .username("john.doe_123")
+                    .isActive(true)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
@@ -354,11 +393,13 @@ class ToggleActiveRequestTest {
         }
 
         @Test
-        @DisplayName("Should pass validation with emoji")
-        void shouldPassValidationWithEmoji() {
+        @DisplayName("Should handle very long username")
+        void shouldHandle_VeryLongUsername() {
+            String longUsername = "a".repeat(255);
+
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("user😀")
-                    .password("pass🔒word")
+                    .username(longUsername)
+                    .isActive(true)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
@@ -367,11 +408,11 @@ class ToggleActiveRequestTest {
         }
 
         @Test
-        @DisplayName("Should pass validation with mixed case")
-        void shouldPassValidationWithMixedCase() {
+        @DisplayName("Should handle single character username")
+        void shouldHandle_SingleCharacterUsername() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("JoHn.DoE")
-                    .password("PaSsWoRd123")
+                    .username("a")
+                    .isActive(false)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
@@ -380,103 +421,11 @@ class ToggleActiveRequestTest {
         }
 
         @Test
-        @DisplayName("Should pass validation with content having internal spaces")
-        void shouldPassValidationWithContentHavingInternalSpaces() {
+        @DisplayName("Should handle username with unicode characters")
+        void shouldHandle_UsernameWithUnicodeCharacters() {
             ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("john doe")
-                    .password("pass word")
-                    .build();
-
-            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("Property Path Tests")
-    class PropertyPathTests {
-
-        @Test
-        @DisplayName("Should have correct property path for username violation")
-        void shouldHaveCorrectPropertyPathForUsernameViolation() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setUsername(null);
-
-            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
-
-            assertThat(violations)
-                    .extracting(v -> v.getPropertyPath().toString())
-                    .contains("username");
-        }
-
-        @Test
-        @DisplayName("Should have correct property path for password violation")
-        void shouldHaveCorrectPropertyPathForPasswordViolation() {
-            ToggleActiveRequest request = createValidRequest();
-            request.setPassword(null);
-
-            Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);
-
-            assertThat(violations)
-                    .extracting(v -> v.getPropertyPath().toString())
-                    .contains("password");
-        }
-    }
-
-    @Nested
-    @DisplayName("Non-Idempotent Behavior Documentation Tests")
-    class NonIdempotentBehaviorTests {
-
-        @Test
-        @DisplayName("Should create identical requests for toggle operation")
-        void shouldCreateIdenticalRequestsForToggleOperation() {
-            // Toggle requests are identical - the non-idempotent behavior
-            // is in the service layer, not in the request validation
-            ToggleActiveRequest request1 = createValidRequest();
-            ToggleActiveRequest request2 = createValidRequest();
-
-            assertThat(request1).isEqualTo(request2);
-            assertThat(validator.validate(request1)).isEmpty();
-            assertThat(validator.validate(request2)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should not contain isActive field - toggle determines new state")
-        void shouldNotContainIsActiveField() {
-            ToggleActiveRequest request = createValidRequest();
-
-            // Verify the class only has username and password fields
-            // No isActive field - the toggle operation determines the new state
-            assertThat(request).hasFieldOrProperty("username");
-            assertThat(request).hasFieldOrProperty("password");
-            assertThat(request).hasNoNullFieldsOrProperties();
-        }
-    }
-
-    @Nested
-    @DisplayName("Comparison with SetActiveRequest Tests")
-    class ComparisonWithSetActiveRequestTests {
-
-        @Test
-        @DisplayName("ToggleActiveRequest should have fewer fields than SetActiveRequest")
-        void toggleActiveRequestShouldHaveFewerFieldsThanSetActiveRequest() {
-            ToggleActiveRequest toggleRequest = createValidRequest();
-
-            // ToggleActiveRequest has only 2 fields (username, password)
-            // SetActiveRequest has 3 fields (username, password, isActive)
-            assertThat(toggleRequest.getClass().getDeclaredFields())
-                    .extracting("name")
-                    .containsExactlyInAnyOrder("username", "password");
-        }
-
-        @Test
-        @DisplayName("Should be valid without specifying target active state")
-        void shouldBeValidWithoutSpecifyingTargetActiveState() {
-            // Unlike SetActiveRequest, ToggleActiveRequest doesn't need isActive
-            ToggleActiveRequest request = ToggleActiveRequest.builder()
-                    .username("user")
-                    .password("pass")
+                    .username("用户名")
+                    .isActive(true)
                     .build();
 
             Set<ConstraintViolation<ToggleActiveRequest>> violations = validator.validate(request);

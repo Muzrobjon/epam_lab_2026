@@ -28,17 +28,7 @@ class AddTrainingRequestTest {
         validator = factory.getValidator();
     }
 
-    private AddTrainingRequest createValidRequest() {
-        return AddTrainingRequest.builder()
-                .traineeUsername("John.Doe")
-                .traineePassword("traineePass123")
-                .trainerUsername("Alice.Smith")
-                .trainerPassword("trainerPass123")
-                .trainingName("Morning Yoga Session")
-                .trainingDate(LocalDate.of(2024, 6, 15))
-                .trainingDuration(60)
-                .build();
-    }
+    // ==================== VALID REQUEST TESTS ====================
 
     @Nested
     @DisplayName("Valid Request Tests")
@@ -46,8 +36,14 @@ class AddTrainingRequestTest {
 
         @Test
         @DisplayName("Should pass validation with all valid fields")
-        void shouldPassValidationWithAllValidFields() {
-            AddTrainingRequest request = createValidRequest();
+        void shouldPassValidation_WhenAllFieldsAreValid() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio Session")
+                    .trainingDate(LocalDate.now().plusDays(1))
+                    .trainingDuration(60)
+                    .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
@@ -56,59 +52,22 @@ class AddTrainingRequestTest {
 
         @Test
         @DisplayName("Should pass validation with minimum valid duration")
-        void shouldPassValidationWithMinimumValidDuration() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDuration(1);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with large duration")
-        void shouldPassValidationWithLargeDuration() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDuration(480); // 8 hours
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with future date")
-        void shouldPassValidationWithFutureDate() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDate(LocalDate.now().plusMonths(1));
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with past date")
-        void shouldPassValidationWithPastDate() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDate(LocalDate.now().minusDays(1));
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with today's date")
-        void shouldPassValidationWithTodaysDate() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDate(LocalDate.now());
+        void shouldPassValidation_WhenDurationIsMinimumPositive() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Quick Session")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(1)
+                    .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
             assertThat(violations).isEmpty();
         }
     }
+
+    // ==================== TRAINEE USERNAME VALIDATION TESTS ====================
 
     @Nested
     @DisplayName("Trainee Username Validation Tests")
@@ -118,61 +77,42 @@ class AddTrainingRequestTest {
         @NullAndEmptySource
         @ValueSource(strings = {"   ", "\t", "\n"})
         @DisplayName("Should fail validation when trainee username is blank or null")
-        void shouldFailValidationWhenTraineeUsernameIsBlankOrNull(String traineeUsername) {
-            AddTrainingRequest request = createValidRequest();
-            request.setTraineeUsername(traineeUsername);
+        void shouldFailValidation_WhenTraineeUsernameIsBlankOrNull(String traineeUsername) {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(traineeUsername)
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(60)
+                    .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
             assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("traineeUsername"));
+        }
+
+        @Test
+        @DisplayName("Should have correct error message for blank trainee username")
+        void shouldHaveCorrectErrorMessage_WhenTraineeUsernameIsBlank() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(60)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
             assertThat(violations)
                     .extracting(ConstraintViolation::getMessage)
                     .contains("Trainee username is required");
         }
-
-        @Test
-        @DisplayName("Should pass validation with valid trainee username")
-        void shouldPassValidationWithValidTraineeUsername() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTraineeUsername("valid.username");
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
     }
 
-    @Nested
-    @DisplayName("Trainee Password Validation Tests")
-    class TraineePasswordValidationTests {
-
-        @ParameterizedTest
-        @NullAndEmptySource
-        @ValueSource(strings = {"   ", "\t", "\n"})
-        @DisplayName("Should fail validation when trainee password is blank or null")
-        void shouldFailValidationWhenTraineePasswordIsBlankOrNull(String traineePassword) {
-            AddTrainingRequest request = createValidRequest();
-            request.setTraineePassword(traineePassword);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isNotEmpty();
-            assertThat(violations)
-                    .extracting(ConstraintViolation::getMessage)
-                    .contains("Trainee password is required");
-        }
-
-        @Test
-        @DisplayName("Should pass validation with valid trainee password")
-        void shouldPassValidationWithValidTraineePassword() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTraineePassword("validPassword123");
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-    }
+    // ==================== TRAINER USERNAME VALIDATION TESTS ====================
 
     @Nested
     @DisplayName("Trainer Username Validation Tests")
@@ -182,61 +122,42 @@ class AddTrainingRequestTest {
         @NullAndEmptySource
         @ValueSource(strings = {"   ", "\t", "\n"})
         @DisplayName("Should fail validation when trainer username is blank or null")
-        void shouldFailValidationWhenTrainerUsernameIsBlankOrNull(String trainerUsername) {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainerUsername(trainerUsername);
+        void shouldFailValidation_WhenTrainerUsernameIsBlankOrNull(String trainerUsername) {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername(trainerUsername)
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(60)
+                    .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
             assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("trainerUsername"));
+        }
+
+        @Test
+        @DisplayName("Should have correct error message for blank trainer username")
+        void shouldHaveCorrectErrorMessage_WhenTrainerUsernameIsBlank() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(60)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
             assertThat(violations)
                     .extracting(ConstraintViolation::getMessage)
                     .contains("Trainer username is required");
         }
-
-        @Test
-        @DisplayName("Should pass validation with valid trainer username")
-        void shouldPassValidationWithValidTrainerUsername() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainerUsername("valid.trainer");
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
     }
 
-    @Nested
-    @DisplayName("Trainer Password Validation Tests")
-    class TrainerPasswordValidationTests {
-
-        @ParameterizedTest
-        @NullAndEmptySource
-        @ValueSource(strings = {"   ", "\t", "\n"})
-        @DisplayName("Should fail validation when trainer password is blank or null")
-        void shouldFailValidationWhenTrainerPasswordIsBlankOrNull(String trainerPassword) {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainerPassword(trainerPassword);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isNotEmpty();
-            assertThat(violations)
-                    .extracting(ConstraintViolation::getMessage)
-                    .contains("Trainer password is required");
-        }
-
-        @Test
-        @DisplayName("Should pass validation with valid trainer password")
-        void shouldPassValidationWithValidTrainerPassword() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainerPassword("validPassword123");
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-    }
+    // ==================== TRAINING NAME VALIDATION TESTS ====================
 
     @Nested
     @DisplayName("Training Name Validation Tests")
@@ -246,40 +167,42 @@ class AddTrainingRequestTest {
         @NullAndEmptySource
         @ValueSource(strings = {"   ", "\t", "\n"})
         @DisplayName("Should fail validation when training name is blank or null")
-        void shouldFailValidationWhenTrainingNameIsBlankOrNull(String trainingName) {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingName(trainingName);
+        void shouldFailValidation_WhenTrainingNameIsBlankOrNull(String trainingName) {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName(trainingName)
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(60)
+                    .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
             assertThat(violations).isNotEmpty();
             assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("trainingName"));
+        }
+
+        @Test
+        @DisplayName("Should have correct error message for blank training name")
+        void shouldHaveCorrectErrorMessage_WhenTrainingNameIsBlank() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(60)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
+            assertThat(violations)
                     .extracting(ConstraintViolation::getMessage)
                     .contains("Training name is required");
         }
-
-        @Test
-        @DisplayName("Should pass validation with valid training name")
-        void shouldPassValidationWithValidTrainingName() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingName("Advanced Cardio Training");
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with long training name")
-        void shouldPassValidationWithLongTrainingName() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingName("A".repeat(200));
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
     }
+
+    // ==================== TRAINING DATE VALIDATION TESTS ====================
 
     @Nested
     @DisplayName("Training Date Validation Tests")
@@ -287,29 +210,74 @@ class AddTrainingRequestTest {
 
         @Test
         @DisplayName("Should fail validation when training date is null")
-        void shouldFailValidationWhenTrainingDateIsNull() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDate(null);
+        void shouldFailValidation_WhenTrainingDateIsNull() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(null)
+                    .trainingDuration(60)
+                    .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
             assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("trainingDate"));
+        }
+
+        @Test
+        @DisplayName("Should have correct error message for null training date")
+        void shouldHaveCorrectErrorMessage_WhenTrainingDateIsNull() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(null)
+                    .trainingDuration(60)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
             assertThat(violations)
                     .extracting(ConstraintViolation::getMessage)
                     .contains("Training date is required");
         }
 
         @Test
-        @DisplayName("Should pass validation with valid training date")
-        void shouldPassValidationWithValidTrainingDate() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDate(LocalDate.of(2024, 12, 25));
+        @DisplayName("Should pass validation with past date")
+        void shouldPassValidation_WhenTrainingDateIsInPast() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now().minusDays(10))
+                    .trainingDuration(60)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
+            assertThat(violations).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should pass validation with future date")
+        void shouldPassValidation_WhenTrainingDateIsInFuture() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now().plusDays(30))
+                    .trainingDuration(60)
+                    .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
             assertThat(violations).isEmpty();
         }
     }
+
+    // ==================== TRAINING DURATION VALIDATION TESTS ====================
 
     @Nested
     @DisplayName("Training Duration Validation Tests")
@@ -317,90 +285,30 @@ class AddTrainingRequestTest {
 
         @Test
         @DisplayName("Should fail validation when training duration is null")
-        void shouldFailValidationWhenTrainingDurationIsNull() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDuration(null);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isNotEmpty();
-            assertThat(violations)
-                    .extracting(ConstraintViolation::getMessage)
-                    .contains("Training duration is required");
-        }
-
-        @Test
-        @DisplayName("Should fail validation when training duration is zero")
-        void shouldFailValidationWhenTrainingDurationIsZero() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDuration(0);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isNotEmpty();
-            assertThat(violations)
-                    .extracting(ConstraintViolation::getMessage)
-                    .contains("Training duration must be positive");
-        }
-
-        @Test
-        @DisplayName("Should fail validation when training duration is negative")
-        void shouldFailValidationWhenTrainingDurationIsNegative() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDuration(-10);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isNotEmpty();
-            assertThat(violations)
-                    .extracting(ConstraintViolation::getMessage)
-                    .contains("Training duration must be positive");
-        }
-
-        @Test
-        @DisplayName("Should pass validation when training duration is positive")
-        void shouldPassValidationWhenTrainingDurationIsPositive() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDuration(90);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("Multiple Violations Tests")
-    class MultipleViolationsTests {
-
-        @Test
-        @DisplayName("Should return all violations when multiple fields are invalid")
-        void shouldReturnAllViolationsWhenMultipleFieldsAreInvalid() {
+        void shouldFailValidation_WhenTrainingDurationIsNull() {
             AddTrainingRequest request = AddTrainingRequest.builder()
-                    .traineeUsername(null)
-                    .traineePassword("")
-                    .trainerUsername("   ")
-                    .trainerPassword(null)
-                    .trainingName("")
-                    .trainingDate(null)
-                    .trainingDuration(-5)
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(null)
                     .build();
 
             Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
 
-            assertThat(violations).hasSize(7);
+            assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("trainingDuration"));
         }
 
         @Test
-        @DisplayName("Should return correct violation messages for all invalid fields")
-        void shouldReturnCorrectViolationMessagesForAllInvalidFields() {
+        @DisplayName("Should have correct error message for null training duration")
+        void shouldHaveCorrectErrorMessage_WhenTrainingDurationIsNull() {
             AddTrainingRequest request = AddTrainingRequest.builder()
-                    .traineeUsername(null)
-                    .traineePassword(null)
-                    .trainerUsername(null)
-                    .trainerPassword(null)
-                    .trainingName(null)
-                    .trainingDate(null)
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
                     .trainingDuration(null)
                     .build();
 
@@ -408,225 +316,225 @@ class AddTrainingRequestTest {
 
             assertThat(violations)
                     .extracting(ConstraintViolation::getMessage)
+                    .contains("Training duration is required");
+        }
+
+        @Test
+        @DisplayName("Should fail validation when training duration is zero")
+        void shouldFailValidation_WhenTrainingDurationIsZero() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(0)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
+            assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .anyMatch(v -> v.getPropertyPath().toString().equals("trainingDuration"));
+        }
+
+        @Test
+        @DisplayName("Should fail validation when training duration is negative")
+        void shouldFailValidation_WhenTrainingDurationIsNegative() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(-30)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
+            assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .extracting(ConstraintViolation::getMessage)
+                    .contains("Training duration must be positive");
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = {1, 30, 60, 90, 120, 180})
+        @DisplayName("Should pass validation with positive duration values")
+        void shouldPassValidation_WhenTrainingDurationIsPositive(int duration) {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(duration)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
+            assertThat(violations).isEmpty();
+        }
+    }
+
+    // ==================== MULTIPLE VALIDATION ERRORS TESTS ====================
+
+    @Nested
+    @DisplayName("Multiple Validation Errors Tests")
+    class MultipleValidationErrorsTests {
+
+        @Test
+        @DisplayName("Should return all violations when multiple fields are invalid")
+        void shouldReturnAllViolations_WhenMultipleFieldsAreInvalid() {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("")
+                    .trainerUsername(null)
+                    .trainingName("   ")
+                    .trainingDate(null)
+                    .trainingDuration(-1)
+                    .build();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
+            assertThat(violations).hasSize(5);
+        }
+
+        @Test
+        @DisplayName("Should return all violations when all fields are null")
+        void shouldReturnAllViolations_WhenAllFieldsAreNull() {
+            AddTrainingRequest request = new AddTrainingRequest();
+
+            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
+
+            assertThat(violations).hasSize(5);
+            assertThat(violations)
+                    .extracting(v -> v.getPropertyPath().toString())
                     .containsExactlyInAnyOrder(
-                            "Trainee username is required",
-                            "Trainee password is required",
-                            "Trainer username is required",
-                            "Trainer password is required",
-                            "Training name is required",
-                            "Training date is required",
-                            "Training duration is required"
+                            "traineeUsername",
+                            "trainerUsername",
+                            "trainingName",
+                            "trainingDate",
+                            "trainingDuration"
                     );
         }
     }
 
+    // ==================== LOMBOK FUNCTIONALITY TESTS ====================
+
     @Nested
-    @DisplayName("Builder and Lombok Tests")
-    class BuilderAndLombokTests {
+    @DisplayName("Lombok Functionality Tests")
+    class LombokFunctionalityTests {
 
         @Test
-        @DisplayName("Should create request using builder")
-        void shouldCreateRequestUsingBuilder() {
+        @DisplayName("Should create object using builder")
+        void shouldCreateObject_UsingBuilder() {
+            LocalDate trainingDate = LocalDate.of(2024, 6, 15);
+
             AddTrainingRequest request = AddTrainingRequest.builder()
-                    .traineeUsername("trainee.user")
-                    .traineePassword("traineePass")
-                    .trainerUsername("trainer.user")
-                    .trainerPassword("trainerPass")
-                    .trainingName("Test Training")
-                    .trainingDate(LocalDate.of(2024, 1, 15))
-                    .trainingDuration(45)
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(trainingDate)
+                    .trainingDuration(60)
                     .build();
 
-            assertThat(request.getTraineeUsername()).isEqualTo("trainee.user");
-            assertThat(request.getTraineePassword()).isEqualTo("traineePass");
-            assertThat(request.getTrainerUsername()).isEqualTo("trainer.user");
-            assertThat(request.getTrainerPassword()).isEqualTo("trainerPass");
-            assertThat(request.getTrainingName()).isEqualTo("Test Training");
-            assertThat(request.getTrainingDate()).isEqualTo(LocalDate.of(2024, 1, 15));
-            assertThat(request.getTrainingDuration()).isEqualTo(45);
+            assertThat(request.getTraineeUsername()).isEqualTo("john.doe");
+            assertThat(request.getTrainerUsername()).isEqualTo("trainer.smith");
+            assertThat(request.getTrainingName()).isEqualTo("Morning Cardio");
+            assertThat(request.getTrainingDate()).isEqualTo(trainingDate);
+            assertThat(request.getTrainingDuration()).isEqualTo(60);
         }
 
         @Test
-        @DisplayName("Should create request using no-args constructor")
-        void shouldCreateRequestUsingNoArgsConstructor() {
+        @DisplayName("Should create object using no-args constructor and setters")
+        void shouldCreateObject_UsingNoArgsConstructorAndSetters() {
+            LocalDate trainingDate = LocalDate.of(2024, 6, 15);
+
             AddTrainingRequest request = new AddTrainingRequest();
+            request.setTraineeUsername("john.doe");
+            request.setTrainerUsername("trainer.smith");
+            request.setTrainingName("Morning Cardio");
+            request.setTrainingDate(trainingDate);
+            request.setTrainingDuration(60);
 
-            assertThat(request.getTraineeUsername()).isNull();
-            assertThat(request.getTraineePassword()).isNull();
-            assertThat(request.getTrainerUsername()).isNull();
-            assertThat(request.getTrainerPassword()).isNull();
-            assertThat(request.getTrainingName()).isNull();
-            assertThat(request.getTrainingDate()).isNull();
-            assertThat(request.getTrainingDuration()).isNull();
+            assertThat(request.getTraineeUsername()).isEqualTo("john.doe");
+            assertThat(request.getTrainerUsername()).isEqualTo("trainer.smith");
+            assertThat(request.getTrainingName()).isEqualTo("Morning Cardio");
+            assertThat(request.getTrainingDate()).isEqualTo(trainingDate);
+            assertThat(request.getTrainingDuration()).isEqualTo(60);
         }
 
         @Test
-        @DisplayName("Should create request using all-args constructor")
-        void shouldCreateRequestUsingAllArgsConstructor() {
+        @DisplayName("Should create object using all-args constructor")
+        void shouldCreateObject_UsingAllArgsConstructor() {
+            LocalDate trainingDate = LocalDate.of(2024, 6, 15);
+
             AddTrainingRequest request = new AddTrainingRequest(
-                    "trainee.user",
-                    "traineePass",
-                    "trainer.user",
-                    "trainerPass",
-                    "Test Training",
-                    LocalDate.of(2024, 1, 15),
-                    45
+                    "john.doe",
+                    "trainer.smith",
+                    "Morning Cardio",
+                    trainingDate,
+                    60
             );
 
-            assertThat(request.getTraineeUsername()).isEqualTo("trainee.user");
-            assertThat(request.getTraineePassword()).isEqualTo("traineePass");
-            assertThat(request.getTrainerUsername()).isEqualTo("trainer.user");
-            assertThat(request.getTrainerPassword()).isEqualTo("trainerPass");
-            assertThat(request.getTrainingName()).isEqualTo("Test Training");
-            assertThat(request.getTrainingDate()).isEqualTo(LocalDate.of(2024, 1, 15));
-            assertThat(request.getTrainingDuration()).isEqualTo(45);
+            assertThat(request.getTraineeUsername()).isEqualTo("john.doe");
+            assertThat(request.getTrainerUsername()).isEqualTo("trainer.smith");
+            assertThat(request.getTrainingName()).isEqualTo("Morning Cardio");
+            assertThat(request.getTrainingDate()).isEqualTo(trainingDate);
+            assertThat(request.getTrainingDuration()).isEqualTo(60);
         }
 
         @Test
-        @DisplayName("Should set and get all fields using setters and getters")
-        void shouldSetAndGetAllFieldsUsingSettersAndGetters() {
-            AddTrainingRequest request = new AddTrainingRequest();
+        @DisplayName("Should have correct equals and hashCode")
+        void shouldHaveCorrectEqualsAndHashCode() {
+            LocalDate trainingDate = LocalDate.of(2024, 6, 15);
 
-            request.setTraineeUsername("trainee.user");
-            request.setTraineePassword("traineePass");
-            request.setTrainerUsername("trainer.user");
-            request.setTrainerPassword("trainerPass");
-            request.setTrainingName("Test Training");
-            request.setTrainingDate(LocalDate.of(2024, 1, 15));
-            request.setTrainingDuration(45);
+            AddTrainingRequest request1 = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(trainingDate)
+                    .trainingDuration(60)
+                    .build();
 
-            assertThat(request.getTraineeUsername()).isEqualTo("trainee.user");
-            assertThat(request.getTraineePassword()).isEqualTo("traineePass");
-            assertThat(request.getTrainerUsername()).isEqualTo("trainer.user");
-            assertThat(request.getTrainerPassword()).isEqualTo("trainerPass");
-            assertThat(request.getTrainingName()).isEqualTo("Test Training");
-            assertThat(request.getTrainingDate()).isEqualTo(LocalDate.of(2024, 1, 15));
-            assertThat(request.getTrainingDuration()).isEqualTo(45);
-        }
+            AddTrainingRequest request2 = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(trainingDate)
+                    .trainingDuration(60)
+                    .build();
 
-        @Test
-        @DisplayName("Should have correct equals implementation")
-        void shouldHaveCorrectEqualsImplementation() {
-            AddTrainingRequest request1 = createValidRequest();
-            AddTrainingRequest request2 = createValidRequest();
+            AddTrainingRequest request3 = AddTrainingRequest.builder()
+                    .traineeUsername("jane.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(trainingDate)
+                    .trainingDuration(60)
+                    .build();
 
             assertThat(request1).isEqualTo(request2);
             assertThat(request1.hashCode()).isEqualTo(request2.hashCode());
+            assertThat(request1).isNotEqualTo(request3);
         }
 
         @Test
-        @DisplayName("Should have correct equals implementation for different objects")
-        void shouldHaveCorrectEqualsImplementationForDifferentObjects() {
-            AddTrainingRequest request1 = createValidRequest();
-            AddTrainingRequest request2 = createValidRequest();
-            request2.setTrainingName("Different Training");
+        @DisplayName("Should have correct toString")
+        void shouldHaveCorrectToString() {
+            LocalDate trainingDate = LocalDate.of(2024, 6, 15);
 
-            assertThat(request1).isNotEqualTo(request2);
-        }
-
-        @Test
-        @DisplayName("Should have correct toString implementation")
-        void shouldHaveCorrectToStringImplementation() {
-            AddTrainingRequest request = createValidRequest();
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe")
+                    .trainerUsername("trainer.smith")
+                    .trainingName("Morning Cardio")
+                    .trainingDate(trainingDate)
+                    .trainingDuration(60)
+                    .build();
 
             String toString = request.toString();
 
-            assertThat(toString).contains("AddTrainingRequest");
-            assertThat(toString).contains("traineeUsername=John.Doe");
-            assertThat(toString).contains("trainerUsername=Alice.Smith");
-            assertThat(toString).contains("trainingName=Morning Yoga Session");
-        }
-    }
-
-    @Nested
-    @DisplayName("Edge Cases Tests")
-    class EdgeCasesTests {
-
-        @Test
-        @DisplayName("Should pass validation with single character values")
-        void shouldPassValidationWithSingleCharacterValues() {
-            AddTrainingRequest request = AddTrainingRequest.builder()
-                    .traineeUsername("a")
-                    .traineePassword("b")
-                    .trainerUsername("c")
-                    .trainerPassword("d")
-                    .trainingName("e")
-                    .trainingDate(LocalDate.now())
-                    .trainingDuration(1)
-                    .build();
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with special characters in fields")
-        void shouldPassValidationWithSpecialCharactersInFields() {
-            AddTrainingRequest request = AddTrainingRequest.builder()
-                    .traineeUsername("john.doe@test")
-                    .traineePassword("P@$$w0rd!")
-                    .trainerUsername("alice_smith-123")
-                    .trainerPassword("Tr@iner#Pass")
-                    .trainingName("Morning Yoga - Advanced (Level 3)")
-                    .trainingDate(LocalDate.now())
-                    .trainingDuration(60)
-                    .build();
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with unicode characters")
-        void shouldPassValidationWithUnicodeCharacters() {
-            AddTrainingRequest request = AddTrainingRequest.builder()
-                    .traineeUsername("josé.müller")
-                    .traineePassword("пароль123")
-                    .trainerUsername("田中.太郎")
-                    .trainerPassword("密码456")
-                    .trainingName("Йога для начинающих")
-                    .trainingDate(LocalDate.now())
-                    .trainingDuration(60)
-                    .build();
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with max integer duration")
-        void shouldPassValidationWithMaxIntegerDuration() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDuration(Integer.MAX_VALUE);
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with far future date")
-        void shouldPassValidationWithFarFutureDate() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDate(LocalDate.of(2099, 12, 31));
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Should pass validation with far past date")
-        void shouldPassValidationWithFarPastDate() {
-            AddTrainingRequest request = createValidRequest();
-            request.setTrainingDate(LocalDate.of(1900, 1, 1));
-
-            Set<ConstraintViolation<AddTrainingRequest>> violations = validator.validate(request);
-
-            assertThat(violations).isEmpty();
+            assertThat(toString).contains("john.doe");
+            assertThat(toString).contains("trainer.smith");
+            assertThat(toString).contains("Morning Cardio");
+            assertThat(toString).contains("2024-06-15");
+            assertThat(toString).contains("60");
         }
     }
 }

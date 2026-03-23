@@ -26,12 +26,6 @@ public class UpdateTraineeRequest {
             requiredMode = RequiredMode.REQUIRED)
     private String username;
 
-    @NotBlank(message = "Password is required")
-    @Schema(description = "Password for authentication",
-            example = "password123",
-            requiredMode = RequiredMode.REQUIRED)
-    private String password;
-
     @NotBlank(message = "First name is required")
     @Schema(description = "First name",
             example = "John",

@@ -1,196 +1,252 @@
 package com.epam.gym.controller;
 
 import com.epam.gym.dto.request.ChangePasswordRequest;
-import com.epam.gym.facade.GymFacade;
+import com.epam.gym.dto.request.LoginRequest;
+import com.epam.gym.dto.request.ToggleActiveRequest;
+import com.epam.gym.exception.AuthenticationException;
+import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("AuthController Tests")
 class AuthControllerTest {
 
     private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
 
     @Mock
-    private GymFacade gymFacade;
+    private UserService userService;
 
     @InjectMocks
     private AuthController authController;
 
+    private ObjectMapper objectMapper;
+
+    private static final String USERNAME = "john.doe";
+    private static final String PASSWORD = "password123";
+    private static final String NEW_PASSWORD = "newPassword456";
+
+    // Test exception handler for standalone MockMvc setup
+    @RestControllerAdvice
+    static class TestExceptionHandler {
+
+        @ExceptionHandler(AuthenticationException.class)
+        public ResponseEntity<String> handleAuthenticationException(AuthenticationException ex) {
+            return ResponseEntity.status(401).body(ex.getMessage());
+        }
+
+        @ExceptionHandler(NotFoundException.class)
+        public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
+            return ResponseEntity.status(404).body(ex.getMessage());
+        }
+    }
+
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(authController)
+                .setControllerAdvice(new TestExceptionHandler()) // Add exception handler
+                .build();
         objectMapper = new ObjectMapper();
     }
 
-    @Test
-    @DisplayName("Login should succeed when trainee authentication succeeds")
-    void loginShouldSucceedWhenTraineeAuthenticationSucceeds() throws Exception {
-        doNothing().when(gymFacade).authenticateTrainee("john.doe", "password123");
+    // ==================== LOGIN TESTS ====================
 
-        mockMvc.perform(get("/api/auth/login")
-                        .param("username", "john.doe")
-                        .param("password", "password123"))
-                .andExpect(status().isOk());
+    @Nested
+    @DisplayName("Login Endpoint Tests")
+    class LoginTests {
 
-        verify(gymFacade).authenticateTrainee("john.doe", "password123");
-        verify(gymFacade, never()).authenticateTrainer(anyString(), anyString());
-    }
+        @Test
+        @DisplayName("Should return 200 OK when login is successful")
+        void login_WithValidCredentials_ReturnsOk() throws Exception {
+            LoginRequest request = new LoginRequest();
+            request.setUsername(USERNAME);
+            request.setPassword(PASSWORD);
 
-    @Test
-    @DisplayName("Login should succeed when trainer authentication succeeds after trainee fails")
-    void loginShouldSucceedWhenTrainerAuthenticationSucceeds() throws Exception {
-        doThrow(new RuntimeException("Trainee not found"))
-                .when(gymFacade).authenticateTrainee("jane.smith", "trainerPass");
-        doNothing().when(gymFacade).authenticateTrainer("jane.smith", "trainerPass");
+            doNothing().when(userService).authenticate(USERNAME, PASSWORD);
 
-        mockMvc.perform(get("/api/auth/login")
-                        .param("username", "jane.smith")
-                        .param("password", "trainerPass"))
-                .andExpect(status().isOk());
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
 
-        verify(gymFacade).authenticateTrainee("jane.smith", "trainerPass");
-        verify(gymFacade).authenticateTrainer("jane.smith", "trainerPass");
-    }
-
-    @Test
-    @DisplayName("Login should fail when both trainee and trainer authentication fail")
-    void loginShouldFailWhenBothAuthenticationsFail() {
-        String username = "unknown.user";
-        String password = "wrongPass";
-
-        doThrow(new RuntimeException("Trainee not found"))
-                .when(gymFacade).authenticateTrainee(username, password);
-        doThrow(new RuntimeException("Trainer not found"))
-                .when(gymFacade).authenticateTrainer(username, password);
-
-        Exception exception = assertThrows(Exception.class, () -> {
-            mockMvc.perform(get("/api/auth/login")
-                    .param("username", username)
-                    .param("password", password));
-        });
-
-        Throwable rootCause = findRootCause(exception);
-        assertNotNull(rootCause, "Expected RuntimeException in exception chain");
-        assertEquals("Trainer not found", rootCause.getMessage());
-
-        verify(gymFacade).authenticateTrainee(username, password);
-        verify(gymFacade).authenticateTrainer(username, password);
-    }
-
-    @Test
-    @DisplayName("Change password should succeed for trainee")
-    void changePasswordShouldSucceedForTrainee() throws Exception {
-        ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setUsername("john.doe");
-        request.setOldPassword("oldPass123");
-        request.setNewPassword("newPass456");
-
-        doNothing().when(gymFacade).changeTraineePassword("john.doe", "oldPass123", "newPass456");
-
-        mockMvc.perform(put("/api/auth/change-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).changeTraineePassword("john.doe", "oldPass123", "newPass456");
-        verify(gymFacade, never()).changeTrainerPassword(anyString(), anyString(), anyString());
-    }
-
-    @Test
-    @DisplayName("Change password should succeed for trainer when trainee fails")
-    void changePasswordShouldSucceedForTrainerWhenTraineeFails() throws Exception {
-        ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setUsername("jane.smith");
-        request.setOldPassword("oldTrainerPass");
-        request.setNewPassword("newTrainerPass");
-
-        doThrow(new RuntimeException("Trainee not found"))
-                .when(gymFacade).changeTraineePassword("jane.smith", "oldTrainerPass", "newTrainerPass");
-        doNothing().when(gymFacade).changeTrainerPassword("jane.smith", "oldTrainerPass", "newTrainerPass");
-
-        mockMvc.perform(put("/api/auth/change-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).changeTraineePassword("jane.smith", "oldTrainerPass", "newTrainerPass");
-        verify(gymFacade).changeTrainerPassword("jane.smith", "oldTrainerPass", "newTrainerPass");
-    }
-
-    @Test
-    @DisplayName("Change password should fail when both trainee and trainer password change fails")
-    void changePasswordShouldFailWhenBothFail() {
-        String username = "unknown.user";
-        String oldPassword = "wrongOld";
-        String newPassword = "newPass";
-
-        ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setUsername(username);
-        request.setOldPassword(oldPassword);
-        request.setNewPassword(newPassword);
-
-        doThrow(new RuntimeException("Trainee not found"))
-                .when(gymFacade).changeTraineePassword(username, oldPassword, newPassword);
-        doThrow(new RuntimeException("Trainer not found"))
-                .when(gymFacade).changeTrainerPassword(username, oldPassword, newPassword);
-
-        Exception exception = assertThrows(Exception.class, () -> {
-            mockMvc.perform(put("/api/auth/change-password")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-        });
-
-        Throwable rootCause = findRootCause(exception);
-        assertNotNull(rootCause, "Expected RuntimeException in exception chain");
-        assertEquals("Trainer not found", rootCause.getMessage());
-
-        verify(gymFacade).changeTraineePassword(username, oldPassword, newPassword);
-        verify(gymFacade).changeTrainerPassword(username, oldPassword, newPassword);
-    }
-
-    @Test
-    @DisplayName("Change password should return bad request when request body is invalid")
-    void changePasswordShouldReturnBadRequestWhenInvalid() throws Exception {
-        ChangePasswordRequest invalidRequest = new ChangePasswordRequest();
-
-        mockMvc.perform(put("/api/auth/change-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("Login should return bad request when parameters are missing")
-    void loginShouldReturnBadRequestWhenParametersMissing() throws Exception {
-        mockMvc.perform(get("/api/auth/login")
-                        .param("username", "john.doe"))
-                .andExpect(status().isBadRequest());
-    }
-
-    private Throwable findRootCause(Throwable throwable) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (RuntimeException.class.isInstance(current)) {
-                return current;
-            }
-            current = current.getCause();
+            verify(userService).authenticate(USERNAME, PASSWORD);
         }
-        return null;
+
+        @Test
+        @DisplayName("Should return 401 when authentication fails")
+        void login_WithInvalidCredentials_ReturnsUnauthorized() throws Exception {
+            LoginRequest request = new LoginRequest();
+            request.setUsername(USERNAME);
+            request.setPassword("wrongPassword");
+
+            doThrow(new AuthenticationException("Invalid username or password"))
+                    .when(userService).authenticate(USERNAME, "wrongPassword");
+
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isUnauthorized());
+
+            verify(userService).authenticate(USERNAME, "wrongPassword");
+        }
+    }
+
+    // ==================== CHANGE PASSWORD TESTS ====================
+
+    @Nested
+    @DisplayName("Change Password Endpoint Tests")
+    class ChangePasswordTests {
+
+        @Test
+        @DisplayName("Should return 200 OK when password change is successful")
+        void changePassword_WithValidRequest_ReturnsOk() throws Exception {
+            ChangePasswordRequest request = new ChangePasswordRequest();
+            request.setUsername(USERNAME);
+            request.setOldPassword(PASSWORD);
+            request.setNewPassword(NEW_PASSWORD);
+
+            doNothing().when(userService).changePassword(USERNAME, PASSWORD, NEW_PASSWORD);
+
+            mockMvc.perform(put("/api/auth/change-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(userService).changePassword(USERNAME, PASSWORD, NEW_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("Should return 401 when old password is incorrect")
+        void changePassword_WithWrongOldPassword_ReturnsUnauthorized() throws Exception {
+            ChangePasswordRequest request = new ChangePasswordRequest();
+            request.setUsername(USERNAME);
+            request.setOldPassword("wrongOldPassword");
+            request.setNewPassword(NEW_PASSWORD);
+
+            doThrow(new AuthenticationException("Invalid username or password"))
+                    .when(userService).changePassword(USERNAME, "wrongOldPassword", NEW_PASSWORD);
+
+            mockMvc.perform(put("/api/auth/change-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when user not found")
+        void changePassword_UserNotFound_ReturnsNotFound() throws Exception {
+            ChangePasswordRequest request = new ChangePasswordRequest();
+            request.setUsername("nonexistent");
+            request.setOldPassword(PASSWORD);
+            request.setNewPassword(NEW_PASSWORD);
+
+            doThrow(new NotFoundException("User not found"))
+                    .when(userService).changePassword("nonexistent", PASSWORD, NEW_PASSWORD);
+
+            mockMvc.perform(put("/api/auth/change-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    // ==================== TOGGLE STATUS TESTS ====================
+
+    @Nested
+    @DisplayName("Toggle User Status Endpoint Tests")
+    class ToggleUserStatusTests {
+
+        @Test
+        @DisplayName("Should return 200 OK when activating user")
+        void toggleUserStatus_ActivateUser_ReturnsOk() throws Exception {
+            ToggleActiveRequest request = new ToggleActiveRequest();
+            request.setUsername(USERNAME);  // <-- FIX: Set username field
+            request.setIsActive(true);
+
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            doNothing().when(userService).setActiveStatus(USERNAME, true);
+
+            mockMvc.perform(patch("/api/auth/users/{username}/status", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(userService).setActiveStatus(USERNAME, true);
+        }
+
+        @Test
+        @DisplayName("Should return 200 OK when deactivating user")
+        void toggleUserStatus_DeactivateUser_ReturnsOk() throws Exception {
+            ToggleActiveRequest request = new ToggleActiveRequest();
+            request.setUsername(USERNAME);  // <-- FIX: Set username field
+            request.setIsActive(false);
+
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            doNothing().when(userService).setActiveStatus(USERNAME, false);
+
+            mockMvc.perform(patch("/api/auth/users/{username}/status", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(userService).setActiveStatus(USERNAME, false);
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user not authenticated")
+        void toggleUserStatus_UserNotAuthenticated_ReturnsUnauthorized() throws Exception {
+            ToggleActiveRequest request = new ToggleActiveRequest();
+            request.setUsername(USERNAME);  // <-- FIX: Set username field
+            request.setIsActive(true);
+
+            doThrow(new AuthenticationException("User is not authenticated"))
+                    .when(userService).isAuthenticated(USERNAME);
+
+            mockMvc.perform(patch("/api/auth/users/{username}/status", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isUnauthorized());
+
+            verify(userService).isAuthenticated(USERNAME);
+            verify(userService, never()).setActiveStatus(anyString(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when user not found")
+        void toggleUserStatus_UserNotFound_ReturnsNotFound() throws Exception {
+            ToggleActiveRequest request = new ToggleActiveRequest();
+            request.setUsername(USERNAME);  // <-- FIX: Set username field
+            request.setIsActive(true);
+
+            doNothing().when(userService).isAuthenticated(USERNAME);
+            doThrow(new NotFoundException("User not found"))
+                    .when(userService).setActiveStatus(USERNAME, true);
+
+            mockMvc.perform(patch("/api/auth/users/{username}/status", USERNAME)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound());
+        }
     }
 }

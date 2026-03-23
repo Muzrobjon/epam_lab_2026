@@ -1,265 +1,804 @@
 package com.epam.gym.controller;
 
 import com.epam.gym.dto.request.AddTrainingRequest;
-import com.epam.gym.entity.Trainer;
-import com.epam.gym.entity.Training;
+import com.epam.gym.dto.response.TrainingTypeResponse;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.enums.TrainingTypeName;
-import com.epam.gym.facade.GymFacade;
-import com.epam.gym.repository.TrainingTypeRepository;
+import com.epam.gym.exception.GlobalExceptionHandler;
+import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.mapper.TrainingTypeMapper;
+import com.epam.gym.service.TrainingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
-import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)  // Allow lenient stubbing for helper methods
+@DisplayName("TrainingController Unit Tests")
 class TrainingControllerTest {
 
     private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
 
     @Mock
-    private GymFacade gymFacade;
+    private TrainingService trainingService;
 
     @Mock
-    private TrainingTypeRepository trainingTypeRepository;
+    private TrainingTypeMapper trainingTypeMapper;
 
     @InjectMocks
     private TrainingController trainingController;
 
+    private ObjectMapper objectMapper;
+
+    private static final String TRAINEE_USERNAME = "john.doe";
+    private static final String TRAINER_USERNAME = "jane.smith";
+    private static final String TRAINING_NAME = "Morning Fitness Session";
+    private static final LocalDate TRAINING_DATE = LocalDate.of(2024, 6, 15);
+    private static final Integer TRAINING_DURATION = 60;
+
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(trainingController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(trainingController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
     }
 
-    // ==================== Add Training Tests ====================
+    @Nested
+    @DisplayName("POST /api/trainings - Add Training")
+    class AddTrainingTests {
 
-    @Test
-    @DisplayName("Add training should succeed with valid request")
-    void addTrainingShouldSucceedWithValidRequest() throws Exception {
-        AddTrainingRequest request = createValidAddTrainingRequest();
-        Trainer trainer = createSampleTrainer(TrainingTypeName.YOGA);
+        @Test
+        @DisplayName("Should add training successfully and return 200 OK")
+        void addTraining_ValidRequest_ReturnsOk() throws Exception {
+            AddTrainingRequest request = createValidAddTrainingRequest();
 
-        when(gymFacade.getTrainerByUsername("trainer.jane")).thenReturn(trainer);
-        // createTraining returns a Training object, not void
-        when(gymFacade.createTraining(
-                "trainee.john", "traineePass123", "trainer.jane", "trainerPass456",
-                "Morning Yoga Session", TrainingTypeName.YOGA, LocalDate.of(2024, 6, 15), 60))
-                .thenReturn(new Training());
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
 
-        mockMvc.perform(post("/api/trainings")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).getTrainerByUsername("trainer.jane");
-        verify(gymFacade).createTraining(
-                "trainee.john", "traineePass123", "trainer.jane", "trainerPass456",
-                "Morning Yoga Session", TrainingTypeName.YOGA, LocalDate.of(2024, 6, 15), 60);
-    }
-
-    @Test
-    @DisplayName("Add training should use trainer's specialization as training type")
-    void addTrainingShouldUseTrainerSpecialization() throws Exception {
-        AddTrainingRequest request = createValidAddTrainingRequest();
-        Trainer trainer = createSampleTrainer(TrainingTypeName.FITNESS);
-
-        when(gymFacade.getTrainerByUsername("trainer.jane")).thenReturn(trainer);
-        // createTraining returns a Training object
-        when(gymFacade.createTraining(
-                anyString(), anyString(), anyString(), anyString(),
-                anyString(), eq(TrainingTypeName.FITNESS), any(), anyInt()))
-                .thenReturn(new Training());
-
-        mockMvc.perform(post("/api/trainings")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade).createTraining(
-                "trainee.john", "traineePass123", "trainer.jane", "trainerPass456",
-                "Morning Yoga Session", TrainingTypeName.FITNESS, LocalDate.of(2024, 6, 15), 60);
-    }
-
-    @Test
-    @DisplayName("Add training should return 400 when request is invalid")
-    void addTrainingShouldReturnBadRequestWhenInvalid() throws Exception {
-        AddTrainingRequest invalidRequest = new AddTrainingRequest();
-
-        mockMvc.perform(post("/api/trainings")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
-
-        verify(gymFacade, never()).getTrainerByUsername(anyString());
-        verify(gymFacade, never()).createTraining(any(), any(), any(), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("Add training should propagate exception when trainer not found")
-    void addTrainingShouldPropagateExceptionWhenTrainerNotFound() {
-        AddTrainingRequest request = createValidAddTrainingRequest();
-
-        when(gymFacade.getTrainerByUsername("trainer.jane"))
-                .thenThrow(new RuntimeException("Trainer not found"));
-
-        Exception exception = assertThrows(Exception.class, () -> {
             mockMvc.perform(post("/api/trainings")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-        });
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
 
-        Throwable rootCause = findRootCause(exception);
-        assertNotNull(rootCause);
-        assertEquals("Trainer not found", rootCause.getMessage());
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
 
-        verify(gymFacade).getTrainerByUsername("trainer.jane");
-        verify(gymFacade, never()).createTraining(any(), any(), any(), any(), any(), any(), any(), any());
-    }
+        @Test
+        @DisplayName("Should add training with minimum valid duration")
+        void addTraining_MinimumDuration_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(1)
+                    .build();
 
-    @Test
-    @DisplayName("Add training should propagate exception when create training fails")
-    void addTrainingShouldPropagateExceptionWhenCreateFails() {
-        AddTrainingRequest request = createValidAddTrainingRequest();
-        Trainer trainer = createSampleTrainer(TrainingTypeName.YOGA);
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
 
-        when(gymFacade.getTrainerByUsername("trainer.jane")).thenReturn(trainer);
-        when(gymFacade.createTraining(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenThrow(new RuntimeException("Trainee authentication failed"));
-
-        Exception exception = assertThrows(Exception.class, () -> {
             mockMvc.perform(post("/api/trainings")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-        });
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
 
-        Throwable rootCause = findRootCause(exception);
-        assertNotNull(rootCause);
-        assertEquals("Trainee authentication failed", rootCause.getMessage());
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should add training with large duration")
+        void addTraining_LargeDuration_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(480)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should add training with future date")
+        void addTraining_FutureDate_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(LocalDate.now().plusMonths(6))
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should add training with past date")
+        void addTraining_PastDate_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(LocalDate.now().minusMonths(1))
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when traineeUsername is missing")
+        void addTraining_MissingTraineeUsername_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when traineeUsername is blank")
+        void addTraining_BlankTraineeUsername_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("   ")
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trainerUsername is missing")
+        void addTraining_MissingTrainerUsername_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trainerUsername is blank")
+        void addTraining_BlankTrainerUsername_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername("   ")
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trainingName is missing")
+        void addTraining_MissingTrainingName_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trainingName is blank")
+        void addTraining_BlankTrainingName_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName("   ")
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trainingDate is missing")
+        void addTraining_MissingTrainingDate_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trainingDuration is missing")
+        void addTraining_MissingTrainingDuration_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when request body is empty")
+        void addTraining_EmptyBody_ReturnsBadRequest() throws Exception {
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when trainee not found")
+        void addTraining_TraineeNotFound_ReturnsNotFound() throws Exception {
+            AddTrainingRequest request = createValidAddTrainingRequest();
+
+            doThrow(new NotFoundException("Trainee not found: " + TRAINEE_USERNAME))
+                    .when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should return 404 when trainer not found")
+        void addTraining_TrainerNotFound_ReturnsNotFound() throws Exception {
+            AddTrainingRequest request = createValidAddTrainingRequest();
+
+            doThrow(new NotFoundException("Trainer not found: " + TRAINER_USERNAME))
+                    .when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle long training name")
+        void addTraining_LongTrainingName_ReturnsOk() throws Exception {
+            String longName = "A".repeat(200);
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(longName)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle special characters in training name")
+        void addTraining_SpecialCharactersInName_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName("Morning Session @Gym #2024!")
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle username with dots")
+        void addTraining_UsernameWithDots_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("john.doe.junior")
+                    .trainerUsername("jane.smith.senior")
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
     }
 
-    // ==================== Get Training Types Tests ====================
+    @Nested
+    @DisplayName("GET /api/trainings/types - Get Training Types")
+    class GetTrainingTypesTests {
 
-    @Test
-    @DisplayName("Get training types should return list of all types")
-    void getTrainingTypesShouldReturnListOfAllTypes() throws Exception {
-        TrainingType type1 = createTrainingTypeMock(1L, TrainingTypeName.YOGA);
-        TrainingType type2 = createTrainingTypeMock(2L, TrainingTypeName.FITNESS);
+        @Test
+        @DisplayName("Should return all training types successfully")
+        void getTrainingTypes_ReturnsAllTypes() throws Exception {
+            List<TrainingType> types = Arrays.asList(
+                    new TrainingType(1L, TrainingTypeName.FITNESS),
+                    new TrainingType(2L, TrainingTypeName.YOGA),
+                    new TrainingType(3L, TrainingTypeName.ZUMBA)
+            );
 
-        when(trainingTypeRepository.findAll()).thenReturn(List.of(type1, type2));
+            List<TrainingTypeResponse> responses = Arrays.asList(
+                    new TrainingTypeResponse(1L, TrainingTypeName.FITNESS),
+                    new TrainingTypeResponse(2L, TrainingTypeName.YOGA),
+                    new TrainingTypeResponse(3L, TrainingTypeName.ZUMBA)
+            );
 
-        mockMvc.perform(get("/api/trainings/types"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].trainingTypeName").value("YOGA"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].trainingTypeName").value("FITNESS"));
+            when(trainingService.getAllTrainingTypes()).thenReturn(types);
+            when(trainingTypeMapper.toResponseList(types)).thenReturn(responses);
 
-        verify(trainingTypeRepository).findAll();
+            mockMvc.perform(get("/api/trainings/types"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(3)))
+                    .andExpect(jsonPath("$[0].id", is(1)))
+                    .andExpect(jsonPath("$[0].trainingTypeName", is("FITNESS")))
+                    .andExpect(jsonPath("$[1].id", is(2)))
+                    .andExpect(jsonPath("$[1].trainingTypeName", is("YOGA")))
+                    .andExpect(jsonPath("$[2].id", is(3)))
+                    .andExpect(jsonPath("$[2].trainingTypeName", is("ZUMBA")));
+
+            verify(trainingService).getAllTrainingTypes();
+            verify(trainingTypeMapper).toResponseList(types);
+        }
+
+        @Test
+        @DisplayName("Should return single training type")
+        void getTrainingTypes_SingleType_ReturnsOne() throws Exception {
+            List<TrainingType> types = List.of(
+                    new TrainingType(1L, TrainingTypeName.FITNESS)
+            );
+
+            List<TrainingTypeResponse> responses = List.of(
+                    new TrainingTypeResponse(1L, TrainingTypeName.FITNESS)
+            );
+
+            when(trainingService.getAllTrainingTypes()).thenReturn(types);
+            when(trainingTypeMapper.toResponseList(types)).thenReturn(responses);
+
+            mockMvc.perform(get("/api/trainings/types"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(1)))
+                    .andExpect(jsonPath("$[0].id", is(1)))
+                    .andExpect(jsonPath("$[0].trainingTypeName", is("FITNESS")));
+
+            verify(trainingService).getAllTrainingTypes();
+        }
+
+        @Test
+        @DisplayName("Should return empty list when no training types exist")
+        void getTrainingTypes_NoTypes_ReturnsEmptyList() throws Exception {
+            when(trainingService.getAllTrainingTypes()).thenReturn(Collections.emptyList());
+            when(trainingTypeMapper.toResponseList(anyList())).thenReturn(Collections.emptyList());
+
+            mockMvc.perform(get("/api/trainings/types"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(0)));
+
+            verify(trainingService).getAllTrainingTypes();
+            verify(trainingTypeMapper).toResponseList(anyList());
+        }
+
+        @Test
+        @DisplayName("Should return training types with correct structure")
+        void getTrainingTypes_CorrectStructure_ReturnsValidJson() throws Exception {
+            List<TrainingType> types = List.of(
+                    new TrainingType(1L, TrainingTypeName.YOGA)
+            );
+
+            List<TrainingTypeResponse> responses = List.of(
+                    new TrainingTypeResponse(1L, TrainingTypeName.YOGA)
+            );
+
+            when(trainingService.getAllTrainingTypes()).thenReturn(types);
+            when(trainingTypeMapper.toResponseList(types)).thenReturn(responses);
+
+            mockMvc.perform(get("/api/trainings/types"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$[0]").exists())
+                    .andExpect(jsonPath("$[0].id").isNumber())
+                    .andExpect(jsonPath("$[0].trainingTypeName").isString());
+
+            verify(trainingService).getAllTrainingTypes();
+        }
+
+        @Test
+        @DisplayName("Should return training types in consistent order")
+        void getTrainingTypes_MultipleRequests_ReturnsConsistentOrder() throws Exception {
+            List<TrainingType> types = Arrays.asList(
+                    new TrainingType(1L, TrainingTypeName.FITNESS),
+                    new TrainingType(2L, TrainingTypeName.YOGA)
+            );
+
+            List<TrainingTypeResponse> responses = Arrays.asList(
+                    new TrainingTypeResponse(1L, TrainingTypeName.FITNESS),
+                    new TrainingTypeResponse(2L, TrainingTypeName.YOGA)
+            );
+
+            when(trainingService.getAllTrainingTypes()).thenReturn(types);
+            when(trainingTypeMapper.toResponseList(types)).thenReturn(responses);
+
+            mockMvc.perform(get("/api/trainings/types"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].trainingTypeName", is("FITNESS")))
+                    .andExpect(jsonPath("$[1].trainingTypeName", is("YOGA")));
+
+            mockMvc.perform(get("/api/trainings/types"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].trainingTypeName", is("FITNESS")))
+                    .andExpect(jsonPath("$[1].trainingTypeName", is("YOGA")));
+
+            verify(trainingService, times(2)).getAllTrainingTypes();
+        }
     }
 
-    @Test
-    @DisplayName("Get training types should return empty list when no types exist")
-    void getTrainingTypesShouldReturnEmptyListWhenNoTypes() throws Exception {
-        when(trainingTypeRepository.findAll()).thenReturn(Collections.emptyList());
+    @Nested
+    @DisplayName("Edge Cases")
+    class EdgeCases {
 
-        mockMvc.perform(get("/api/trainings/types"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0))
-                .andExpect(content().json("[]"));
+        @Test
+        @DisplayName("Should handle concurrent training creation requests")
+        void addTraining_ConcurrentRequests_HandlesCorrectly() throws Exception {
+            AddTrainingRequest request = createValidAddTrainingRequest();
 
-        verify(trainingTypeRepository).findAll();
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            for (int i = 0; i < 5; i++) {
+                mockMvc.perform(post("/api/trainings")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                        .andExpect(status().isOk());
+            }
+
+            verify(trainingService, times(5)).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle training with today's date")
+        void addTraining_TodayDate_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(LocalDate.now())
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle numeric username")
+        void addTraining_NumericUsername_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername("12345")
+                    .trainerUsername("67890")
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle unicode characters in training name")
+        void addTraining_UnicodeInTrainingName_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName("Morning Training Session")
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .characterEncoding("UTF-8")
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle same trainee and trainer username")
+        void addTraining_SameTraineeAndTrainer_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINEE_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle training far in the future")
+        void addTraining_FarFutureDate_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(LocalDate.of(2030, 12, 31))
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
+
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
     }
 
-    @Test
-    @DisplayName("Get training types should map entity to response correctly")
-    void getTrainingTypesShouldMapEntityToResponseCorrectly() throws Exception {
-        TrainingType type = createTrainingTypeMock(5L, TrainingTypeName.CARDIO);
+    @Nested
+    @DisplayName("Validation Boundary Tests")
+    class ValidationBoundaryTests {
 
-        when(trainingTypeRepository.findAll()).thenReturn(List.of(type));
+        @Test
+        @DisplayName("Should handle minimum valid training name length")
+        void addTraining_MinTrainingNameLength_ReturnsOk() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName("A")
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(TRAINING_DURATION)
+                    .build();
 
-        mockMvc.perform(get("/api/trainings/types"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(5))
-                .andExpect(jsonPath("$[0].trainingTypeName").value("CARDIO"));
+            doNothing().when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when duration is zero")
+        void addTraining_ZeroDuration_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(0)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when duration is negative")
+        void addTraining_NegativeDuration_ReturnsBadRequest() throws Exception {
+            AddTrainingRequest request = AddTrainingRequest.builder()
+                    .traineeUsername(TRAINEE_USERNAME)
+                    .trainerUsername(TRAINER_USERNAME)
+                    .trainingName(TRAINING_NAME)
+                    .trainingDate(TRAINING_DATE)
+                    .trainingDuration(-10)
+                    .build();
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(trainingService, never()).createTraining(any());
+        }
     }
 
-    // ==================== Helper Methods ====================
+    @Nested
+    @DisplayName("Service Exception Tests")
+    class ServiceExceptionTests {
+
+        @Test
+        @DisplayName("Should handle generic runtime exception from service")
+        void addTraining_ServiceThrowsRuntimeException_ReturnsInternalServerError() throws Exception {
+            AddTrainingRequest request = createValidAddTrainingRequest();
+
+            doThrow(new RuntimeException("Unexpected error"))
+                    .when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isInternalServerError());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle IllegalArgumentException from service as 500")
+        void addTraining_ServiceThrowsIllegalArgumentException_ReturnsInternalServerError() throws Exception {
+            AddTrainingRequest request = createValidAddTrainingRequest();
+
+            doThrow(new IllegalArgumentException("Invalid training data"))
+                    .when(trainingService).createTraining(any(AddTrainingRequest.class));
+
+            mockMvc.perform(post("/api/trainings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isInternalServerError());
+
+            verify(trainingService).createTraining(any(AddTrainingRequest.class));
+        }
+
+        @Test
+        @DisplayName("Should handle exception when getting training types")
+        void getTrainingTypes_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
+            when(trainingService.getAllTrainingTypes())
+                    .thenThrow(new RuntimeException("Database error"));
+
+            mockMvc.perform(get("/api/trainings/types"))
+                    .andExpect(status().isInternalServerError());
+
+            verify(trainingService).getAllTrainingTypes();
+        }
+    }
 
     private AddTrainingRequest createValidAddTrainingRequest() {
-        AddTrainingRequest request = new AddTrainingRequest();
-        request.setTraineeUsername("trainee.john");
-        request.setTraineePassword("traineePass123");
-        request.setTrainerUsername("trainer.jane");
-        request.setTrainerPassword("trainerPass456");
-        request.setTrainingName("Morning Yoga Session");
-        request.setTrainingDate(LocalDate.of(2024, 6, 15));
-        request.setTrainingDuration(60);
-        return request;
-    }
-
-    private Trainer createSampleTrainer(TrainingTypeName specialization) {
-        // For trainer specialization, we only need getTrainingTypeName()
-        TrainingType trainingType = mock(TrainingType.class);
-        when(trainingType.getTrainingTypeName()).thenReturn(specialization);
-        // Note: getId() is NOT stubbed here - this avoids unnecessary stubbing
-
-        com.epam.gym.entity.User user = com.epam.gym.entity.User.builder()
-                .username("trainer.jane")
-                .firstName("Jane")
-                .lastName("Smith")
+        return AddTrainingRequest.builder()
+                .traineeUsername(TRAINEE_USERNAME)
+                .trainerUsername(TRAINER_USERNAME)
+                .trainingName(TRAINING_NAME)
+                .trainingDate(TRAINING_DATE)
+                .trainingDuration(TRAINING_DURATION)
                 .build();
-
-        return Trainer.builder()
-                .user(user)
-                .specialization(trainingType)
-                .build();
-    }
-
-    /**
-     * Creates a mocked TrainingType with specific ID and name for repository tests.
-     * Both getId() and getTrainingTypeName() are stubbed here because they're both used
-     * in the controller's stream mapping to TrainingTypeResponse.
-     */
-    private TrainingType createTrainingTypeMock(Long id, TrainingTypeName name) {
-        TrainingType mock = mock(TrainingType.class);
-        when(mock.getId()).thenReturn(id);
-        when(mock.getTrainingTypeName()).thenReturn(name);
-        return mock;
-    }
-
-    private Throwable findRootCause(Throwable throwable) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (RuntimeException.class.isInstance(current)) {
-                return current;
-            }
-            current = current.getCause();
-        }
-        return null;
     }
 }

@@ -25,12 +25,6 @@ public class UpdateTraineeTrainersRequest {
             requiredMode = RequiredMode.REQUIRED)
     private String traineeUsername;
 
-    @NotBlank(message = "Password is required")
-    @Schema(description = "Password for authentication",
-            example = "password123",
-            requiredMode = RequiredMode.REQUIRED)
-    private String password;
-
     @NotEmpty(message = "Trainers list cannot be empty")
     @Schema(description = "List of trainer usernames",
             example = "[\"Alice.Smith\", \"Bob.Johnson\"]",
