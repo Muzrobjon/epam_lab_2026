@@ -7,8 +7,11 @@ import com.epam.gym.entity.Training;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.enums.TrainingTypeName;
 import com.epam.gym.exception.ValidationException;
+import com.epam.gym.metrics.TrainingMetrics;
 import com.epam.gym.repository.TrainingRepository;
 import com.epam.gym.repository.TrainingTypeRepository;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Timer;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -32,19 +35,21 @@ public class TrainingService {
     private final TrainerService trainerService;
     private final Validator validator;
     private final UserService userService;
+    private final TrainingMetrics trainingMetrics;
 
     @Transactional
     public void createTraining(AddTrainingRequest request) {
+        Timer.Sample timer = trainingMetrics.startTimer();
+
         userService.isAuthenticated(request.getTraineeUsername());
+
         log.info("Creating training: {} for trainee: {} and trainer: {}",
                 request.getTrainingName(),
                 request.getTraineeUsername(),
                 request.getTrainerUsername());
 
-
         Trainee trainee = traineeService.getByUsername(request.getTraineeUsername());
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
-
         TrainingType trainingType = trainer.getSpecialization();
 
         Training training = Training.builder()
@@ -59,17 +64,23 @@ public class TrainingService {
         validateTraining(training);
 
         Training saved = trainingRepository.save(training);
-        log.info("Training created successfully with ID: {}", saved.getId());
 
+        trainingMetrics.stopTimer(timer);
+        trainingMetrics.incrementCreated();
+
+        log.info("Training created with ID: {}", saved.getId());
     }
 
+    @Timed(value = "gym_training_fetch_trainee_seconds")
     @Transactional(readOnly = true)
     public List<Training> getTraineeTrainingsByCriteria(
             String traineeUsername,
-            LocalDate fromDate, LocalDate toDate,
-            String trainerName, TrainingTypeName trainingTypeName) {
+            LocalDate fromDate,
+            LocalDate toDate,
+            String trainerName,
+            TrainingTypeName trainingTypeName) {
 
-        log.info("Getting trainee trainings by criteria for: {}", traineeUsername);
+        log.info("Fetching trainings for trainee: {}", traineeUsername);
         userService.isAuthenticated(traineeUsername);
 
         List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
@@ -93,13 +104,15 @@ public class TrainingService {
         return trainings;
     }
 
+    @Timed(value = "gym_training_fetch_trainer_seconds")
     @Transactional(readOnly = true)
     public List<Training> getTrainerTrainingsByCriteria(
             String trainerUsername,
-            LocalDate fromDate, LocalDate toDate,
+            LocalDate fromDate,
+            LocalDate toDate,
             String traineeName) {
 
-        log.info("Getting trainer trainings by criteria for: {}", trainerUsername);
+        log.info("Fetching trainings for trainer: {}", trainerUsername);
         userService.isAuthenticated(trainerUsername);
 
         List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
