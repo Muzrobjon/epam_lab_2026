@@ -7,9 +7,10 @@ import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
 import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.exception.ValidationException;
-import com.epam.gym.repository.TrainerRepository;
 import com.epam.gym.repository.TraineeRepository;
+import com.epam.gym.repository.TrainerRepository;
 import com.epam.gym.repository.TrainingTypeRepository;
+import io.micrometer.core.annotation.Timed;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class TrainerService {
     private final UserService userService;
     private final Validator validator;
 
-
+    @Timed(value = "gym_trainer_create_seconds", description = "Time to create trainer")
     @Transactional
     public Trainer createProfile(TrainerRegistrationRequest request) {
         log.info("Creating trainer profile for {} {}", request.getFirstName(), request.getLastName());
@@ -51,21 +52,22 @@ public class TrainerService {
         validateEntity(trainer);
 
         Trainer saved = trainerRepository.save(trainer);
-        log.info("Trainer profile created for ID: {}, username: {}", saved.getId(), savedUser.getUsername());
+        log.info("Trainer created: {} with username: {}", saved.getId(), savedUser.getUsername());
 
         return saved;
     }
 
+    @Timed(value = "gym_trainer_fetch_seconds", description = "Time to fetch trainer")
     @Transactional(readOnly = true)
     public Trainer getByUsername(String username) {
-        log.info("Retrieving trainer by username: {}", username);
+        log.info("Fetching trainer by username: {}", username);
         return trainerRepository.findByUser_Username(username)
                 .orElseThrow(() -> new NotFoundException("Trainer not found: " + username));
     }
 
     @Transactional
     public Trainer updateProfile(String username, UpdateTrainerRequest request) {
-        log.info("Updating trainer profile for username: {}", username);
+        log.info("Updating trainer profile: {}", username);
 
         userService.isAuthenticated(request.getUsername());
 
@@ -81,15 +83,14 @@ public class TrainerService {
         validateEntity(trainer);
 
         Trainer saved = trainerRepository.save(trainer);
-        log.info("Trainer profile updated successfully: {}", username);
+        log.info("Trainer profile updated: {}", username);
 
         return saved;
     }
 
-
     @Transactional(readOnly = true)
     public List<Trainer> getUnassignedTrainers(String traineeUsername) {
-        log.info("Retrieving unassigned trainers for trainee: {}", traineeUsername);
+        log.info("Fetching unassigned trainers for trainee: {}", traineeUsername);
 
         userService.isAuthenticated(traineeUsername);
 

@@ -6,11 +6,13 @@ import lombok.*;
 import org.hibernate.annotations.Immutable;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "training_types")
 @Immutable
+@Builder
 public class TrainingType {
 
     @Id

@@ -3,7 +3,9 @@ package com.epam.gym.service;
 import com.epam.gym.entity.User;
 import com.epam.gym.exception.AuthenticationException;
 import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.metrics.UserMetrics;
 import com.epam.gym.repository.UserRepository;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,11 +19,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
+    private final UserMetrics userMetrics;
+
     private User currentUser;
 
+    @Timed(value = "gym_user_create_seconds", description = "Time to create user")
     @Transactional
     public User createUser(String firstName, String lastName) {
-        log.debug("Creating user for {} {}", firstName, lastName);
+        log.debug("Creating user: {} {}", firstName, lastName);
 
         String rawPassword = passwordGenerator.generatePassword();
 
@@ -36,8 +41,9 @@ public class UserService {
         user.setUsername(username);
 
         User savedUser = userRepository.save(user);
-        log.debug("Created user: {} with username: {}", savedUser.getId(), username);
+        userMetrics.incrementRegistrations();
 
+        log.info("User created: {}", username);
         return savedUser;
     }
 
@@ -47,18 +53,27 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found: " + username));
     }
 
+    @Timed(value = "gym_authenticate_seconds", description = "Authentication time")
     @Transactional(readOnly = true)
     public void authenticate(String username, String password) {
         log.info("Authenticating user: {}", username);
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AuthenticationException("Invalid username or password"));
+                .orElseThrow(() -> {
+                    userMetrics.incrementLoginFailure();
+                    log.warn("Login failed - user not found: {}", username);
+                    return new AuthenticationException("Invalid username or password");
+                });
 
         if (!user.getPassword().equals(password)) {
+            userMetrics.incrementLoginFailure();
+            log.warn("Login failed - invalid password: {}", username);
             throw new AuthenticationException("Invalid username or password");
         }
+
         currentUser = user;
-        log.info("User authenticated successfully: {}", username);
+        userMetrics.incrementLoginSuccess();
+        log.info("User authenticated: {}", username);
     }
 
     @Transactional
@@ -67,10 +82,12 @@ public class UserService {
 
         isAuthenticated(username);
         authenticate(username, oldPassword);
+
         User user = findByUsername(username);
         user.setPassword(newPassword);
         userRepository.save(user);
 
+        userMetrics.incrementPasswordChanges();
         log.info("Password changed for user: {}", username);
     }
 
