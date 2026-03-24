@@ -1,8 +1,7 @@
 spring:
   application:
     name: gym-crm
-  profiles:
-    active: local
+
 
 logging:
   pattern:
