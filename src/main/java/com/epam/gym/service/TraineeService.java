@@ -9,12 +9,14 @@ import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.exception.ValidationException;
 import com.epam.gym.repository.TraineeRepository;
 import com.epam.gym.repository.TrainerRepository;
+import io.micrometer.core.annotation.Timed;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -30,8 +32,9 @@ public class TraineeService {
     private final UserService userService;
     private final Validator validator;
 
+    @Timed(value = "gym_trainee_create_seconds", description = "Time to create trainee")
     @Transactional
-    public Trainee createProfile(TraineeRegistrationRequest request)  {
+    public Trainee createProfile(TraineeRegistrationRequest request) {
         log.info("Creating trainee profile for {} {}", request.getFirstName(), request.getLastName());
 
         User savedUser = userService.createUser(request.getFirstName(), request.getLastName());
@@ -46,14 +49,15 @@ public class TraineeService {
         validateEntity(trainee);
 
         Trainee saved = traineeRepository.save(trainee);
-        log.info("Created trainee: {} with username: {}", saved.getId(), savedUser.getUsername());
+        log.info("Trainee created: {} with username: {}", saved.getId(), savedUser.getUsername());
 
         return saved;
     }
 
+    @Timed(value = "gym_trainee_fetch_seconds", description = "Time to fetch trainee")
     @Transactional(readOnly = true)
     public Trainee getByUsername(String username) {
-        log.debug("Selecting trainee by username: {}", username);
+        log.debug("Fetching trainee by username: {}", username);
         return traineeRepository.findByUser_Username(username)
                 .orElseThrow(() -> new NotFoundException("Trainee not found: " + username));
     }
@@ -83,7 +87,7 @@ public class TraineeService {
         validateEntity(existing);
 
         Trainee saved = traineeRepository.save(existing);
-        log.info("Updated trainee profile: {}", username);
+        log.info("Trainee profile updated: {}", username);
 
         return saved;
     }
@@ -97,7 +101,7 @@ public class TraineeService {
         Trainee trainee = getByUsername(username);
         traineeRepository.delete(trainee);
 
-        log.info("Deleted trainee profile: {}", username);
+        log.info("Trainee profile deleted: {}", username);
     }
 
     @Transactional
@@ -113,11 +117,11 @@ public class TraineeService {
         trainee.getTrainers().addAll(trainers);
         traineeRepository.save(trainee);
 
-        log.info("Updated trainers list for trainee: {} with {} trainers", traineeUsername, trainers.size());
+        log.info("Trainers list updated for trainee: {} with {} trainers",
+                traineeUsername, trainers.size());
 
         return trainers;
     }
-
 
     private List<Trainer> fetchTrainersByUsernames(List<String> trainerUsernames) {
         if (trainerUsernames == null || trainerUsernames.isEmpty()) {

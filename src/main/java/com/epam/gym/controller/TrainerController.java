@@ -101,10 +101,10 @@ public class TrainerController {
 
     @Operation(summary = "Get unassigned trainers",
             description = "Get list of available trainers not assigned to a specific trainee")
-    @GetMapping("/{traineeUsername}/trainers/unassigned")
+    @GetMapping("/unassigned")
     public ResponseEntity<List<TrainerSummaryResponse>> getUnassignedTrainers(
             @Parameter(description = "Username of the trainee", required = true)
-            @PathVariable String traineeUsername)
+            @RequestParam("trainee") String traineeUsername)
     {
 
         log.info("Fetching unassigned trainers for trainee: {}", traineeUsername);
