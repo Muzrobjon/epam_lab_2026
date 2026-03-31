@@ -2,6 +2,7 @@ package com.epam.gym.service;
 
 import com.epam.gym.dto.request.TraineeRegistrationRequest;
 import com.epam.gym.dto.request.UpdateTraineeRequest;
+import com.epam.gym.dto.response.RegistrationResponse;
 import com.epam.gym.entity.Trainee;
 import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.User;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TraineeService {
 
+    private final PasswordService passwordService;
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final UserService userService;
@@ -34,10 +36,12 @@ public class TraineeService {
 
     @Timed(value = "gym_trainee_create_seconds", description = "Time to create trainee")
     @Transactional
-    public Trainee createProfile(TraineeRegistrationRequest request) {
+    public RegistrationResponse createProfile(TraineeRegistrationRequest request) {
         log.info("Creating trainee profile for {} {}", request.getFirstName(), request.getLastName());
 
         User savedUser = userService.createUser(request.getFirstName(), request.getLastName());
+        String rawPassword = savedUser.getPassword();
+        savedUser.setPassword(passwordService.encodePassword(rawPassword));
 
         Trainee trainee = Trainee.builder()
                 .user(savedUser)
@@ -50,8 +54,10 @@ public class TraineeService {
 
         Trainee saved = traineeRepository.save(trainee);
         log.info("Trainee created: {} with username: {}", saved.getId(), savedUser.getUsername());
-
-        return saved;
+        RegistrationResponse response = new RegistrationResponse();
+        response.setUsername(savedUser.getUsername());
+        response.setPassword(rawPassword);
+        return  response;
     }
 
     @Timed(value = "gym_trainee_fetch_seconds", description = "Time to fetch trainee")
