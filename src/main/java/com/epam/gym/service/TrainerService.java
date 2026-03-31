@@ -2,6 +2,7 @@ package com.epam.gym.service;
 
 import com.epam.gym.dto.request.TrainerRegistrationRequest;
 import com.epam.gym.dto.request.UpdateTrainerRequest;
+import com.epam.gym.dto.response.RegistrationResponse;
 import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrainerService {
 
+    private final PasswordService passwordService;
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TraineeRepository traineeRepository;
@@ -35,10 +37,12 @@ public class TrainerService {
 
     @Timed(value = "gym_trainer_create_seconds", description = "Time to create trainer")
     @Transactional
-    public Trainer createProfile(TrainerRegistrationRequest request) {
+    public RegistrationResponse createProfile(TrainerRegistrationRequest request) {
         log.info("Creating trainer profile for {} {}", request.getFirstName(), request.getLastName());
 
         User savedUser = userService.createUser(request.getFirstName(), request.getLastName());
+        String rawPassword = savedUser.getPassword();
+        savedUser.setPassword(passwordService.encodePassword(rawPassword));
 
         TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(request.getSpecialization())
                 .orElseThrow(() -> new NotFoundException("Training type not found: " + request.getSpecialization()));
@@ -53,8 +57,11 @@ public class TrainerService {
 
         Trainer saved = trainerRepository.save(trainer);
         log.info("Trainer created: {} with username: {}", saved.getId(), savedUser.getUsername());
+        RegistrationResponse response = new RegistrationResponse();
+        response.setUsername(savedUser.getUsername());
+        response.setPassword(rawPassword);
+        return  response;
 
-        return saved;
     }
 
     @Timed(value = "gym_trainer_fetch_seconds", description = "Time to fetch trainer")

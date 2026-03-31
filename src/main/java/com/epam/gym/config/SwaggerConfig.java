@@ -2,34 +2,35 @@ package com.epam.gym.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
-
 import io.swagger.v3.oas.models.info.Info;
-
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 
 @Configuration
 public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        final String securitySchemeName = "BearerAuth";
+
         return new OpenAPI()
                 .info(new Info()
-                        .title("EPAM Lab 2025 API")
-                        .version("1.0.0")
-                        .description("REST API documentation")
+                        .title("Gym CRM API")
+                        .version("2.0.0")
+                        .description("REST API documentation with JWT Authentication")
                 )
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
-                        .addSecuritySchemes("BearerAuth",
+                        .addSecuritySchemes(securitySchemeName,
                                 new SecurityScheme()
+                                        .name(securitySchemeName)
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
                                         .in(SecurityScheme.In.HEADER)
-                                        .name("Authorization")
+                                        .description("Enter JWT token (without 'Bearer ' prefix)")
                         )
                 );
     }

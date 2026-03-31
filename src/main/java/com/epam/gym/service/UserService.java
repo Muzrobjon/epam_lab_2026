@@ -8,8 +8,11 @@ import com.epam.gym.repository.UserRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -18,29 +21,31 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UsernameGenerator usernameGenerator;
-    private final PasswordGenerator passwordGenerator;
+    private final PasswordService passwordService;
     private final UserMetrics userMetrics;
-
-    private User currentUser;
 
     @Timed(value = "gym_user_create_seconds", description = "Time to create user")
     @Transactional
     public User createUser(String firstName, String lastName) {
         log.debug("Creating user: {} {}", firstName, lastName);
 
-        String rawPassword = passwordGenerator.generatePassword();
+        // Generate random password for new user
+        String rawPassword = passwordService.generateRandomPassword();
 
         User user = User.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .isActive(true)
-                .password(rawPassword)
+                .password(passwordService.encodePassword(rawPassword)) // Encode password
                 .build();
 
         String username = usernameGenerator.generateUsername(user, userRepository::existsByUsername);
         user.setUsername(username);
 
         User savedUser = userRepository.save(user);
+
+        savedUser.setPassword(rawPassword);
+
         userMetrics.incrementRegistrations();
 
         log.info("User created: {}", username);
@@ -53,38 +58,29 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found: " + username));
     }
 
-    @Timed(value = "gym_authenticate_seconds", description = "Authentication time")
-    @Transactional(readOnly = true)
-    public void authenticate(String username, String password) {
-        log.info("Authenticating user: {}", username);
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    userMetrics.incrementLoginFailure();
-                    log.warn("Login failed - user not found: {}", username);
-                    return new AuthenticationException("Invalid username or password");
-                });
-
-        if (!user.getPassword().equals(password)) {
-            userMetrics.incrementLoginFailure();
-            log.warn("Login failed - invalid password: {}", username);
-            throw new AuthenticationException("Invalid username or password");
-        }
-
-        currentUser = user;
-        userMetrics.incrementLoginSuccess();
-        log.info("User authenticated: {}", username);
-    }
-
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
         log.info("Changing password for user: {}", username);
 
         isAuthenticated(username);
-        authenticate(username, oldPassword);
 
         User user = findByUsername(username);
-        user.setPassword(newPassword);
+
+        // Verify old password
+        if (!passwordService.matches(oldPassword, user.getPassword())) {
+            userMetrics.incrementLoginFailure();
+            throw new AuthenticationException("Invalid old password");
+        }
+
+        // Validate new password strength (optional)
+        if (!passwordService.isPasswordStrong(newPassword)) {
+            throw new IllegalArgumentException(
+                    "Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character"
+            );
+        }
+
+        // Encode and save new password
+        user.setPassword(passwordService.encodePassword(newPassword));
         userRepository.save(user);
 
         userMetrics.incrementPasswordChanges();
@@ -117,7 +113,11 @@ public class UserService {
     }
 
     public void isAuthenticated(String username) {
-        if (currentUser == null || !currentUser.getUsername().equals(username)) {
+        String authenticatedUsername = Objects.requireNonNull(SecurityContextHolder.getContext()
+                        .getAuthentication())
+                .getName();
+
+        if (!authenticatedUsername.equals(username)) {
             throw new AuthenticationException("User is not authenticated: " + username);
         }
     }

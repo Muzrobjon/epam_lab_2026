@@ -9,12 +9,22 @@ spring:
     password: "@Designer1980"
     driver-class-name: org.postgresql.Driver
 
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 logging:
   level:
-    root: info
-    com.epam.gym: debug
+    root: INFO
+    com.epam.gym: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG

@@ -46,7 +46,6 @@ public class TrainerController {
     private final TrainingService trainingService;
     private final TrainerMapper trainerMapper;
     private final TrainingMapper trainingMapper;
-    private final UserMapper userMapper;
     private final UserService userService;
 
     @Operation(summary = "Register trainer", description = "Create a new trainer profile")
@@ -56,9 +55,7 @@ public class TrainerController {
 
         log.info("Registering trainer: {} {}", request.getFirstName(), request.getLastName());
 
-        Trainer trainer = trainerService.createProfile(request);
-
-        RegistrationResponse response = userMapper.toRegistrationResponse(trainer);
+        RegistrationResponse response = trainerService.createProfile(request);
 
         log.info("Trainer registered successfully: {}", response.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

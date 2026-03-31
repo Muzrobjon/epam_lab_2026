@@ -56,7 +56,7 @@ public class TraineeController {
     private final TraineeMapper traineeMapper;
     private final TrainerMapper trainerMapper;
     private final TrainingMapper trainingMapper;
-    private final UserMapper userMapper;
+
 
     @Operation(summary = "Register trainee", description = "Create a new trainee profile")
     @PostMapping
@@ -64,10 +64,7 @@ public class TraineeController {
             @Valid @RequestBody TraineeRegistrationRequest request) {
 
         log.info("Registering trainee: {} {}", request.getFirstName(), request.getLastName());
-
-        Trainee trainee = traineeService.createProfile(request);
-
-        RegistrationResponse response = userMapper.toRegistrationResponse(trainee);
+        RegistrationResponse response = traineeService.createProfile(request);
 
         log.info("Trainee registered successfully: {}", response.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
