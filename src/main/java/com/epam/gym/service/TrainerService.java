@@ -59,6 +59,8 @@ public class TrainerService {
         log.info("Trainer created: {} with username: {}", saved.getId(), savedUser.getUsername());
         RegistrationResponse response = new RegistrationResponse();
         response.setUsername(savedUser.getUsername());
+        // TODO:
+        //  What is the use case of returning raw password in response?
         response.setPassword(rawPassword);
         return  response;
 

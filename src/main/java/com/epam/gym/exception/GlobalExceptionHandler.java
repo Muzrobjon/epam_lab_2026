@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
-// TODO:
-//  Very well designed and implemented class, good job!
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {

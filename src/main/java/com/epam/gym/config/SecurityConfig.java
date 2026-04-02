@@ -27,6 +27,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    // TODO:
+    //  It`s better to depend on the Spring Security interface instead of the concrete implementation.
+    //  This follows dependency inversion and makes testing/mocking easier
     private final UserDetailsServiceImpl userDetailsService;
     private final CorsConfigurationSource corsConfigurationSource;
 
@@ -37,6 +40,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
+                        // TODO:
+                        //  Only /register should be public, but this config leaves entire controllers open.
                         .requestMatchers("/api/trainees", "/api/trainers").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
@@ -60,6 +65,8 @@ public class SecurityConfig {
         return new ProviderManager(authProvider);
     }
 
+    // TODO:
+    //  It`s better to depend on Spring Security interfaces rather than concrete classes
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder(12);

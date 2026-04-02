@@ -23,6 +23,9 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    // TODO:
+    //  It`s better to depend on the Spring Security interface instead of the concrete implementation.
+    //  This follows dependency inversion and makes testing/mocking easier
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
 
@@ -66,6 +69,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    // TODO:
+    //  Duplicated method
     private String extractJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 

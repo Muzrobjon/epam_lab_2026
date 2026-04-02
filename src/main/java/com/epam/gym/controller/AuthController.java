@@ -39,6 +39,16 @@ public class AuthController {
     private final LoginAttemptService loginAttemptService;
     private final TokenBlacklistService tokenBlacklistService;
 
+
+    // TODO:
+    //  Overall the flow is good, but I would improve a few things:
+    //  1) In stateless JWT login, setting SecurityContextHolder is usually unnecessary unless this request needs auth context later.
+    //  2) authenticate(...) can throw more than BadCredentialsException, so handling AuthenticationException
+    //  (or specific subtypes) would make the endpoint more robust.
+    //  3) Returning Map<String, Object> and ResponseEntity<?> makes the API contract weak.
+    //  centralized exception handling would be cleaner.
+    //  4) assert on principal is not a reliable runtime check and can be removed: a) assertions can be disabled in prod
+    //  and b) after successful authentication, principal should be present.
     @Operation(summary = "User login", description = "Authenticate user and get JWT token")
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
@@ -138,6 +148,8 @@ public class AuthController {
         }
 
         Map<String, String> response = new HashMap<>();
+        // TODO:
+        //  If an error was caught in try-catch block do we still respond with 200 "Logged out successfully"?
         response.put("message", "Logged out successfully");
         response.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.ok(response);
@@ -175,6 +187,8 @@ public class AuthController {
     @Operation(summary = "Get current user", description = "Get current authenticated user information")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@CurrentUser UserPrincipal currentUser) {
+        // TODO:
+        //  Can unauthenticated users even reach this endpoint?
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Not authenticated"));
@@ -191,6 +205,8 @@ public class AuthController {
         return ResponseEntity.ok(userInfo);
     }
 
+    // TODO:
+    //  Duplicated method
     private String extractJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 

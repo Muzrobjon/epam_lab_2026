@@ -22,6 +22,9 @@ public class LoginAttemptService {
 
     private final LoadingCache<String, Integer> attemptsCache;
 
+    // TODO:
+    //  It's better to use injected config though, not hardcoded constants.
+    //  Constructor can accept @Value parameters and initialize private final class fields with them
     public LoginAttemptService() {
         attemptsCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES) // Fixed: use constant instead of field
@@ -71,6 +74,8 @@ public class LoginAttemptService {
         }
     }
 
+    // TODO:
+    //  Use @Getter
     public int getBlockDurationMinutes() {
         return blockDurationMinutes;
     }

@@ -44,6 +44,8 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
+        // TODO:
+        //  What is the use case of returning raw password in response?
         savedUser.setPassword(rawPassword);
 
         userMetrics.incrementRegistrations();
@@ -74,6 +76,9 @@ public class UserService {
 
         // Validate new password strength (optional)
         if (!passwordService.isPasswordStrong(newPassword)) {
+            // TODO:
+            //  How will the response look like if password does not meet strength requirements and what will the http status be?
+            //  I assume with the current impl it will be 500 Internal Server Error, but 400 with details feels more appropriate.
             throw new IllegalArgumentException(
                     "Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character"
             );
@@ -112,6 +117,8 @@ public class UserService {
         }
     }
 
+    // TODO:
+    //  Is this check necessary, if JWT authentication flow you've implemented already enforces security?
     public void isAuthenticated(String username) {
         String authenticatedUsername = Objects.requireNonNull(SecurityContextHolder.getContext()
                         .getAuthentication())
