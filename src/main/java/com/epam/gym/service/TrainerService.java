@@ -78,7 +78,7 @@ public class TrainerService {
     public Trainer updateProfile(String username, UpdateTrainerRequest request) {
         log.info("Updating trainer profile: {}", username);
 
-        userService.isAuthenticated(request.getUsername());
+        userService.verifyResourceOwnership(request.getUsername());
 
         Trainer trainer = getByUsername(username);
 
@@ -101,7 +101,7 @@ public class TrainerService {
     public List<Trainer> getUnassignedTrainers(String traineeUsername) {
         log.info("Fetching unassigned trainers for trainee: {}", traineeUsername);
 
-        userService.isAuthenticated(traineeUsername);
+        userService.verifyResourceOwnership(traineeUsername);
 
         traineeRepository.findByUser_Username(traineeUsername)
                 .orElseThrow(() -> new NotFoundException("Trainee not found: " + traineeUsername));

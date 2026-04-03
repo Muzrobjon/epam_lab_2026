@@ -4,6 +4,11 @@ package com.epam.gym.controller;
 import com.epam.gym.dto.response.LoginResponse;
 import com.epam.gym.dto.request.ChangePasswordRequest;
 import com.epam.gym.dto.request.LoginRequest;
+import com.epam.gym.dto.response.MessageResponse;
+import com.epam.gym.dto.response.UserInfoResponse;
+import com.epam.gym.exception.AccountLockedException;
+import com.epam.gym.exception.BadLoginException;
+import com.epam.gym.exception.LogoutException;
 import com.epam.gym.security.*;
 import com.epam.gym.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,19 +17,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+
 
 @Slf4j
 @RestController
@@ -38,6 +37,7 @@ public class AuthController {
     private final JwtProvider jwtProvider;
     private final LoginAttemptService loginAttemptService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final JwtTokenExtractor jwtTokenExtractor;
 
 
     // TODO:
@@ -51,25 +51,14 @@ public class AuthController {
     //  and b) after successful authentication, principal should be present.
     @Operation(summary = "User login", description = "Authenticate user and get JWT token")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         String username = request.getUsername();
         log.info("Login attempt for user: {}", username);
 
         // Check if user is blocked
         if (loginAttemptService.isBlocked(username)) {
-            int blockDuration = loginAttemptService.getBlockDurationMinutes();
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Account is locked");
-            errorResponse.put("message", String.format(
-                    "Too many failed login attempts. Account is locked for %d minutes.",
-                    blockDuration
-            ));
-            errorResponse.put("blockDurationMinutes", blockDuration);
-            errorResponse.put("timestamp", LocalDateTime.now());
-
             log.warn("Login attempt for blocked user: {}", username);
-            return ResponseEntity.status(HttpStatus.LOCKED).body(errorResponse);
+            throw new AccountLockedException(loginAttemptService.getBlockDurationMinutes());
         }
 
         try {
@@ -81,7 +70,6 @@ public class AuthController {
                     )
             );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // Generate JWT token
             String jwt = jwtProvider.generateToken(authentication);
@@ -91,7 +79,6 @@ public class AuthController {
 
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-            assert userPrincipal != null;
             LoginResponse response = LoginResponse.builder()
                     .accessToken(jwt)
                     .tokenType("Bearer")
@@ -101,119 +88,83 @@ public class AuthController {
             log.info("User {} logged in successfully", username);
             return ResponseEntity.ok(response);
 
-        } catch (BadCredentialsException e) {
+        } catch (org.springframework.security.core.AuthenticationException e) {
             // Record failed attempt
             loginAttemptService.loginFailed(username);
 
             int remainingAttempts = loginAttemptService.getRemainingAttempts(username);
 
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Invalid credentials");
-            errorResponse.put("message", "Username or password is incorrect");
-            errorResponse.put("remainingAttempts", remainingAttempts);
-            errorResponse.put("timestamp", LocalDateTime.now());
-
-            if (remainingAttempts == 0) {
-                errorResponse.put("blocked", true);
-                errorResponse.put("blockDurationMinutes", loginAttemptService.getBlockDurationMinutes());
-            }
-
             log.warn("Login failed for user: {}. Remaining attempts: {}", username, remainingAttempts);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+
+            throw new BadLoginException(
+                    "Username or password is incorrect",
+                    remainingAttempts,
+                    remainingAttempts == 0
+                        ? loginAttemptService.getBlockDurationMinutes()
+                            :null
+            );
         }
     }
 
     @Operation(summary = "Logout", description = "Logout current user and blacklist token")
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        String jwt = extractJwtFromRequest(request);
+    public ResponseEntity<MessageResponse> logout(HttpServletRequest request) {
+        String jwt = jwtTokenExtractor.extract(request);
 
         if (jwt != null) {
             try {
                 LocalDateTime expiration = jwtProvider.getExpirationFromToken(jwt);
                 tokenBlacklistService.blacklistToken(jwt, expiration);
-
-                SecurityContextHolder.clearContext();
-
                 log.info("User logged out successfully");
-
-                Map<String, String> response = new HashMap<>();
-                response.put("message", "Logged out successfully");
-                response.put("timestamp", LocalDateTime.now().toString());
-                return ResponseEntity.ok(response);
-
             } catch (Exception e) {
                 log.error("Error during logout: {}", e.getMessage());
+                throw new LogoutException("Failed to process logout" + e.getMessage());
             }
         }
 
-        Map<String, String> response = new HashMap<>();
         // TODO:
         //  If an error was caught in try-catch block do we still respond with 200 "Logged out successfully"?
-        response.put("message", "Logged out successfully");
-        response.put("timestamp", LocalDateTime.now().toString());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new MessageResponse("User logged out successfully"));
     }
 
     @Operation(summary = "Change password", description = "Change user password")
     @PutMapping("/change-password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<MessageResponse> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
         log.info("Password change request for user: {}", request.getUsername());
 
-        try {
+
             userService.changePassword(
                     request.getUsername(),
                     request.getOldPassword(),
                     request.getNewPassword()
             );
 
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Password changed successfully");
-            response.put("timestamp", LocalDateTime.now().toString());
-
             log.info("Password changed successfully for user: {}", request.getUsername());
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
 
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Password change failed");
-            errorResponse.put("message", e.getMessage());
-            errorResponse.put("timestamp", LocalDateTime.now().toString());
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
     }
 
-    @Operation(summary = "Get current user", description = "Get current authenticated user information")
+
+    @Operation(summary = "Get current user",
+            description = "Get current authenticated user information")
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@CurrentUser UserPrincipal currentUser) {
+    public ResponseEntity<UserInfoResponse> getCurrentUser(
+            @CurrentUser UserPrincipal currentUser) {
         // TODO:
         //  Can unauthenticated users even reach this endpoint?
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Not authenticated"));
-        }
-
-        Map<String, Object> userInfo = new HashMap<>();
-        userInfo.put("id", currentUser.getId());
-        userInfo.put("username", currentUser.getUsername());
-        userInfo.put("firstName", currentUser.getFirstName());
-        userInfo.put("lastName", currentUser.getLastName());
-        userInfo.put("isActive", currentUser.isActive());
-        userInfo.put("authorities", currentUser.getAuthorities());
+        UserInfoResponse userInfo = UserInfoResponse.builder()
+                .id(currentUser.getId())
+                .username(currentUser.getUsername())
+                .firstName(currentUser.getFirstName())
+                .lastName(currentUser.getLastName())
+                .authorities(currentUser.getAuthorities())
+                .build();
 
         return ResponseEntity.ok(userInfo);
     }
 
     // TODO:
     //  Duplicated method
-    private String extractJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-
-        return null;
-    }
+    //deleted
 }

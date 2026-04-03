@@ -74,7 +74,7 @@ public class TraineeService {
     public Trainee updateProfile(String username, UpdateTraineeRequest request) {
         log.info("Updating trainee profile: {}", username);
 
-        userService.isAuthenticated(request.getUsername());
+        userService.verifyResourceOwnership(request.getUsername());
 
         Trainee existing = getByUsername(username);
 
@@ -104,7 +104,7 @@ public class TraineeService {
     public void deleteByUsername(String username) {
         log.info("Deleting trainee profile: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
 
         Trainee trainee = getByUsername(username);
         traineeRepository.delete(trainee);
@@ -116,7 +116,7 @@ public class TraineeService {
     public List<Trainer> updateTrainersList(String traineeUsername, List<String> trainerUsernames) {
         log.info("Updating trainers list for trainee: {}", traineeUsername);
 
-        userService.isAuthenticated(traineeUsername);
+        userService.verifyResourceOwnership(traineeUsername);
 
         Trainee trainee = getByUsername(traineeUsername);
         List<Trainer> trainers = fetchTrainersByUsernames(trainerUsernames);

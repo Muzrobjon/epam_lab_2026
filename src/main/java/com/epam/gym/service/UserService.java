@@ -3,6 +3,7 @@ package com.epam.gym.service;
 import com.epam.gym.entity.User;
 import com.epam.gym.exception.AuthenticationException;
 import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.exception.WeakPasswordException;
 import com.epam.gym.metrics.UserMetrics;
 import com.epam.gym.repository.UserRepository;
 import io.micrometer.core.annotation.Timed;
@@ -64,7 +65,7 @@ public class UserService {
     public void changePassword(String username, String oldPassword, String newPassword) {
         log.info("Changing password for user: {}", username);
 
-        isAuthenticated(username);
+        verifyResourceOwnership(username);
 
         User user = findByUsername(username);
 
@@ -79,7 +80,7 @@ public class UserService {
             // TODO:
             //  How will the response look like if password does not meet strength requirements and what will the http status be?
             //  I assume with the current impl it will be 500 Internal Server Error, but 400 with details feels more appropriate.
-            throw new IllegalArgumentException(
+            throw new WeakPasswordException(
                     "Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character"
             );
         }
@@ -96,7 +97,7 @@ public class UserService {
     public void setActiveStatus(String username, Boolean isActive) {
         log.info("Setting active status for user: {} to {}", username, isActive);
 
-        isAuthenticated(username);
+        verifyResourceOwnership(username);
 
         User user = findByUsername(username);
         user.setIsActive(isActive);
@@ -119,13 +120,14 @@ public class UserService {
 
     // TODO:
     //  Is this check necessary, if JWT authentication flow you've implemented already enforces security?
-    public void isAuthenticated(String username) {
-        String authenticatedUsername = Objects.requireNonNull(SecurityContextHolder.getContext()
-                        .getAuthentication())
-                .getName();
+    public void verifyResourceOwnership(String username) {
+        String authenticatedUsername = Objects.requireNonNull(
+                SecurityContextHolder.getContext().getAuthentication()
+        ).getName();
 
         if (!authenticatedUsername.equals(username)) {
-            throw new AuthenticationException("User is not authenticated: " + username);
+            throw new AuthenticationException(
+                    "Access denied: you can only modify your own resources");
         }
     }
 }

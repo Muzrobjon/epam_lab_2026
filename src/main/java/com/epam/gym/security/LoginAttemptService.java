@@ -3,6 +3,9 @@ package com.epam.gym.security;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import jakarta.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,27 +17,33 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class LoginAttemptService {
 
-    @Value("${security.brute-force.max-attempts:3}")
-    private int maxAttempts;
+    private final int maxAttempts;
 
-    @Value("${security.brute-force.block-duration-minutes:5}")
-    private int blockDurationMinutes;
+    @Getter
+    private final int blockDurationMinutes;
 
     private final LoadingCache<String, Integer> attemptsCache;
 
     // TODO:
     //  It's better to use injected config though, not hardcoded constants.
     //  Constructor can accept @Value parameters and initialize private final class fields with them
-    public LoginAttemptService() {
-        attemptsCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(5, TimeUnit.MINUTES) // Fixed: use constant instead of field
-                .build(new CacheLoader<String, Integer>() {
+    public LoginAttemptService(
+            @Value("${security.brute-force.max-attempts:3}") int maxAttempts,
+            @Value("${security.brute-force.block-duration-minutes:5}") int blockDurationMinutes) {
+
+        this.maxAttempts = maxAttempts;
+        this.blockDurationMinutes = blockDurationMinutes;
+        this.attemptsCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(blockDurationMinutes, TimeUnit.MINUTES)
+                .build(new CacheLoader<>() {
+                    @Nonnull
                     @Override
-                    public Integer load(String key) {
+                    public Integer load(@Nonnull String key) {
                         return 0;
                     }
                 });
     }
+
 
     public void loginSucceeded(String username) {
         attemptsCache.invalidate(username);
@@ -57,7 +66,8 @@ public class LoginAttemptService {
         try {
             boolean blocked = attemptsCache.get(username) >= maxAttempts;
             if (blocked) {
-                log.warn("User {} is blocked due to {} failed login attempts", username, maxAttempts);
+                log.warn("User {} is blocked due to {} failed login attempts",
+                        username, maxAttempts);
             }
             return blocked;
         } catch (ExecutionException e) {
@@ -73,10 +83,7 @@ public class LoginAttemptService {
             return maxAttempts;
         }
     }
-
-    // TODO:
-    //  Use @Getter
-    public int getBlockDurationMinutes() {
-        return blockDurationMinutes;
-    }
 }
+
+
+

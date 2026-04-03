@@ -16,7 +16,6 @@ import com.epam.gym.exception.ValidationException;
 import com.epam.gym.mapper.TraineeMapper;
 import com.epam.gym.mapper.TrainerMapper;
 import com.epam.gym.mapper.TrainingMapper;
-import com.epam.gym.mapper.UserMapper;
 import com.epam.gym.service.TraineeService;
 import com.epam.gym.service.TrainingService;
 import com.epam.gym.service.UserService;
@@ -78,7 +77,7 @@ public class TraineeController {
 
         log.info("Fetching trainee profile: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership((username));
         Trainee trainee = traineeService.getByUsername(username);
 
         TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
@@ -96,7 +95,7 @@ public class TraineeController {
 
         log.info("Updating trainee profile: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
         Trainee updated = traineeService.updateProfile(username, request);
 
         TraineeProfileResponse response = traineeMapper.toProfileResponse(updated);
@@ -111,7 +110,7 @@ public class TraineeController {
             @Parameter(description = "Username of the trainee", required = true)
             @PathVariable String username)
             {
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
         log.info("Deleting trainee profile: {}", username);
 
         traineeService.deleteByUsername(username);
@@ -129,7 +128,7 @@ public class TraineeController {
 
         log.info("Toggling active status for trainee: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
 
         userService.setActiveStatus(username, request.getIsActive());
 

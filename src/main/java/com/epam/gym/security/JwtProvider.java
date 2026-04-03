@@ -2,6 +2,7 @@ package com.epam.gym.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecurityException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -31,9 +32,11 @@ public class JwtProvider {
     }
 
     public String generateToken(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalArgumentException("Invalid authentication");
+        }
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-        assert userPrincipal != null;
         String roles = userPrincipal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
@@ -82,7 +85,7 @@ public class JwtProvider {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (MalformedJwtException e) {
+        } catch (SecurityException | MalformedJwtException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
             log.error("JWT token is expired: {}", e.getMessage());

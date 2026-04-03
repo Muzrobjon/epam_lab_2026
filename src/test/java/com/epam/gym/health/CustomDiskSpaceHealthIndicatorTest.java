@@ -1,8 +1,6 @@
 package com.epam.gym.health;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,12 +10,17 @@ import org.springframework.boot.health.contributor.Status;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("CustomDiskSpaceHealthIndicator Tests")
 class CustomDiskSpaceHealthIndicatorTest {
 
+    @BeforeAll
+    static void setUpLocale() {
+        Locale.setDefault(Locale.US);
+    }
     private final CustomDiskSpaceHealthIndicator healthIndicator = new CustomDiskSpaceHealthIndicator();
 
     @Nested

@@ -10,7 +10,6 @@ import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.Training;
 import com.epam.gym.mapper.TrainerMapper;
 import com.epam.gym.mapper.TrainingMapper;
-import com.epam.gym.mapper.UserMapper;
 import com.epam.gym.service.TrainerService;
 import com.epam.gym.service.TrainingService;
 import com.epam.gym.service.UserService;
@@ -69,7 +68,7 @@ public class TrainerController {
 
         log.info("Fetching trainer profile: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
         Trainer trainer = trainerService.getByUsername(username);
 
         TrainerProfileResponse response = trainerMapper.toProfileResponse(trainer);
@@ -87,7 +86,7 @@ public class TrainerController {
 
         log.info("Updating trainer profile: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
         Trainer updated = trainerService.updateProfile(username, request);
 
         TrainerProfileResponse response = trainerMapper.toProfileResponse(updated);

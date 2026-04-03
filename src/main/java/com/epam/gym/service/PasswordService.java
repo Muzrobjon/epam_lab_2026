@@ -2,7 +2,6 @@ package com.epam.gym.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 // TODO:
 //  Unused import. Please review the code base and remove all redundant code
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +14,7 @@ public class PasswordService {
 
     // TODO:
     //  It`s better to depend on Spring Security interfaces rather than concrete classes
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final PasswordGenerator passwordGenerator;
 
     public String generateRandomPassword() {

@@ -2,6 +2,7 @@ package com.epam.gym.security;
 
 import com.epam.gym.entity.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.Nonnull;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -41,7 +42,7 @@ public class UserPrincipal implements UserDetails {
                 .authorities(authorities)
                 .build();
     }
-
+    @Nonnull
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
@@ -51,7 +52,7 @@ public class UserPrincipal implements UserDetails {
     public String getPassword() {
         return password;
     }
-
+    @Nonnull
     @Override
     public String getUsername() {
         return username;

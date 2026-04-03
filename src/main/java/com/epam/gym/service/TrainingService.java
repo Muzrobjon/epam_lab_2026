@@ -41,7 +41,7 @@ public class TrainingService {
     public void createTraining(AddTrainingRequest request) {
         Timer.Sample timer = trainingMetrics.startTimer();
 
-        userService.isAuthenticated(request.getTraineeUsername());
+        userService.verifyResourceOwnership(request.getTraineeUsername());
 
         log.info("Creating training: {} for trainee: {} and trainer: {}",
                 request.getTrainingName(),
@@ -81,7 +81,7 @@ public class TrainingService {
             TrainingTypeName trainingTypeName) {
 
         log.info("Fetching trainings for trainee: {}", traineeUsername);
-        userService.isAuthenticated(traineeUsername);
+        userService.verifyResourceOwnership(traineeUsername);
 
         List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
                 traineeUsername, null, fromDate, toDate);
@@ -113,7 +113,7 @@ public class TrainingService {
             String traineeName) {
 
         log.info("Fetching trainings for trainer: {}", trainerUsername);
-        userService.isAuthenticated(trainerUsername);
+        userService.verifyResourceOwnership(trainerUsername);
 
         List<Training> trainings = trainingRepository.findTrainingsWithAllUsers(
                 null, trainerUsername, fromDate, toDate);
