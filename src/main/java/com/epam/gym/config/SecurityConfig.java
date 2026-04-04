@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -32,7 +33,7 @@ public class SecurityConfig {
     // TODO:
     //  It`s better to depend on the Spring Security interface instead of the concrete implementation.
     //  This follows dependency inversion and makes testing/mocking easier
-    private final UserDetailsServiceImpl userDetailsService;
+    private final UserDetailsService userDetailsService;
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -44,7 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         // TODO:
                         //  Only /register should be public, but this config leaves entire controllers open.
-                        .requestMatchers(HttpMethod.POST, "/api/trainees", "/api/trainers").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/trainees/register", "/api/trainers/register").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
