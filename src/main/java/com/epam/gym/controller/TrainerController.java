@@ -48,7 +48,7 @@ public class TrainerController {
     private final UserService userService;
 
     @Operation(summary = "Register trainer", description = "Create a new trainer profile")
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<RegistrationResponse> registerTrainer(
             @Valid @RequestBody TrainerRegistrationRequest request) {
 

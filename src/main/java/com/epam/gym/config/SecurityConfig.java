@@ -2,7 +2,6 @@ package com.epam.gym.config;
 
 import com.epam.gym.security.JwtAuthenticationEntryPoint;
 import com.epam.gym.security.JwtAuthenticationFilter;
-import com.epam.gym.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

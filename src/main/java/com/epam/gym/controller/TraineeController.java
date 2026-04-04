@@ -58,7 +58,7 @@ public class TraineeController {
 
 
     @Operation(summary = "Register trainee", description = "Create a new trainee profile")
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<RegistrationResponse> registerTrainee(
             @Valid @RequestBody TraineeRegistrationRequest request) {
 
