@@ -24,9 +24,6 @@ public class LoginAttemptService {
 
     private final LoadingCache<String, Integer> attemptsCache;
 
-    // TODO:
-    //  It's better to use injected config though, not hardcoded constants.
-    //  Constructor can accept @Value parameters and initialize private final class fields with them
     public LoginAttemptService(
             @Value("${security.brute-force.max-attempts:3}") int maxAttempts,
             @Value("${security.brute-force.block-duration-minutes:5}") int blockDurationMinutes) {

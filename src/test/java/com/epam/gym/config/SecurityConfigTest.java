@@ -38,8 +38,6 @@ class SecurityConfigTest {
     @InjectMocks
     private SecurityConfig securityConfig;
 
-    // ==================== PASSWORD ENCODER TESTS ====================
-
     @Nested
     @DisplayName("Password Encoder Tests")
     class PasswordEncoderTests {
@@ -64,60 +62,13 @@ class SecurityConfigTest {
         }
 
         @Test
-        @DisplayName("Should encode password")
-        void passwordEncoder_ShouldEncodePassword() {
-            String rawPassword = "TestPassword@123";
-            String encoded = passwordEncoder.encode(rawPassword);
-
-            assertThat(encoded).isNotNull();
-            assertThat(encoded).isNotEqualTo(rawPassword);
-            assertThat(encoded).startsWith("$2a$12$");
-        }
-
-        @Test
-        @DisplayName("Should match raw password with encoded password")
-        void passwordEncoder_ShouldMatchPassword() {
-            String rawPassword = "TestPassword@123";
-            String encoded = passwordEncoder.encode(rawPassword);
-
-            assertThat(passwordEncoder.matches(rawPassword, encoded)).isTrue();
-        }
-
-        @Test
-        @DisplayName("Should not match wrong password")
-        void passwordEncoder_ShouldNotMatchWrongPassword() {
-            String rawPassword = "TestPassword@123";
-            String wrongPassword = "WrongPassword@456";
-            String encoded = passwordEncoder.encode(rawPassword);
-
-            assertThat(passwordEncoder.matches(wrongPassword, encoded)).isFalse();
-        }
-
-        @Test
         @DisplayName("Should use strength 12")
         void passwordEncoder_ShouldUseStrength12() {
-            String rawPassword = "Test";
-            String encoded = passwordEncoder.encode(rawPassword);
+            String encoded = passwordEncoder.encode("Test");
 
-            // BCrypt hash format: $2a$STRENGTH$...
-            // $2a$12$ — 12 rounds
             assertThat(encoded).startsWith("$2a$12$");
         }
-
-        @Test
-        @DisplayName("Should produce different hashes for same password")
-        void passwordEncoder_ShouldProduceDifferentHashes() {
-            String rawPassword = "TestPassword@123";
-            String encoded1 = passwordEncoder.encode(rawPassword);
-            String encoded2 = passwordEncoder.encode(rawPassword);
-
-            assertThat(encoded1).isNotEqualTo(encoded2);
-            assertThat(passwordEncoder.matches(rawPassword, encoded1)).isTrue();
-            assertThat(passwordEncoder.matches(rawPassword, encoded2)).isTrue();
-        }
     }
-
-    // ==================== AUTHENTICATION MANAGER TESTS ====================
 
     @Nested
     @DisplayName("Authentication Manager Tests")

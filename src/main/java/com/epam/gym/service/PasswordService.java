@@ -12,8 +12,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PasswordService {
 
-    // TODO:
-    //  It`s better to depend on Spring Security interfaces rather than concrete classes
     private final PasswordEncoder passwordEncoder;
     private final PasswordGenerator passwordGenerator;
 
