@@ -11,9 +11,11 @@ import com.epam.gym.entity.Training;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
 import com.epam.gym.enums.TrainingTypeName;
+import com.epam.gym.exception.AuthenticationException;
+import com.epam.gym.exception.NotFoundException;
+import com.epam.gym.exception.ValidationException;
 import com.epam.gym.mapper.TrainerMapper;
 import com.epam.gym.mapper.TrainingMapper;
-import com.epam.gym.mapper.UserMapper;
 import com.epam.gym.service.TrainerService;
 import com.epam.gym.service.TrainingService;
 import com.epam.gym.service.UserService;
@@ -29,21 +31,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TrainerController Unit Tests")
 class TrainerControllerTest {
 
     @Mock
@@ -59,449 +53,575 @@ class TrainerControllerTest {
     private TrainingMapper trainingMapper;
 
     @Mock
-    private UserMapper userMapper;
-
-    @Mock
     private UserService userService;
 
     @InjectMocks
     private TrainerController trainerController;
 
-    private Trainer testTrainer;
-    private TrainingType testTrainingType;
-    private TrainerRegistrationRequest registrationRequest;
+    private static final String USERNAME = "Mike.Tyson";
+    private static final String TRAINEE_USERNAME = "John.Doe";
+
+    private Trainer trainer;
+    private TrainingType specialization;
 
     @BeforeEach
     void setUp() {
-        User testUser = User.builder()
+        User user = User.builder()
                 .id(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .username("john.doe")
-                .password("password123")
+                .firstName("Mike")
+                .lastName("Tyson")
+                .username(USERNAME)
+                .password("encodedPassword")
                 .isActive(true)
                 .build();
 
-        testTrainingType = TrainingType.builder()
+        specialization = TrainingType.builder()
                 .id(1L)
                 .trainingTypeName(TrainingTypeName.FITNESS)
                 .build();
 
-        testTrainer = Trainer.builder()
+        trainer = Trainer.builder()
                 .id(1L)
-                .user(testUser)
-                .specialization(testTrainingType)
+                .user(user)
+                .specialization(specialization)
+                .trainees(List.of())
                 .build();
-
-        registrationRequest = createTrainerRegistrationRequest("John", "Doe");
     }
 
-    private TrainerRegistrationRequest createTrainerRegistrationRequest(String firstName, String lastName) {
-        TrainerRegistrationRequest request = new TrainerRegistrationRequest();
-        request.setFirstName(firstName);
-        request.setLastName(lastName);
-        request.setSpecialization(TrainingTypeName.FITNESS);
-        return request;
-    }
+    // ==================== REGISTER TRAINER TESTS ====================
 
     @Nested
     @DisplayName("Register Trainer Tests")
     class RegisterTrainerTests {
 
         @Test
-        @DisplayName("Should register trainer successfully and return CREATED status")
+        @DisplayName("Should register trainer successfully")
         void registerTrainer_Success() {
-            RegistrationResponse expectedResponse = RegistrationResponse.builder()
-                    .username("john.doe")
-                    .password("password123")
-                    .build();
+            // Given
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Tyson");
+            request.setSpecialization(TrainingTypeName.FITNESS);
 
-            when(trainerService.createProfile(any(TrainerRegistrationRequest.class)))
-                    .thenReturn(testTrainer);
-            when(userMapper.toRegistrationResponse(any(Trainer.class)))
-                    .thenReturn(expectedResponse);
+            RegistrationResponse registrationResponse = new RegistrationResponse();
+            registrationResponse.setUsername(USERNAME);
+            registrationResponse.setPassword("rawPassword123");
 
+            when(trainerService.createProfile(request)).thenReturn(registrationResponse);
+
+            // When
             ResponseEntity<RegistrationResponse> response =
-                    trainerController.registerTrainer(registrationRequest);
+                    trainerController.registerTrainer(request);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getUsername()).isEqualTo("john.doe");
-            assertThat(response.getBody().getPassword()).isEqualTo("password123");
+            assertThat(response.getBody().getUsername()).isEqualTo(USERNAME);
+            assertThat(response.getBody().getPassword()).isEqualTo("rawPassword123");
 
-            verify(trainerService, times(1)).createProfile(registrationRequest);
-            verify(userMapper, times(1)).toRegistrationResponse(testTrainer);
+            verify(trainerService).createProfile(request);
         }
 
         @Test
-        @DisplayName("Should call service with correct request parameters")
-        void registerTrainer_VerifyServiceCall() {
-            TrainerRegistrationRequest request = createTrainerRegistrationRequest("Jane", "Smith");
+        @DisplayName("Should propagate exception when service fails")
+        void registerTrainer_ServiceFails_PropagatesException() {
+            // Given
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Tyson");
+            request.setSpecialization(TrainingTypeName.FITNESS);
 
-            when(trainerService.createProfile(any(TrainerRegistrationRequest.class)))
-                    .thenReturn(testTrainer);
-            when(userMapper.toRegistrationResponse(any(Trainer.class)))
-                    .thenReturn(new RegistrationResponse());
+            when(trainerService.createProfile(request))
+                    .thenThrow(new NotFoundException("Training type not found: FITNESS"));
 
-            trainerController.registerTrainer(request);
+            // When & Then
+            assertThatThrownBy(() -> trainerController.registerTrainer(request))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Training type not found");
+        }
 
-            verify(trainerService).createProfile(eq(request));
+        @Test
+        @DisplayName("Should propagate validation exception")
+        void registerTrainer_ValidationFails_PropagatesException() {
+            // Given
+            TrainerRegistrationRequest request = new TrainerRegistrationRequest();
+            request.setFirstName("Mike");
+            request.setLastName("Tyson");
+            request.setSpecialization(TrainingTypeName.FITNESS);
+
+            when(trainerService.createProfile(request))
+                    .thenThrow(new ValidationException("Validation failed"));
+
+            // When & Then
+            assertThatThrownBy(() -> trainerController.registerTrainer(request))
+                    .isInstanceOf(ValidationException.class)
+                    .hasMessageContaining("Validation failed");
         }
     }
+
+    // ==================== GET TRAINER PROFILE TESTS ====================
 
     @Nested
     @DisplayName("Get Trainer Profile Tests")
     class GetTrainerProfileTests {
 
         @Test
-        @DisplayName("Should return trainer profile successfully")
+        @DisplayName("Should get trainer profile successfully")
         void getTrainerProfile_Success() {
-            String username = "john.doe";
-            TrainerProfileResponse expectedResponse = TrainerProfileResponse.builder()
-                    .firstName("John")
-                    .lastName("Doe")
+            // Given
+            TrainerProfileResponse profileResponse = TrainerProfileResponse.builder()
+                    .firstName("Mike")
+                    .lastName("Tyson")
                     .specialization(TrainingTypeName.FITNESS)
                     .isActive(true)
+                    .trainees(List.of())
                     .build();
 
-            doNothing().when(userService).isAuthenticated(username);
-            when(trainerService.getByUsername(username)).thenReturn(testTrainer);
-            when(trainerMapper.toProfileResponse(any(Trainer.class))).thenReturn(expectedResponse);
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(trainerService.getByUsername(USERNAME)).thenReturn(trainer);
+            when(trainerMapper.toProfileResponse(trainer)).thenReturn(profileResponse);
 
+            // When
             ResponseEntity<TrainerProfileResponse> response =
-                    trainerController.getTrainerProfile(username);
+                    trainerController.getTrainerProfile(USERNAME);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getFirstName()).isEqualTo("John");
-            assertThat(response.getBody().getLastName()).isEqualTo("Doe");
+            assertThat(response.getBody().getFirstName()).isEqualTo("Mike");
+            assertThat(response.getBody().getLastName()).isEqualTo("Tyson");
             assertThat(response.getBody().getSpecialization()).isEqualTo(TrainingTypeName.FITNESS);
             assertThat(response.getBody().getIsActive()).isTrue();
+            assertThat(response.getBody().getTrainees()).isEmpty();
 
-            verify(userService, times(1)).isAuthenticated(username);
-            verify(trainerService, times(1)).getByUsername(username);
-            verify(trainerMapper, times(1)).toProfileResponse(testTrainer);
+            verify(userService).verifyResourceOwnership(USERNAME);
+            verify(trainerService).getByUsername(USERNAME);
+            verify(trainerMapper).toProfileResponse(trainer);
         }
 
         @Test
-        @DisplayName("Should verify authentication before fetching profile")
-        void getTrainerProfile_VerifyAuthenticationOrder() {
-            String username = "john.doe";
+        @DisplayName("Should throw AuthenticationException when not resource owner")
+        void getTrainerProfile_NotOwner_ThrowsAuthException() {
+            // Given
+            doThrow(new AuthenticationException("Access denied: you can only modify your own resources"))
+                    .when(userService).verifyResourceOwnership(USERNAME);
 
-            doNothing().when(userService).isAuthenticated(username);
-            when(trainerService.getByUsername(username)).thenReturn(testTrainer);
-            when(trainerMapper.toProfileResponse(any(Trainer.class)))
-                    .thenReturn(new TrainerProfileResponse());
+            // When & Then
+            assertThatThrownBy(() -> trainerController.getTrainerProfile(USERNAME))
+                    .isInstanceOf(AuthenticationException.class)
+                    .hasMessageContaining("Access denied");
 
-            trainerController.getTrainerProfile(username);
+            verify(userService).verifyResourceOwnership(USERNAME);
+            verify(trainerService, never()).getByUsername(anyString());
+            verify(trainerMapper, never()).toProfileResponse(any());
+        }
 
-            verify(userService).isAuthenticated(username);
-            verify(trainerService).getByUsername(username);
+        @Test
+        @DisplayName("Should throw NotFoundException when trainer not found")
+        void getTrainerProfile_NotFound_ThrowsNotFoundException() {
+            // Given
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(trainerService.getByUsername(USERNAME))
+                    .thenThrow(new NotFoundException("Trainer not found: " + USERNAME));
+
+            // When & Then
+            assertThatThrownBy(() -> trainerController.getTrainerProfile(USERNAME))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainer not found");
+
+            verify(trainerMapper, never()).toProfileResponse(any());
         }
     }
+
+    // ==================== UPDATE TRAINER PROFILE TESTS ====================
 
     @Nested
     @DisplayName("Update Trainer Profile Tests")
     class UpdateTrainerProfileTests {
 
+        private UpdateTrainerRequest updateRequest;
+
+        @BeforeEach
+        void setUp() {
+            updateRequest = new UpdateTrainerRequest();
+            updateRequest.setUsername(USERNAME);
+            updateRequest.setFirstName("Mike");
+            updateRequest.setLastName("Updated");
+            updateRequest.setIsActive(true);
+        }
+
         @Test
         @DisplayName("Should update trainer profile successfully")
         void updateTrainerProfile_Success() {
-            String username = "john.doe";
-            UpdateTrainerRequest request = createUpdateTrainerRequest(
-                    "John Updated", "Doe Updated");
-
+            // Given
             Trainer updatedTrainer = Trainer.builder()
                     .id(1L)
                     .user(User.builder()
-                            .firstName("John Updated")
-                            .lastName("Doe Updated")
-                            .username(username)
+                            .id(1L)
+                            .firstName("Mike")
+                            .lastName("Updated")
+                            .username(USERNAME)
                             .isActive(true)
                             .build())
-                    .specialization(testTrainingType)
+                    .specialization(specialization)
                     .build();
 
-            TrainerProfileResponse expectedResponse = TrainerProfileResponse.builder()
-                    .firstName("John Updated")
-                    .lastName("Doe Updated")
+            TrainerProfileResponse profileResponse = TrainerProfileResponse.builder()
+                    .firstName("Mike")
+                    .lastName("Updated")
                     .specialization(TrainingTypeName.FITNESS)
                     .isActive(true)
+                    .trainees(List.of())
                     .build();
 
-            doNothing().when(userService).isAuthenticated(username);
-            when(trainerService.updateProfile(eq(username), any(UpdateTrainerRequest.class)))
-                    .thenReturn(updatedTrainer);
-            when(trainerMapper.toProfileResponse(any(Trainer.class))).thenReturn(expectedResponse);
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(trainerService.updateProfile(USERNAME, updateRequest)).thenReturn(updatedTrainer);
+            when(trainerMapper.toProfileResponse(updatedTrainer)).thenReturn(profileResponse);
 
+            // When
             ResponseEntity<TrainerProfileResponse> response =
-                    trainerController.updateTrainerProfile(username, request);
+                    trainerController.updateTrainerProfile(USERNAME, updateRequest);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getFirstName()).isEqualTo("John Updated");
-            assertThat(response.getBody().getLastName()).isEqualTo("Doe Updated");
+            assertThat(response.getBody().getLastName()).isEqualTo("Updated");
+            assertThat(response.getBody().getSpecialization()).isEqualTo(TrainingTypeName.FITNESS);
 
-            verify(userService, times(1)).isAuthenticated(username);
-            verify(trainerService, times(1)).updateProfile(username, request);
-            verify(trainerMapper, times(1)).toProfileResponse(updatedTrainer);
+            verify(userService).verifyResourceOwnership(USERNAME);
+            verify(trainerService).updateProfile(USERNAME, updateRequest);
+            verify(trainerMapper).toProfileResponse(updatedTrainer);
         }
 
         @Test
-        @DisplayName("Should verify authentication before updating profile")
-        void updateTrainerProfile_VerifyAuthentication() {
-            String username = "john.doe";
-            UpdateTrainerRequest request = createUpdateTrainerRequest(
-                    "John", "Doe");
+        @DisplayName("Should throw AuthenticationException when not resource owner")
+        void updateTrainerProfile_NotOwner_ThrowsAuthException() {
+            // Given
+            doThrow(new AuthenticationException("Access denied"))
+                    .when(userService).verifyResourceOwnership(USERNAME);
 
-            doNothing().when(userService).isAuthenticated(username);
-            when(trainerService.updateProfile(anyString(), any(UpdateTrainerRequest.class)))
-                    .thenReturn(testTrainer);
-            when(trainerMapper.toProfileResponse(any(Trainer.class)))
-                    .thenReturn(new TrainerProfileResponse());
+            // When & Then
+            assertThatThrownBy(() -> trainerController.updateTrainerProfile(USERNAME, updateRequest))
+                    .isInstanceOf(AuthenticationException.class);
 
-            trainerController.updateTrainerProfile(username, request);
-
-            verify(userService).isAuthenticated(username);
+            verify(trainerService, never()).updateProfile(anyString(), any());
+            verify(trainerMapper, never()).toProfileResponse(any());
         }
 
-        private UpdateTrainerRequest createUpdateTrainerRequest(
-                String firstName, String lastName) {
-            UpdateTrainerRequest request = new UpdateTrainerRequest();
-            request.setFirstName(firstName);
-            request.setLastName(lastName);
-            request.setIsActive(true);
-            return request;
+        @Test
+        @DisplayName("Should throw NotFoundException when trainer not found")
+        void updateTrainerProfile_NotFound_ThrowsNotFoundException() {
+            // Given
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(trainerService.updateProfile(USERNAME, updateRequest))
+                    .thenThrow(new NotFoundException("Trainer not found: " + USERNAME));
+
+            // When & Then
+            assertThatThrownBy(() -> trainerController.updateTrainerProfile(USERNAME, updateRequest))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainer not found");
+
+            verify(trainerMapper, never()).toProfileResponse(any());
         }
     }
+
+    // ==================== GET UNASSIGNED TRAINERS TESTS ====================
 
     @Nested
     @DisplayName("Get Unassigned Trainers Tests")
     class GetUnassignedTrainersTests {
 
         @Test
-        @DisplayName("Should return list of unassigned trainers")
+        @DisplayName("Should get unassigned trainers successfully")
         void getUnassignedTrainers_Success() {
-            String traineeUsername = "trainee.user";
-
-            Trainer trainer1 = Trainer.builder()
-                    .id(1L)
-                    .user(User.builder()
-                            .firstName("John")
-                            .lastName("Doe")
-                            .username("john.doe")
-                            .build())
-                    .specialization(testTrainingType)
+            // Given
+            User trainerUser1 = User.builder()
+                    .firstName("Trainer")
+                    .lastName("One")
+                    .username("Trainer.One")
                     .build();
 
-            Trainer trainer2 = Trainer.builder()
-                    .id(2L)
-                    .user(User.builder()
-                            .firstName("Jane")
-                            .lastName("Smith")
-                            .username("jane.smith")
-                            .build())
-                    .specialization(testTrainingType)
+            User trainerUser2 = User.builder()
+                    .firstName("Trainer")
+                    .lastName("Two")
+                    .username("Trainer.Two")
                     .build();
 
-            List<Trainer> trainers = Arrays.asList(trainer1, trainer2);
+            List<Trainer> trainers = List.of(
+                    Trainer.builder().user(trainerUser1).specialization(specialization).build(),
+                    Trainer.builder().user(trainerUser2).specialization(specialization).build()
+            );
 
-            List<TrainerSummaryResponse> expectedResponse = Arrays.asList(
+            List<TrainerSummaryResponse> summaryResponses = List.of(
                     TrainerSummaryResponse.builder()
-                            .username("john.doe")
-                            .firstName("John")
-                            .lastName("Doe")
+                            .username("Trainer.One")
+                            .firstName("Trainer")
+                            .lastName("One")
                             .specialization(TrainingTypeName.FITNESS)
                             .build(),
                     TrainerSummaryResponse.builder()
-                            .username("jane.smith")
-                            .firstName("Jane")
-                            .lastName("Smith")
+                            .username("Trainer.Two")
+                            .firstName("Trainer")
+                            .lastName("Two")
                             .specialization(TrainingTypeName.FITNESS)
                             .build()
             );
 
-            when(trainerService.getUnassignedTrainers(traineeUsername)).thenReturn(trainers);
-            when(trainerMapper.toSummaryResponseList(trainers)).thenReturn(expectedResponse);
+            when(trainerService.getUnassignedTrainers(TRAINEE_USERNAME)).thenReturn(trainers);
+            when(trainerMapper.toSummaryResponseList(trainers)).thenReturn(summaryResponses);
 
+            // When
             ResponseEntity<List<TrainerSummaryResponse>> response =
-                    trainerController.getUnassignedTrainers(traineeUsername);
+                    trainerController.getUnassignedTrainers(TRAINEE_USERNAME);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody()).hasSize(2);
-            assertThat(response.getBody().get(0).getUsername()).isEqualTo("john.doe");
-            assertThat(response.getBody().get(1).getUsername()).isEqualTo("jane.smith");
+            assertThat(response.getBody().get(0).getUsername()).isEqualTo("Trainer.One");
+            assertThat(response.getBody().get(1).getUsername()).isEqualTo("Trainer.Two");
 
-            verify(trainerService, times(1)).getUnassignedTrainers(traineeUsername);
-            verify(trainerMapper, times(1)).toSummaryResponseList(trainers);
+            verify(trainerService).getUnassignedTrainers(TRAINEE_USERNAME);
+            verify(trainerMapper).toSummaryResponseList(trainers);
         }
 
         @Test
         @DisplayName("Should return empty list when no unassigned trainers")
-        void getUnassignedTrainers_EmptyList() {
-            String traineeUsername = "trainee.user";
+        void getUnassignedTrainers_NoTrainers_ReturnsEmptyList() {
+            // Given
+            when(trainerService.getUnassignedTrainers(TRAINEE_USERNAME)).thenReturn(List.of());
+            when(trainerMapper.toSummaryResponseList(List.of())).thenReturn(List.of());
 
-            when(trainerService.getUnassignedTrainers(traineeUsername))
-                    .thenReturn(Collections.emptyList());
-            when(trainerMapper.toSummaryResponseList(Collections.emptyList()))
-                    .thenReturn(Collections.emptyList());
-
+            // When
             ResponseEntity<List<TrainerSummaryResponse>> response =
-                    trainerController.getUnassignedTrainers(traineeUsername);
+                    trainerController.getUnassignedTrainers(TRAINEE_USERNAME);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody()).isEmpty();
         }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when trainee not found")
+        void getUnassignedTrainers_TraineeNotFound_ThrowsNotFoundException() {
+            // Given
+            when(trainerService.getUnassignedTrainers("NonExistent.User"))
+                    .thenThrow(new NotFoundException("Trainee not found: NonExistent.User"));
+
+            // When & Then
+            assertThatThrownBy(() ->
+                    trainerController.getUnassignedTrainers("NonExistent.User"))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainee not found");
+
+            verify(trainerMapper, never()).toSummaryResponseList(anyList());
+        }
+
+        @Test
+        @DisplayName("Should pass correct trainee username to service")
+        void getUnassignedTrainers_PassesCorrectUsername() {
+            // Given
+            when(trainerService.getUnassignedTrainers(TRAINEE_USERNAME)).thenReturn(List.of());
+            when(trainerMapper.toSummaryResponseList(List.of())).thenReturn(List.of());
+
+            // When
+            trainerController.getUnassignedTrainers(TRAINEE_USERNAME);
+
+            // Then
+            verify(trainerService).getUnassignedTrainers(eq(TRAINEE_USERNAME));
+        }
     }
+
+    // ==================== GET TRAINER TRAININGS TESTS ====================
 
     @Nested
     @DisplayName("Get Trainer Trainings Tests")
     class GetTrainerTrainingsTests {
 
         @Test
-        @DisplayName("Should return trainer trainings with all filters")
-        void getTrainerTrainings_WithAllFilters() {
-            String username = "john.doe";
-            LocalDate fromDate = LocalDate.of(2024, 1, 1);
-            LocalDate toDate = LocalDate.of(2024, 12, 31);
-            String traineeName = "Jane";
-
-            Training training1 = Training.builder()
-                    .id(1L)
-                    .trainingName("Morning Session")
-                    .trainingDate(LocalDate.of(2024, 6, 15))
-                    .trainingDurationMinutes(60)  // ✅ FIXED: was trainingDuration(60)
-                    .build();
-
-            Training training2 = Training.builder()
-                    .id(2L)
-                    .trainingName("Evening Session")
-                    .trainingDate(LocalDate.of(2024, 6, 16))
-                    .trainingDurationMinutes(90)  // ✅ FIXED: was trainingDuration(90)
-                    .build();
-
-            List<Training> trainings = Arrays.asList(training1, training2);
-
-            List<TrainingResponse> expectedResponse = Arrays.asList(
-                    TrainingResponse.builder()
+        @DisplayName("Should get trainer trainings without filters")
+        void getTrainerTrainings_NoFilters_Success() {
+            // Given
+            List<Training> trainings = List.of(
+                    Training.builder()
+                            .id(1L)
                             .trainingName("Morning Session")
-                            .trainingDate(LocalDate.of(2024, 6, 15))
-                            .trainingDuration(60)
-                            .build(),
-                    TrainingResponse.builder()
-                            .trainingName("Evening Session")
-                            .trainingDate(LocalDate.of(2024, 6, 16))
-                            .trainingDuration(90)
+                            .trainingDate(LocalDate.of(2025, 1, 15))
+                            .trainingDurationMinutes(60)
                             .build()
             );
 
-            when(trainingService.getTrainerTrainingsByCriteria(username, fromDate, toDate, traineeName))
+            List<TrainingResponse> trainingResponses = List.of(
+                    TrainingResponse.builder()
+                            .trainingName("Morning Session")
+                            .trainingDate(LocalDate.of(2025, 1, 15))
+                            .trainingDuration(60)
+                            .build()
+            );
+
+            when(trainingService.getTrainerTrainingsByCriteria(
+                    USERNAME, null, null, null))
                     .thenReturn(trainings);
-            when(trainingMapper.toResponseList(trainings)).thenReturn(expectedResponse);
+            when(trainingMapper.toResponseList(trainings)).thenReturn(trainingResponses);
 
+            // When
             ResponseEntity<List<TrainingResponse>> response =
-                    trainerController.getTrainerTrainings(username, fromDate, toDate, traineeName);
+                    trainerController.getTrainerTrainings(
+                            USERNAME, null, null, null);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody()).hasSize(2);
-            assertThat(response.getBody().get(0).getTrainingName()).isEqualTo("Morning Session");
-            assertThat(response.getBody().get(1).getTrainingName()).isEqualTo("Evening Session");
+            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody().getFirst().getTrainingName()).isEqualTo("Morning Session");
 
-            verify(trainingService, times(1))
-                    .getTrainerTrainingsByCriteria(username, fromDate, toDate, traineeName);
-            verify(trainingMapper, times(1)).toResponseList(trainings);
+            verify(trainingService).getTrainerTrainingsByCriteria(
+                    USERNAME, null, null, null);
+            verify(trainingMapper).toResponseList(trainings);
         }
 
         @Test
-        @DisplayName("Should return trainer trainings without filters")
-        void getTrainerTrainings_WithoutFilters() {
-            String username = "john.doe";
+        @DisplayName("Should get trainer trainings with all filters")
+        void getTrainerTrainings_WithAllFilters_Success() {
+            // Given
+            LocalDate fromDate = LocalDate.of(2025, 1, 1);
+            LocalDate toDate = LocalDate.of(2025, 12, 31);
+            String traineeName = "John";
 
-            Training training = Training.builder()
-                    .id(1L)
-                    .trainingName("Session")
-                    .trainingDate(LocalDate.now())
-                    .trainingDurationMinutes(60)  // ✅ FIXED: was trainingDuration(60)
-                    .build();
-
-            List<Training> trainings = Collections.singletonList(training);
-            List<TrainingResponse> expectedResponse = Collections.singletonList(
-                    TrainingResponse.builder()
-                            .trainingName("Session")
-                            .trainingDate(LocalDate.now())
-                            .trainingDuration(60)
+            List<Training> trainings = List.of(
+                    Training.builder()
+                            .id(1L)
+                            .trainingName("Filtered Session")
                             .build()
             );
 
-            when(trainingService.getTrainerTrainingsByCriteria(username, null, null, null))
+            List<TrainingResponse> trainingResponses = List.of(
+                    TrainingResponse.builder()
+                            .trainingName("Filtered Session")
+                            .build()
+            );
+
+            when(trainingService.getTrainerTrainingsByCriteria(
+                    USERNAME, fromDate, toDate, traineeName))
                     .thenReturn(trainings);
-            when(trainingMapper.toResponseList(trainings)).thenReturn(expectedResponse);
+            when(trainingMapper.toResponseList(trainings)).thenReturn(trainingResponses);
 
+            // When
             ResponseEntity<List<TrainingResponse>> response =
-                    trainerController.getTrainerTrainings(username, null, null, null);
+                    trainerController.getTrainerTrainings(
+                            USERNAME, fromDate, toDate, traineeName);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody()).hasSize(1);
 
-            verify(trainingService).getTrainerTrainingsByCriteria(username, null, null, null);
+            verify(trainingService).getTrainerTrainingsByCriteria(
+                    USERNAME, fromDate, toDate, traineeName);
         }
 
         @Test
         @DisplayName("Should return empty list when no trainings found")
-        void getTrainerTrainings_EmptyList() {
-            String username = "john.doe";
+        void getTrainerTrainings_NoTrainings_ReturnsEmptyList() {
+            // Given
+            when(trainingService.getTrainerTrainingsByCriteria(
+                    USERNAME, null, null, null))
+                    .thenReturn(List.of());
+            when(trainingMapper.toResponseList(List.of())).thenReturn(List.of());
 
-            when(trainingService.getTrainerTrainingsByCriteria(username, null, null, null))
-                    .thenReturn(Collections.emptyList());
-            when(trainingMapper.toResponseList(Collections.emptyList()))
-                    .thenReturn(Collections.emptyList());
-
+            // When
             ResponseEntity<List<TrainingResponse>> response =
-                    trainerController.getTrainerTrainings(username, null, null, null);
+                    trainerController.getTrainerTrainings(
+                            USERNAME, null, null, null);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody()).isEmpty();
         }
 
         @Test
-        @DisplayName("Should return trainings with partial filters - only fromDate")
-        void getTrainerTrainings_WithPartialFilters_OnlyFromDate() {
-            String username = "john.doe";
-            LocalDate fromDate = LocalDate.of(2024, 1, 1);
+        @DisplayName("Should pass correct parameters to service")
+        void getTrainerTrainings_PassesCorrectParameters() {
+            // Given
+            LocalDate fromDate = LocalDate.of(2025, 3, 1);
+            LocalDate toDate = LocalDate.of(2025, 3, 31);
+            String traineeName = "Jane";
 
-            when(trainingService.getTrainerTrainingsByCriteria(username, fromDate, null, null))
-                    .thenReturn(Collections.emptyList());
-            when(trainingMapper.toResponseList(Collections.emptyList()))
-                    .thenReturn(Collections.emptyList());
+            when(trainingService.getTrainerTrainingsByCriteria(
+                    anyString(), any(), any(), anyString()))
+                    .thenReturn(List.of());
+            when(trainingMapper.toResponseList(anyList())).thenReturn(List.of());
 
-            ResponseEntity<List<TrainingResponse>> response =
-                    trainerController.getTrainerTrainings(username, fromDate, null, null);
+            // When
+            trainerController.getTrainerTrainings(
+                    USERNAME, fromDate, toDate, traineeName);
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            verify(trainingService).getTrainerTrainingsByCriteria(username, fromDate, null, null);
+            // Then
+            verify(trainingService).getTrainerTrainingsByCriteria(
+                    eq(USERNAME),
+                    eq(fromDate),
+                    eq(toDate),
+                    eq(traineeName)
+            );
         }
 
         @Test
-        @DisplayName("Should return trainings with partial filters - only traineeName")
-        void getTrainerTrainings_WithPartialFilters_OnlyTraineeName() {
-            String username = "john.doe";
-            String traineeName = "Jane";
+        @DisplayName("Should get multiple trainings")
+        void getTrainerTrainings_MultipleTrainings_Success() {
+            // Given
+            List<Training> trainings = List.of(
+                    Training.builder().id(1L).trainingName("Session 1").build(),
+                    Training.builder().id(2L).trainingName("Session 2").build(),
+                    Training.builder().id(3L).trainingName("Session 3").build()
+            );
 
-            when(trainingService.getTrainerTrainingsByCriteria(username, null, null, traineeName))
-                    .thenReturn(Collections.emptyList());
-            when(trainingMapper.toResponseList(Collections.emptyList()))
-                    .thenReturn(Collections.emptyList());
+            List<TrainingResponse> trainingResponses = List.of(
+                    TrainingResponse.builder().trainingName("Session 1").build(),
+                    TrainingResponse.builder().trainingName("Session 2").build(),
+                    TrainingResponse.builder().trainingName("Session 3").build()
+            );
 
+            when(trainingService.getTrainerTrainingsByCriteria(
+                    USERNAME, null, null, null))
+                    .thenReturn(trainings);
+            when(trainingMapper.toResponseList(trainings)).thenReturn(trainingResponses);
+
+            // When
             ResponseEntity<List<TrainingResponse>> response =
-                    trainerController.getTrainerTrainings(username, null, null, traineeName);
+                    trainerController.getTrainerTrainings(
+                            USERNAME, null, null, null);
 
+            // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            verify(trainingService).getTrainerTrainingsByCriteria(username, null, null, traineeName);
+            assertThat(response.getBody()).hasSize(3);
+            assertThat(response.getBody().get(0).getTrainingName()).isEqualTo("Session 1");
+            assertThat(response.getBody().get(1).getTrainingName()).isEqualTo("Session 2");
+            assertThat(response.getBody().get(2).getTrainingName()).isEqualTo("Session 3");
+        }
+
+        @Test
+        @DisplayName("Should handle partial filters correctly")
+        void getTrainerTrainings_PartialFilters_Success() {
+            // Given
+            LocalDate fromDate = LocalDate.of(2025, 6, 1);
+
+            when(trainingService.getTrainerTrainingsByCriteria(
+                    USERNAME, fromDate, null, null))
+                    .thenReturn(List.of());
+            when(trainingMapper.toResponseList(List.of())).thenReturn(List.of());
+
+            // When
+            ResponseEntity<List<TrainingResponse>> response =
+                    trainerController.getTrainerTrainings(
+                            USERNAME, fromDate, null, null);
+
+            // Then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+            verify(trainingService).getTrainerTrainingsByCriteria(
+                    eq(USERNAME), eq(fromDate), eq(null), eq(null));
         }
     }
 }

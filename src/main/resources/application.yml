@@ -1,7 +1,9 @@
 spring:
   application:
-    name: gym-crm
+    name: gymdb
 
+  profiles:
+    active: local
 
 logging:
   pattern:
@@ -27,3 +29,14 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+#security:
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGenerationWhichShouldBeLongEnough123456789}
+  expiration: ${JWT_EXPIRATION:7200000}
+
+# Brute force settings
+security:
+  brute-force:
+    max-attempts: ${BRUTE_FORCE_MAX_ATTEMPTS:3}
+    block-duration-minutes: ${BRUTE_FORCE_BLOCK_DURATION:5}

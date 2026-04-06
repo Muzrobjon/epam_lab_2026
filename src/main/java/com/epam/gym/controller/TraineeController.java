@@ -16,7 +16,6 @@ import com.epam.gym.exception.ValidationException;
 import com.epam.gym.mapper.TraineeMapper;
 import com.epam.gym.mapper.TrainerMapper;
 import com.epam.gym.mapper.TrainingMapper;
-import com.epam.gym.mapper.UserMapper;
 import com.epam.gym.service.TraineeService;
 import com.epam.gym.service.TrainingService;
 import com.epam.gym.service.UserService;
@@ -56,18 +55,15 @@ public class TraineeController {
     private final TraineeMapper traineeMapper;
     private final TrainerMapper trainerMapper;
     private final TrainingMapper trainingMapper;
-    private final UserMapper userMapper;
+
 
     @Operation(summary = "Register trainee", description = "Create a new trainee profile")
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<RegistrationResponse> registerTrainee(
             @Valid @RequestBody TraineeRegistrationRequest request) {
 
         log.info("Registering trainee: {} {}", request.getFirstName(), request.getLastName());
-
-        Trainee trainee = traineeService.createProfile(request);
-
-        RegistrationResponse response = userMapper.toRegistrationResponse(trainee);
+        RegistrationResponse response = traineeService.createProfile(request);
 
         log.info("Trainee registered successfully: {}", response.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -81,7 +77,7 @@ public class TraineeController {
 
         log.info("Fetching trainee profile: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership((username));
         Trainee trainee = traineeService.getByUsername(username);
 
         TraineeProfileResponse response = traineeMapper.toProfileResponse(trainee);
@@ -99,7 +95,7 @@ public class TraineeController {
 
         log.info("Updating trainee profile: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
         Trainee updated = traineeService.updateProfile(username, request);
 
         TraineeProfileResponse response = traineeMapper.toProfileResponse(updated);
@@ -114,7 +110,7 @@ public class TraineeController {
             @Parameter(description = "Username of the trainee", required = true)
             @PathVariable String username)
             {
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
         log.info("Deleting trainee profile: {}", username);
 
         traineeService.deleteByUsername(username);
@@ -132,7 +128,7 @@ public class TraineeController {
 
         log.info("Toggling active status for trainee: {}", username);
 
-        userService.isAuthenticated(username);
+        userService.verifyResourceOwnership(username);
 
         userService.setActiveStatus(username, request.getIsActive());
 

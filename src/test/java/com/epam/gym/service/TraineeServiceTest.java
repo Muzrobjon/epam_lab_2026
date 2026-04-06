@@ -2,11 +2,13 @@ package com.epam.gym.service;
 
 import com.epam.gym.dto.request.TraineeRegistrationRequest;
 import com.epam.gym.dto.request.UpdateTraineeRequest;
+import com.epam.gym.dto.response.RegistrationResponse;
 import com.epam.gym.entity.Trainee;
 import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.entity.User;
 import com.epam.gym.enums.TrainingTypeName;
+import com.epam.gym.exception.AuthenticationException;
 import com.epam.gym.exception.NotFoundException;
 import com.epam.gym.exception.ValidationException;
 import com.epam.gym.repository.TraineeRepository;
@@ -18,8 +20,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,23 +27,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TraineeService Tests")
 class TraineeServiceTest {
+
+    @Mock
+    private PasswordService passwordService;
 
     @Mock
     private TraineeRepository traineeRepository;
@@ -60,153 +56,163 @@ class TraineeServiceTest {
     @InjectMocks
     private TraineeService traineeService;
 
-    @Captor
-    private ArgumentCaptor<Trainee> traineeCaptor;
+    private static final String USERNAME = "John.Doe";
+    private static final String RAW_PASSWORD = "RawPass@123";
+    private static final String ENCODED_PASSWORD = "$2a$12$encodedHash";
 
-    private User testUser;
-    private Trainee testTrainee;
-    private Trainer testTrainer1;
-    private Trainer testTrainer2;
+    private User user;
+    private Trainee trainee;
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder()
+        user = User.builder()
                 .id(1L)
                 .firstName("John")
                 .lastName("Doe")
-                .username("John.Doe")
-                .password("password123")
+                .username(USERNAME)
+                .password(RAW_PASSWORD)
                 .isActive(true)
                 .build();
 
-        testTrainee = Trainee.builder()
+        trainee = Trainee.builder()
                 .id(1L)
-                .user(testUser)
-                .dateOfBirth(LocalDate.of(1990, 5, 15))
+                .user(user)
+                .dateOfBirth(LocalDate.of(1995, 5, 15))
                 .address("123 Main St")
                 .trainers(new ArrayList<>())
                 .build();
-
-        User trainerUser1 = User.builder()
-                .id(2L)
-                .firstName("Mike")
-                .lastName("Trainer")
-                .username("Mike.Trainer")
-                .password("pass123")
-                .isActive(true)
-                .build();
-
-        User trainerUser2 = User.builder()
-                .id(3L)
-                .firstName("Jane")
-                .lastName("Coach")
-                .username("Jane.Coach")
-                .password("pass456")
-                .isActive(true)
-                .build();
-
-        TrainingType fitness = TrainingType.builder()
-                .id(1L)
-                .trainingTypeName(TrainingTypeName.FITNESS)
-                .build();
-
-        testTrainer1 = Trainer.builder()
-                .id(1L)
-                .user(trainerUser1)
-                .specialization(fitness)
-                .build();
-
-        testTrainer2 = Trainer.builder()
-                .id(2L)
-                .user(trainerUser2)
-                .specialization(fitness)
-                .build();
     }
 
+    // ==================== CREATE PROFILE TESTS ====================
+
     @Nested
-    @DisplayName("createProfile Tests")
+    @DisplayName("Create Profile Tests")
     class CreateProfileTests {
+
+        private TraineeRegistrationRequest request;
+
+        @BeforeEach
+        void setUp() {
+            request = new TraineeRegistrationRequest();
+            request.setFirstName("John");
+            request.setLastName("Doe");
+            request.setDateOfBirth(LocalDate.of(1995, 5, 15));
+            request.setAddress("123 Main St");
+        }
 
         @Test
         @DisplayName("Should create trainee profile successfully")
         void createProfile_Success() {
             // Given
-            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
-                    .firstName("John")
-                    .lastName("Doe")
-                    .dateOfBirth(LocalDate.of(1990, 5, 15))
-                    .address("123 Main St")
-                    .build();
-
-            when(userService.createUser("John", "Doe")).thenReturn(testUser);
+            when(userService.createUser("John", "Doe")).thenReturn(user);
+            when(passwordService.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
             when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
             // When
-            Trainee result = traineeService.createProfile(request);
+            RegistrationResponse response = traineeService.createProfile(request);
 
             // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getUser().getUsername()).isEqualTo("John.Doe");
-            assertThat(result.getDateOfBirth()).isEqualTo(LocalDate.of(1990, 5, 15));
-            assertThat(result.getAddress()).isEqualTo("123 Main St");
+            assertThat(response).isNotNull();
+            assertThat(response.getUsername()).isEqualTo(USERNAME);
+            assertThat(response.getPassword()).isEqualTo(RAW_PASSWORD);
 
             verify(userService).createUser("John", "Doe");
+            verify(passwordService).encodePassword(RAW_PASSWORD);
             verify(validator).validate(any(Trainee.class));
-            verify(traineeRepository).save(traineeCaptor.capture());
-
-            Trainee capturedTrainee = traineeCaptor.getValue();
-            assertThat(capturedTrainee.getUser()).isEqualTo(testUser);
-            assertThat(capturedTrainee.getTrainers()).isEmpty();
+            verify(traineeRepository).save(any(Trainee.class));
         }
 
         @Test
-        @DisplayName("Should create trainee with null optional fields")
-        void createProfile_WithNullOptionalFields() {
+        @DisplayName("Should encode password before saving")
+        void createProfile_EncodesPassword() {
             // Given
-            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
-                    .firstName("John")
-                    .lastName("Doe")
-                    .dateOfBirth(null)
-                    .address(null)
-                    .build();
-
-            when(userService.createUser("John", "Doe")).thenReturn(testUser);
+            when(userService.createUser("John", "Doe")).thenReturn(user);
+            when(passwordService.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
             when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
             when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> {
-                Trainee t = invocation.getArgument(0);
-                t.setId(1L);
-                return t;
+                Trainee saved = invocation.getArgument(0);
+                assertThat(saved.getUser().getPassword()).isEqualTo(ENCODED_PASSWORD);
+                return saved;
             });
 
             // When
-            Trainee result = traineeService.createProfile(request);
+            traineeService.createProfile(request);
 
             // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getDateOfBirth()).isNull();
-            assertThat(result.getAddress()).isNull();
+            verify(passwordService).encodePassword(RAW_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("Should return raw password in response")
+        void createProfile_ReturnsRawPassword() {
+            // Given
+            when(userService.createUser("John", "Doe")).thenReturn(user);
+            when(passwordService.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
+
+            // When
+            RegistrationResponse response = traineeService.createProfile(request);
+
+            // Then
+            assertThat(response.getPassword()).isEqualTo(RAW_PASSWORD);
+            assertThat(response.getPassword()).isNotEqualTo(ENCODED_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("Should set date of birth and address from request")
+        void createProfile_SetsFieldsFromRequest() {
+            // Given
+            when(userService.createUser("John", "Doe")).thenReturn(user);
+            when(passwordService.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
+            when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> {
+                Trainee saved = invocation.getArgument(0);
+                assertThat(saved.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 5, 15));
+                assertThat(saved.getAddress()).isEqualTo("123 Main St");
+                assertThat(saved.getTrainers()).isEmpty();
+                return saved;
+            });
+
+            // When
+            traineeService.createProfile(request);
+
+            // Then
+            verify(traineeRepository).save(any(Trainee.class));
+        }
+
+        @Test
+        @DisplayName("Should create profile without optional fields")
+        void createProfile_WithoutOptionalFields_Success() {
+            // Given
+            request.setDateOfBirth(null);
+            request.setAddress(null);
+
+            when(userService.createUser("John", "Doe")).thenReturn(user);
+            when(passwordService.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
+
+            // When
+            RegistrationResponse response = traineeService.createProfile(request);
+
+            // Then
+            assertThat(response).isNotNull();
+            assertThat(response.getUsername()).isEqualTo(USERNAME);
         }
 
         @Test
         @DisplayName("Should throw ValidationException when validation fails")
-        void createProfile_ValidationFails() {
+        void createProfile_ValidationFails_ThrowsValidationException() {
             // Given
-            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
-                    .firstName("John")
-                    .lastName("Doe")
-                    .build();
-
-            when(userService.createUser("John", "Doe")).thenReturn(testUser);
+            when(userService.createUser("John", "Doe")).thenReturn(user);
+            when(passwordService.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
 
             @SuppressWarnings("unchecked")
-            ConstraintViolation<Trainee> violation = org.mockito.Mockito.mock(ConstraintViolation.class);
+            ConstraintViolation<Trainee> violation = mock(ConstraintViolation.class);
             when(violation.getMessage()).thenReturn("User must not be null");
-
-            Set<ConstraintViolation<Trainee>> violations = new HashSet<>();
-            violations.add(violation);
-            when(validator.validate(any(Trainee.class))).thenReturn(violations);
+            when(validator.validate(any(Trainee.class))).thenReturn(Set.of(violation));
 
             // When & Then
             assertThatThrownBy(() -> traineeService.createProfile(request))
@@ -218,468 +224,459 @@ class TraineeServiceTest {
         }
     }
 
+    // ==================== GET BY USERNAME TESTS ====================
+
     @Nested
-    @DisplayName("getByUsername Tests")
+    @DisplayName("Get By Username Tests")
     class GetByUsernameTests {
 
         @Test
-        @DisplayName("Should return trainee when found")
+        @DisplayName("Should get trainee by username successfully")
         void getByUsername_Success() {
             // Given
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
 
             // When
-            Trainee result = traineeService.getByUsername("John.Doe");
+            Trainee result = traineeService.getByUsername(USERNAME);
 
             // Then
             assertThat(result).isNotNull();
-            assertThat(result.getUser().getUsername()).isEqualTo("John.Doe");
-            verify(traineeRepository).findByUser_Username("John.Doe");
+            assertThat(result.getUser().getUsername()).isEqualTo(USERNAME);
+            assertThat(result.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 5, 15));
+            assertThat(result.getAddress()).isEqualTo("123 Main St");
+
+            verify(traineeRepository).findByUser_Username(USERNAME);
         }
 
         @Test
         @DisplayName("Should throw NotFoundException when trainee not found")
-        void getByUsername_NotFound() {
+        void getByUsername_NotFound_ThrowsNotFoundException() {
             // Given
-            when(traineeRepository.findByUser_Username("Unknown.User"))
+            when(traineeRepository.findByUser_Username("NonExistent"))
                     .thenReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> traineeService.getByUsername("Unknown.User"))
+            assertThatThrownBy(() -> traineeService.getByUsername("NonExistent"))
                     .isInstanceOf(NotFoundException.class)
-                    .hasMessage("Trainee not found: Unknown.User");
+                    .hasMessageContaining("Trainee not found: NonExistent");
         }
     }
 
+    // ==================== UPDATE PROFILE TESTS ====================
+
     @Nested
-    @DisplayName("updateProfile Tests")
+    @DisplayName("Update Profile Tests")
     class UpdateProfileTests {
+
+        private UpdateTraineeRequest updateRequest;
+
+        @BeforeEach
+        void setUp() {
+            updateRequest = new UpdateTraineeRequest();
+            updateRequest.setUsername(USERNAME);
+            updateRequest.setFirstName("John");
+            updateRequest.setLastName("Updated");
+            updateRequest.setDateOfBirth(LocalDate.of(1996, 6, 20));
+            updateRequest.setAddress("456 New St");
+            updateRequest.setIsActive(true);
+        }
 
         @Test
         @DisplayName("Should update trainee profile successfully")
         void updateProfile_Success() {
             // Given
-            UpdateTraineeRequest request = UpdateTraineeRequest.builder()
-                    .username("John.Doe")
-                    .firstName("Johnny")
-                    .lastName("Updated")
-                    .dateOfBirth(LocalDate.of(1991, 6, 20))
-                    .address("456 New St")
-                    .isActive(true)
-                    .build();
-
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            doNothing().when(userService).updateUserBasicInfo(any(User.class),
+                    eq("John"), eq("Updated"), eq(true));
             when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
             // When
-            Trainee result = traineeService.updateProfile("John.Doe", request);
+            Trainee result = traineeService.updateProfile(USERNAME, updateRequest);
 
             // Then
             assertThat(result).isNotNull();
-            verify(userService).isAuthenticated("John.Doe");
-            verify(userService).updateUserBasicInfo(testUser, "Johnny", "Updated", true);
-            verify(traineeRepository).save(traineeCaptor.capture());
 
-            Trainee captured = traineeCaptor.getValue();
-            assertThat(captured.getDateOfBirth()).isEqualTo(LocalDate.of(1991, 6, 20));
-            assertThat(captured.getAddress()).isEqualTo("456 New St");
+            verify(userService).verifyResourceOwnership(USERNAME);
+            verify(userService).updateUserBasicInfo(user, "John", "Updated", true);
+            verify(traineeRepository).save(trainee);
         }
 
         @Test
-        @DisplayName("Should update only non-null fields")
-        void updateProfile_PartialUpdate() {
+        @DisplayName("Should update date of birth")
+        void updateProfile_UpdatesDateOfBirth() {
             // Given
-            UpdateTraineeRequest request = UpdateTraineeRequest.builder()
-                    .username("John.Doe")
-                    .firstName("Johnny")
-                    .lastName("Updated")
-                    .dateOfBirth(null)  // Keep original
-                    .address(null)       // Keep original
-                    .isActive(true)
-                    .build();
-
-            LocalDate originalDob = testTrainee.getDateOfBirth();
-            String originalAddress = testTrainee.getAddress();
-
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            doNothing().when(userService).updateUserBasicInfo(any(), any(), any(), any());
             when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
             // When
-            traineeService.updateProfile("John.Doe", request);
+            traineeService.updateProfile(USERNAME, updateRequest);
 
             // Then
-            verify(traineeRepository).save(traineeCaptor.capture());
-            Trainee captured = traineeCaptor.getValue();
-            assertThat(captured.getDateOfBirth()).isEqualTo(originalDob);
-            assertThat(captured.getAddress()).isEqualTo(originalAddress);
+            assertThat(trainee.getDateOfBirth()).isEqualTo(LocalDate.of(1996, 6, 20));
         }
 
         @Test
-        @DisplayName("Should throw ValidationException when update validation fails")
-        void updateProfile_ValidationFails() {
+        @DisplayName("Should update address")
+        void updateProfile_UpdatesAddress() {
             // Given
-            UpdateTraineeRequest request = UpdateTraineeRequest.builder()
-                    .username("John.Doe")
-                    .firstName("")
-                    .lastName("")
-                    .isActive(true)
-                    .build();
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            doNothing().when(userService).updateUserBasicInfo(any(), any(), any(), any());
+            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
+            // When
+            traineeService.updateProfile(USERNAME, updateRequest);
 
-            @SuppressWarnings("unchecked")
-            ConstraintViolation<Trainee> violation = org.mockito.Mockito.mock(ConstraintViolation.class);
-            when(violation.getMessage()).thenReturn("First name is required");
+            // Then
+            assertThat(trainee.getAddress()).isEqualTo("456 New St");
+        }
 
-            Set<ConstraintViolation<Trainee>> violations = new HashSet<>();
-            violations.add(violation);
-            when(validator.validate(any(Trainee.class))).thenReturn(violations);
+        @Test
+        @DisplayName("Should not update date of birth when null")
+        void updateProfile_NullDateOfBirth_KeepsExisting() {
+            // Given
+            updateRequest.setDateOfBirth(null);
+            LocalDate originalDate = trainee.getDateOfBirth();
+
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            doNothing().when(userService).updateUserBasicInfo(any(), any(), any(), any());
+            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
+
+            // When
+            traineeService.updateProfile(USERNAME, updateRequest);
+
+            // Then
+            assertThat(trainee.getDateOfBirth()).isEqualTo(originalDate);
+        }
+
+        @Test
+        @DisplayName("Should not update address when null")
+        void updateProfile_NullAddress_KeepsExisting() {
+            // Given
+            updateRequest.setAddress(null);
+            String originalAddress = trainee.getAddress();
+
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            doNothing().when(userService).updateUserBasicInfo(any(), any(), any(), any());
+            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
+
+            // When
+            traineeService.updateProfile(USERNAME, updateRequest);
+
+            // Then
+            assertThat(trainee.getAddress()).isEqualTo(originalAddress);
+        }
+
+        @Test
+        @DisplayName("Should throw AuthenticationException when not resource owner")
+        void updateProfile_NotOwner_ThrowsAuthException() {
+            // Given
+            doThrow(new AuthenticationException("Access denied"))
+                    .when(userService).verifyResourceOwnership(USERNAME);
 
             // When & Then
-            assertThatThrownBy(() -> traineeService.updateProfile("John.Doe", request))
+            assertThatThrownBy(() -> traineeService.updateProfile(USERNAME, updateRequest))
+                    .isInstanceOf(AuthenticationException.class);
+
+            verify(traineeRepository, never()).findByUser_Username(anyString());
+            verify(traineeRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when trainee not found")
+        void updateProfile_NotFound_ThrowsNotFoundException() {
+            // Given
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() -> traineeService.updateProfile(USERNAME, updateRequest))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainee not found");
+
+            verify(traineeRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw ValidationException when validation fails")
+        void updateProfile_ValidationFails_ThrowsValidationException() {
+            // Given
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            doNothing().when(userService).updateUserBasicInfo(any(), any(), any(), any());
+
+            @SuppressWarnings("unchecked")
+            ConstraintViolation<Trainee> violation = mock(ConstraintViolation.class);
+            when(violation.getMessage()).thenReturn("Invalid field");
+            when(validator.validate(any(Trainee.class))).thenReturn(Set.of(violation));
+
+            // When & Then
+            assertThatThrownBy(() -> traineeService.updateProfile(USERNAME, updateRequest))
                     .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("First name is required");
+                    .hasMessageContaining("Validation failed");
 
             verify(traineeRepository, never()).save(any());
         }
     }
 
+    // ==================== DELETE BY USERNAME TESTS ====================
+
     @Nested
-    @DisplayName("deleteByUsername Tests")
+    @DisplayName("Delete By Username Tests")
     class DeleteByUsernameTests {
 
         @Test
         @DisplayName("Should delete trainee successfully")
         void deleteByUsername_Success() {
             // Given
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            doNothing().when(traineeRepository).delete(trainee);
 
             // When
-            traineeService.deleteByUsername("John.Doe");
+            traineeService.deleteByUsername(USERNAME);
 
             // Then
-            verify(userService).isAuthenticated("John.Doe");
-            verify(traineeRepository).findByUser_Username("John.Doe");
-            verify(traineeRepository).delete(testTrainee);
+            verify(userService).verifyResourceOwnership(USERNAME);
+            verify(traineeRepository).findByUser_Username(USERNAME);
+            verify(traineeRepository).delete(trainee);
         }
 
         @Test
-        @DisplayName("Should throw NotFoundException when deleting non-existent trainee")
-        void deleteByUsername_NotFound() {
+        @DisplayName("Should throw AuthenticationException when not resource owner")
+        void deleteByUsername_NotOwner_ThrowsAuthException() {
             // Given
-            doNothing().when(userService).isAuthenticated("Unknown.User");
-            when(traineeRepository.findByUser_Username("Unknown.User"))
-                    .thenReturn(Optional.empty());
+            doThrow(new AuthenticationException("Access denied"))
+                    .when(userService).verifyResourceOwnership(USERNAME);
 
             // When & Then
-            assertThatThrownBy(() -> traineeService.deleteByUsername("Unknown.User"))
+            assertThatThrownBy(() -> traineeService.deleteByUsername(USERNAME))
+                    .isInstanceOf(AuthenticationException.class);
+
+            verify(traineeRepository, never()).findByUser_Username(anyString());
+            verify(traineeRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when trainee not found")
+        void deleteByUsername_NotFound_ThrowsNotFoundException() {
+            // Given
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() -> traineeService.deleteByUsername(USERNAME))
                     .isInstanceOf(NotFoundException.class)
-                    .hasMessage("Trainee not found: Unknown.User");
+                    .hasMessageContaining("Trainee not found");
 
             verify(traineeRepository, never()).delete(any());
         }
     }
 
+    // ==================== UPDATE TRAINERS LIST TESTS ====================
+
     @Nested
-    @DisplayName("updateTrainersList Tests")
+    @DisplayName("Update Trainers List Tests")
     class UpdateTrainersListTests {
+
+        private List<Trainer> trainerList;
+
+        @BeforeEach
+        void setUp() {
+            TrainingType specialization = TrainingType.builder()
+                    .id(1L)
+                    .trainingTypeName(TrainingTypeName.FITNESS)
+                    .build();
+
+            User trainerUser1 = User.builder()
+                    .id(2L)
+                    .firstName("Trainer")
+                    .lastName("One")
+                    .username("Trainer.One")
+                    .build();
+
+            User trainerUser2 = User.builder()
+                    .id(3L)
+                    .firstName("Trainer")
+                    .lastName("Two")
+                    .username("Trainer.Two")
+                    .build();
+
+            trainerList = List.of(
+                    Trainer.builder().id(1L).user(trainerUser1).specialization(specialization).build(),
+                    Trainer.builder().id(2L).user(trainerUser2).specialization(specialization).build()
+            );
+        }
 
         @Test
         @DisplayName("Should update trainers list successfully")
         void updateTrainersList_Success() {
             // Given
-            List<String> trainerUsernames = List.of("Mike.Trainer", "Jane.Coach");
-            List<Trainer> trainers = List.of(testTrainer1, testTrainer2);
+            List<String> trainerUsernames = List.of("Trainer.One", "Trainer.Two");
 
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
-            when(trainerRepository.findByUser_UsernameIn(trainerUsernames))
-                    .thenReturn(trainers);
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            when(trainerRepository.findByUser_UsernameIn(trainerUsernames)).thenReturn(trainerList);
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
             // When
-            List<Trainer> result = traineeService.updateTrainersList("John.Doe", trainerUsernames);
+            List<Trainer> result = traineeService.updateTrainersList(USERNAME, trainerUsernames);
 
             // Then
             assertThat(result).hasSize(2);
-            assertThat(result).containsExactlyInAnyOrder(testTrainer1, testTrainer2);
+            assertThat(trainee.getTrainers()).hasSize(2);
 
-            verify(traineeRepository).save(traineeCaptor.capture());
-            Trainee captured = traineeCaptor.getValue();
-            assertThat(captured.getTrainers()).hasSize(2);
+            verify(userService).verifyResourceOwnership(USERNAME);
+            verify(traineeRepository).findByUser_Username(USERNAME);
+            verify(trainerRepository).findByUser_UsernameIn(trainerUsernames);
+            verify(traineeRepository).save(trainee);
         }
 
         @Test
-        @DisplayName("Should clear trainers list when empty list provided")
-        void updateTrainersList_EmptyList() {
+        @DisplayName("Should clear existing trainers and set new ones")
+        void updateTrainersList_ClearsExistingTrainers() {
             // Given
-            testTrainee.getTrainers().add(testTrainer1);  // Has existing trainer
-            List<String> trainerUsernames = Collections.emptyList();
+            trainee.getTrainers().add(Trainer.builder().id(99L).build());
+            assertThat(trainee.getTrainers()).hasSize(1);
 
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
+            List<String> trainerUsernames = List.of("Trainer.One", "Trainer.Two");
+
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            when(trainerRepository.findByUser_UsernameIn(trainerUsernames)).thenReturn(trainerList);
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
             // When
-            List<Trainer> result = traineeService.updateTrainersList("John.Doe", trainerUsernames);
+            traineeService.updateTrainersList(USERNAME, trainerUsernames);
+
+            // Then
+            assertThat(trainee.getTrainers()).hasSize(2);
+            assertThat(trainee.getTrainers()).containsExactlyElementsOf(trainerList);
+        }
+
+        @Test
+        @DisplayName("Should handle empty trainer usernames list")
+        void updateTrainersList_EmptyList_ClearsTrainers() {
+            // Given
+            trainee.getTrainers().add(Trainer.builder().id(99L).build());
+
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
+
+            // When
+            List<Trainer> result = traineeService.updateTrainersList(USERNAME, List.of());
 
             // Then
             assertThat(result).isEmpty();
+            assertThat(trainee.getTrainers()).isEmpty();
+
             verify(trainerRepository, never()).findByUser_UsernameIn(anyList());
-            verify(traineeRepository).save(traineeCaptor.capture());
-            assertThat(traineeCaptor.getValue().getTrainers()).isEmpty();
         }
 
         @Test
-        @DisplayName("Should handle null trainers list")
-        void updateTrainersList_NullList() {
+        @DisplayName("Should handle null trainer usernames list")
+        void updateTrainersList_NullList_ClearsTrainers() {
             // Given
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
+            trainee.getTrainers().add(Trainer.builder().id(99L).build());
+
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
+            when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
             // When
-            List<Trainer> result = traineeService.updateTrainersList("John.Doe", null);
+            List<Trainer> result = traineeService.updateTrainersList(USERNAME, null);
 
             // Then
             assertThat(result).isEmpty();
+            assertThat(trainee.getTrainers()).isEmpty();
+
             verify(trainerRepository, never()).findByUser_UsernameIn(anyList());
         }
 
         @Test
         @DisplayName("Should throw NotFoundException when some trainers not found")
-        void updateTrainersList_TrainersNotFound() {
+        void updateTrainersList_TrainerNotFound_ThrowsNotFoundException() {
             // Given
-            List<String> trainerUsernames = List.of("Mike.Trainer", "Unknown.Trainer");
-            List<Trainer> foundTrainers = List.of(testTrainer1);  // Only one found
+            List<String> trainerUsernames = List.of("Trainer.One", "NonExistent.Trainer");
 
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
             when(trainerRepository.findByUser_UsernameIn(trainerUsernames))
-                    .thenReturn(foundTrainers);
+                    .thenReturn(List.of(trainerList.getFirst())); // Only 1 found out of 2
 
             // When & Then
-            assertThatThrownBy(() -> traineeService.updateTrainersList("John.Doe", trainerUsernames))
+            assertThatThrownBy(() ->
+                    traineeService.updateTrainersList(USERNAME, trainerUsernames))
                     .isInstanceOf(NotFoundException.class)
                     .hasMessageContaining("Trainers not found")
-                    .hasMessageContaining("Unknown.Trainer");
+                    .hasMessageContaining("NonExistent.Trainer");
 
             verify(traineeRepository, never()).save(any());
         }
 
         @Test
-        @DisplayName("Should replace existing trainers with new list")
-        void updateTrainersList_ReplaceExisting() {
+        @DisplayName("Should throw NotFoundException when all trainers not found")
+        void updateTrainersList_AllTrainersNotFound_ThrowsNotFoundException() {
             // Given
-            testTrainee.getTrainers().add(testTrainer1);  // Has trainer1
-            List<String> newTrainerUsernames = List.of("Jane.Coach");  // Replace with trainer2
-            List<Trainer> newTrainers = List.of(testTrainer2);
+            List<String> trainerUsernames = List.of("NonExistent.One", "NonExistent.Two");
 
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
-            when(trainerRepository.findByUser_UsernameIn(newTrainerUsernames))
-                    .thenReturn(newTrainers);
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
-
-            // When
-            List<Trainer> result = traineeService.updateTrainersList("John.Doe", newTrainerUsernames);
-
-            // Then
-            assertThat(result).hasSize(1);
-            assertThat(result).containsExactly(testTrainer2);
-
-            verify(traineeRepository).save(traineeCaptor.capture());
-            Trainee captured = traineeCaptor.getValue();
-            assertThat(captured.getTrainers()).hasSize(1);
-            assertThat(captured.getTrainers()).containsExactly(testTrainer2);
-        }
-    }
-
-    @Nested
-    @DisplayName("Authentication Tests")
-    class AuthenticationTests {
-
-        @Test
-        @DisplayName("updateProfile should call isAuthenticated")
-        void updateProfile_CallsIsAuthenticated() {
-            // Given
-            UpdateTraineeRequest request = UpdateTraineeRequest.builder()
-                    .username("John.Doe")
-                    .firstName("John")
-                    .lastName("Doe")
-                    .isActive(true)
-                    .build();
-
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
-            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
-
-            // When
-            traineeService.updateProfile("John.Doe", request);
-
-            // Then
-            verify(userService).isAuthenticated("John.Doe");
-        }
-
-        @Test
-        @DisplayName("deleteByUsername should call isAuthenticated")
-        void deleteByUsername_CallsIsAuthenticated() {
-            // Given
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
-
-            // When
-            traineeService.deleteByUsername("John.Doe");
-
-            // Then
-            verify(userService).isAuthenticated("John.Doe");
-        }
-
-        @Test
-        @DisplayName("updateTrainersList should call isAuthenticated")
-        void updateTrainersList_CallsIsAuthenticated() {
-            // Given
-            List<String> trainerUsernames = List.of("Mike.Trainer");
-
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
             when(trainerRepository.findByUser_UsernameIn(trainerUsernames))
-                    .thenReturn(List.of(testTrainer1));
-            when(traineeRepository.save(any(Trainee.class))).thenReturn(testTrainee);
-
-            // When
-            traineeService.updateTrainersList("John.Doe", trainerUsernames);
-
-            // Then
-            verify(userService).isAuthenticated("John.Doe");
-        }
-    }
-
-    @Nested
-    @DisplayName("Edge Cases Tests")
-    class EdgeCasesTests {
-
-        @Test
-        @DisplayName("Should handle trainee with maximum length address")
-        void createProfile_MaxLengthAddress() {
-            // Given
-            String longAddress = "A".repeat(500);
-            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
-                    .firstName("John")
-                    .lastName("Doe")
-                    .address(longAddress)
-                    .build();
-
-            when(userService.createUser("John", "Doe")).thenReturn(testUser);
-            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
-            when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> {
-                Trainee t = invocation.getArgument(0);
-                t.setId(1L);
-                return t;
-            });
-
-            // When
-            Trainee result = traineeService.createProfile(request);
-
-            // Then
-            assertThat(result).isNotNull();
-            verify(traineeRepository).save(traineeCaptor.capture());
-            assertThat(traineeCaptor.getValue().getAddress()).isEqualTo(longAddress);
-        }
-
-        @Test
-        @DisplayName("Should handle date of birth in the past")
-        void createProfile_PastDateOfBirth() {
-            // Given
-            LocalDate oldDate = LocalDate.of(1950, 1, 1);
-            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
-                    .firstName("John")
-                    .lastName("Doe")
-                    .dateOfBirth(oldDate)
-                    .build();
-
-            when(userService.createUser("John", "Doe")).thenReturn(testUser);
-            when(validator.validate(any(Trainee.class))).thenReturn(Collections.emptySet());
-            when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> {
-                Trainee t = invocation.getArgument(0);
-                t.setId(1L);
-                return t;
-            });
-
-            // When
-            Trainee result = traineeService.createProfile(request);
-
-            // Then
-            assertThat(result).isNotNull();
-            verify(traineeRepository).save(traineeCaptor.capture());
-            assertThat(traineeCaptor.getValue().getDateOfBirth()).isEqualTo(oldDate);
-        }
-
-        @Test
-        @DisplayName("Should handle multiple validation errors")
-        void createProfile_MultipleValidationErrors() {
-            // Given
-            TraineeRegistrationRequest request = TraineeRegistrationRequest.builder()
-                    .firstName("John")
-                    .lastName("Doe")
-                    .build();
-
-            when(userService.createUser("John", "Doe")).thenReturn(testUser);
-
-            @SuppressWarnings("unchecked")
-            ConstraintViolation<Trainee> violation1 = org.mockito.Mockito.mock(ConstraintViolation.class);
-            @SuppressWarnings("unchecked")
-            ConstraintViolation<Trainee> violation2 = org.mockito.Mockito.mock(ConstraintViolation.class);
-            when(violation1.getMessage()).thenReturn("Error 1");
-            when(violation2.getMessage()).thenReturn("Error 2");
-
-            Set<ConstraintViolation<Trainee>> violations = new HashSet<>();
-            violations.add(violation1);
-            violations.add(violation2);
-            when(validator.validate(any(Trainee.class))).thenReturn(violations);
+                    .thenReturn(List.of());
 
             // When & Then
-            assertThatThrownBy(() -> traineeService.createProfile(request))
-                    .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Validation failed");
+            assertThatThrownBy(() ->
+                    traineeService.updateTrainersList(USERNAME, trainerUsernames))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainers not found");
+
+            verify(traineeRepository, never()).save(any());
         }
 
         @Test
-        @DisplayName("Should handle duplicate trainer usernames in list")
-        void updateTrainersList_DuplicateUsernames() {
+        @DisplayName("Should throw AuthenticationException when not resource owner")
+        void updateTrainersList_NotOwner_ThrowsAuthException() {
             // Given
-            List<String> trainerUsernames = List.of("Mike.Trainer", "Mike.Trainer");
-            List<Trainer> trainers = List.of(testTrainer1);  // Repository returns unique
+            doThrow(new AuthenticationException("Access denied"))
+                    .when(userService).verifyResourceOwnership(USERNAME);
 
-            doNothing().when(userService).isAuthenticated("John.Doe");
-            when(traineeRepository.findByUser_Username("John.Doe"))
-                    .thenReturn(Optional.of(testTrainee));
-            when(trainerRepository.findByUser_UsernameIn(trainerUsernames))
-                    .thenReturn(trainers);
+            // When & Then
+            assertThatThrownBy(() ->
+                    traineeService.updateTrainersList(USERNAME, List.of("Trainer.One")))
+                    .isInstanceOf(AuthenticationException.class);
 
-            // When & Then - Should throw because size mismatch
-            assertThatThrownBy(() -> traineeService.updateTrainersList("John.Doe", trainerUsernames))
-                    .isInstanceOf(NotFoundException.class);
+            verify(traineeRepository, never()).findByUser_Username(anyString());
+            verify(trainerRepository, never()).findByUser_UsernameIn(anyList());
+            verify(traineeRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when trainee not found")
+        void updateTrainersList_TraineeNotFound_ThrowsNotFoundException() {
+            // Given
+            doNothing().when(userService).verifyResourceOwnership(USERNAME);
+            when(traineeRepository.findByUser_Username(USERNAME)).thenReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() ->
+                    traineeService.updateTrainersList(USERNAME, List.of("Trainer.One")))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessageContaining("Trainee not found");
+
+            verify(trainerRepository, never()).findByUser_UsernameIn(anyList());
+            verify(traineeRepository, never()).save(any());
         }
     }
 }

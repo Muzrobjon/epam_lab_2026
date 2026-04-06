@@ -1,23 +1,29 @@
 package com.epam.gym.controller;
 
+
+import com.epam.gym.dto.response.LoginResponse;
 import com.epam.gym.dto.request.ChangePasswordRequest;
 import com.epam.gym.dto.request.LoginRequest;
-import com.epam.gym.dto.request.ToggleActiveRequest;
+import com.epam.gym.dto.response.MessageResponse;
+import com.epam.gym.dto.response.UserInfoResponse;
+import com.epam.gym.exception.AccountLockedException;
+import com.epam.gym.exception.BadLoginException;
+import com.epam.gym.exception.LogoutException;
+import com.epam.gym.security.*;
 import com.epam.gym.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
+
 
 @Slf4j
 @RestController
@@ -27,47 +33,122 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtProvider jwtProvider;
+    private final LoginAttemptService loginAttemptService;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final JwtTokenExtractor jwtTokenExtractor;
 
-    @Operation(summary = "User login", description = "Authenticate user with username and password")
+    @Operation(summary = "User login", description = "Authenticate user and get JWT token")
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request) {
-        log.info("Login attempt for user: {}", request.getUsername());
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        String username = request.getUsername();
+        log.info("Login attempt for user: {}", username);
 
-        userService.authenticate(request.getUsername(), request.getPassword());
+        // Check if user is blocked
+        if (loginAttemptService.isBlocked(username)) {
+            log.warn("Login attempt for blocked user: {}", username);
+            throw new AccountLockedException(loginAttemptService.getBlockDurationMinutes());
+        }
 
-        log.info("User {} logged in successfully", request.getUsername());
-        return ResponseEntity.ok().build();
+        try {
+            // Authenticate user
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
+
+
+            // Generate JWT token
+            String jwt = jwtProvider.generateToken(authentication);
+
+            // Clear failed attempts on successful login
+            loginAttemptService.loginSucceeded(username);
+
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+            LoginResponse response = LoginResponse.builder()
+                    .accessToken(jwt)
+                    .tokenType("Bearer")
+                    .username(userPrincipal.getUsername())
+                    .build();
+
+            log.info("User {} logged in successfully", username);
+            return ResponseEntity.ok(response);
+
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            // Record failed attempt
+            loginAttemptService.loginFailed(username);
+
+            int remainingAttempts = loginAttemptService.getRemainingAttempts(username);
+
+            log.warn("Login failed for user: {}. Remaining attempts: {}", username, remainingAttempts);
+
+            throw new BadLoginException(
+                    "Username or password is incorrect",
+                    remainingAttempts,
+                    remainingAttempts == 0
+                        ? loginAttemptService.getBlockDurationMinutes()
+                            :null
+            );
+        }
+    }
+
+    @Operation(summary = "Logout", description = "Logout current user and blacklist token")
+    @PostMapping("/logout")
+    public ResponseEntity<MessageResponse> logout(HttpServletRequest request) {
+        String jwt = jwtTokenExtractor.extract(request);
+
+        if (jwt != null) {
+            try {
+                LocalDateTime expiration = jwtProvider.getExpirationFromToken(jwt);
+                tokenBlacklistService.blacklistToken(jwt, expiration);
+                log.info("User logged out successfully");
+            } catch (Exception e) {
+                log.error("Error during logout: {}", e.getMessage());
+                throw new LogoutException("Failed to process logout" + e.getMessage());
+            }
+        }
+
+        return ResponseEntity.ok(new MessageResponse("User logged out successfully"));
     }
 
     @Operation(summary = "Change password", description = "Change user password")
     @PutMapping("/change-password")
-    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<MessageResponse> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
         log.info("Password change request for user: {}", request.getUsername());
 
-        userService.changePassword(
-                request.getUsername(),
-                request.getOldPassword(),
-                request.getNewPassword()
-        );
 
-        log.info("Password changed successfully for user: {}", request.getUsername());
-        return ResponseEntity.ok().build();
+            userService.changePassword(
+                    request.getUsername(),
+                    request.getOldPassword(),
+                    request.getNewPassword()
+            );
+
+            log.info("Password changed successfully for user: {}", request.getUsername());
+            return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
+
     }
 
-    @Operation(summary = "Activate/Deactivate user", description = "Change user's active status")
-    @PatchMapping("/users/{username}/status")
-    public ResponseEntity<Void> toggleUserStatus(
-            @Parameter(description = "Username of the user", required = true)
-            @PathVariable String username,
-            @Valid @RequestBody ToggleActiveRequest request) {
 
-        log.info("Toggling active status for user: {}", username);
+    @Operation(summary = "Get current user",
+            description = "Get current authenticated user information")
+    @GetMapping("/me")
+    public ResponseEntity<UserInfoResponse> getCurrentUser(
+            @CurrentUser UserPrincipal currentUser) {
 
-        userService.isAuthenticated(username);
+        UserInfoResponse userInfo = UserInfoResponse.builder()
+                .id(currentUser.getId())
+                .username(currentUser.getUsername())
+                .firstName(currentUser.getFirstName())
+                .lastName(currentUser.getLastName())
+                .authorities(currentUser.getAuthorities())
+                .build();
 
-        userService.setActiveStatus(username, request.getIsActive());
-
-        log.info("Active status changed for user: {}", username);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(userInfo);
     }
+
 }
