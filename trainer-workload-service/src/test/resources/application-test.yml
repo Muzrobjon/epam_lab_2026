@@ -1,0 +1,78 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  # H2 in-memory database
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+
+  # Embedded ActiveMQ broker
+  activemq:
+    broker-url: vm://localhost?broker.persistent=false
+    user: admin
+    password: admin
+    packages:
+      trust-all: true
+
+  jms:
+    template:
+      default-destination: trainer.workload.queue
+    pub-sub-domain: false
+
+
+  cloud:
+    discovery:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+
+jwt:
+  secret: testSecretKeyForJWTTokenGenerationWhichShouldBeLongEnough123456789
+  expiration: 3600000
+
+# Security
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5
+
+# Queue
+app:
+  jms:
+    queue:
+      trainer-workload: trainer.workload.queue
+      trainer-workload-dlq: trainer.workload.dlq
+
+# Logging
+logging:
+  level:
+    root: WARN
+    com.epam.gym: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
