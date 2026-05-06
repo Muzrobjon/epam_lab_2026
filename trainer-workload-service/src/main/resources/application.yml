@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: trainer-workload-service
+
+  profiles:
+    active: local
+
+  activemq:
+    broker-url: ${ACTIVEMQ_BROKER_URL:tcp://localhost:61616}
+    user: ${ACTIVEMQ_USER:admin}
+    password: ${ACTIVEMQ_PASSWORD:admin}
+    packages:
+      trust-all: false
+      trusted: com.epam.gym
+
+  jms:
+    pub-sub-domain: false
+    listener:
+      acknowledge-mode: auto
+      concurrency: 1
+      max-concurrency: 3
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{X-Transaction-Id}] %-5level %logger{36} --- %msg%n"
+  level:
+    org.springframework.jms: INFO
+    org.apache.activemq: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,loggers
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    enable:
+      all: true
+
+server:
+  port: 8081
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui/index.html
+    operationsSorter: method
+    disable-swagger-default-url: true
+    display-request-duration: true
+
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGenerationWhichShouldBeLongEnough123456789}
+  expiration: ${JWT_EXPIRATION:7200000}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+
+app:
+  jms:
+    queue:
+      trainer-workload: trainer.workload.queue
+      trainer-workload-dlq: trainer.workload.dlq

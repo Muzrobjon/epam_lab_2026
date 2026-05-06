@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  activemq:
+    image: apache/activemq-classic:5.18.3
+    container_name: gym-activemq
+    ports:
+      - "61616:61616"   # JMS (OpenWire)
+      - "8161:8161"     # Web Console
+    environment:
+      ACTIVEMQ_CONNECTION_USER: admin
+      ACTIVEMQ_CONNECTION_PASSWORD: admin
+      ACTIVEMQ_WEB_USER: admin
+      ACTIVEMQ_WEB_PASSWORD: admin
+    volumes:
+      - activemq-data:/opt/apache-activemq/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8161"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - gym-network
+    restart: unless-stopped
+
+volumes:
+  activemq-data:
+
+networks:
+  gym-network:
+    driver: bridge
