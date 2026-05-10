@@ -30,6 +30,12 @@ spring:
       default-destination: trainer.workload.queue
     pub-sub-domain: false
 
+  # Embedded MongoDB
+  data:
+    mongodb:
+      host: localhost
+      port: 0
+      database: testdb
 
   cloud:
     discovery:
@@ -41,38 +47,17 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
 
-
 jwt:
   secret: testSecretKeyForJWTTokenGenerationWhichShouldBeLongEnough123456789
   expiration: 3600000
 
-# Security
-security:
-  brute-force:
-    max-attempts: 3
-    block-duration-minutes: 5
-
-# Queue
 app:
   jms:
     queue:
       trainer-workload: trainer.workload.queue
       trainer-workload-dlq: trainer.workload.dlq
 
-# Logging
 logging:
   level:
     root: WARN
     com.epam.gym: INFO
-    org.springframework.security: WARN
-    org.hibernate.SQL: WARN
-
-# Management endpoints
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always

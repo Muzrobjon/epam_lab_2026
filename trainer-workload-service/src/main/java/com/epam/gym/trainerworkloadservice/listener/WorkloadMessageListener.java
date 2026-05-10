@@ -2,11 +2,12 @@ package com.epam.gym.trainerworkloadservice.listener;
 
 import com.epam.gym.trainerworkloadservice.dto.request.TrainerWorkloadRequest;
 import com.epam.gym.trainerworkloadservice.service.TrainerWorkloadService;
-import jakarta.jms.Message;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.messaging.handler.annotation.Header;
@@ -14,6 +15,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -21,56 +23,70 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WorkloadMessageListener {
 
+    private static final String TRANSACTION_ID_KEY = "X-Transaction-Id";
+
     private final TrainerWorkloadService workloadService;
     private final Validator validator;
     private final JmsTemplate jmsTemplate;
 
-    private static final String DLQ = "trainer.workload.dlq";
+    @Value("${app.jms.queue.trainer-workload-dlq}")
+    private String dlqDestination;
 
     @JmsListener(
             destination = "${app.jms.queue.trainer-workload}",
             containerFactory = "jmsListenerContainerFactory"
     )
     public void onMessage(@Payload TrainerWorkloadRequest request,
-                          @Header(name = "X-Transaction-Id", required = false) String transactionId,
-                          Message rawMessage) {
+                          @Header(name = TRANSACTION_ID_KEY, required = false) String transactionId) {
 
-        if (transactionId == null) transactionId = "UNKNOWN";
-
-        log.info("[TransactionId: {}] Received workload message: trainer={}, action={}",
-                transactionId, request.getTrainerUsername(), request.getActionType());
-
-        Set<ConstraintViolation<TrainerWorkloadRequest>> violations = validator.validate(request);
-        if (!violations.isEmpty()) {
-            String errors = violations.stream()
-                    .map(ConstraintViolation::getMessage)
-                    .collect(Collectors.joining(", "));
-
-            log.error("[TransactionId: {}] Invalid message, sending to DLQ: {}", transactionId, errors);
-            sendToDlq(request, transactionId, "Validation failed: " + errors);
-            return;
+        if (transactionId == null || transactionId.isBlank()) {
+            transactionId = "gen-" + UUID.randomUUID();
         }
+        MDC.put(TRANSACTION_ID_KEY, transactionId);
 
         try {
+            log.info("[TransactionId: {}] Received workload message: trainer={}, action={}",
+                    transactionId, request.getTrainerUsername(), request.getActionType());
+
+            Set<ConstraintViolation<TrainerWorkloadRequest>> violations = validator.validate(request);
+            if (!violations.isEmpty()) {
+                String errors = violations.stream()
+                        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                        .collect(Collectors.joining("; "));
+
+                log.error("[TransactionId: {}] Invalid message, routing to DLQ: {}", transactionId, errors);
+                sendToDlq(request, transactionId, "Validation failed: " + errors);
+                return;
+            }
+
             workloadService.processWorkload(request, transactionId);
-            log.info("[TransactionId: {}] Workload processed successfully", transactionId);
+
         } catch (Exception e) {
-            log.error("[TransactionId: {}] Processing failed: {}", transactionId, e.getMessage(), e);
-            throw new RuntimeException("Failed to process workload", e);
+            log.error("[TransactionId: {}] Message processing failed: {}", transactionId, e.getMessage(), e);
+            throw new MessageProcessingException(
+                    "Failed to process workload for transaction: " + transactionId, e);
+        } finally {
+            MDC.remove(TRANSACTION_ID_KEY);
         }
     }
 
     private void sendToDlq(TrainerWorkloadRequest request, String transactionId, String reason) {
         try {
-            final String txId = transactionId;
-            jmsTemplate.convertAndSend(DLQ, request, msg -> {
-                msg.setStringProperty("X-Transaction-Id", txId);
+            jmsTemplate.convertAndSend(dlqDestination, request, msg -> {
+                msg.setStringProperty(TRANSACTION_ID_KEY, transactionId);
                 msg.setStringProperty("X-DLQ-Reason", reason);
+                msg.setStringProperty("X-DLQ-Timestamp", String.valueOf(System.currentTimeMillis()));
                 return msg;
             });
-            log.warn("[TransactionId: {}] Message routed to DLQ '{}'", transactionId, DLQ);
+            log.warn("[TransactionId: {}] Message routed to DLQ '{}'", transactionId, dlqDestination);
         } catch (Exception ex) {
             log.error("[TransactionId: {}] Failed to send to DLQ: {}", transactionId, ex.getMessage(), ex);
+        }
+    }
+
+    public static class MessageProcessingException extends RuntimeException {
+        public MessageProcessingException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }
