@@ -35,13 +35,41 @@
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <spring-cloud.version>2024.0.1</spring-cloud.version>
 
+        <!-- JUnit versiyalari Spring Boot 3.4.5 ga moslangan -->
+        <junit-jupiter.version>5.11.4</junit-jupiter.version>
+        <junit.jupiter.version>5.11.4</junit.jupiter.version>
+        <junit-platform.version>1.11.4</junit-platform.version>
+        <junit.platform.version>1.11.4</junit.platform.version>
+
+        <!-- Cucumber versiyasi JUnit Platform 1.11.x bilan mos -->
+        <cucumber.version>7.20.1</cucumber.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- JUnit BOM — barcha JUnit versiyalarini bir xil qiladi -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.11.4</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
@@ -96,17 +124,18 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
         </dependency>
+
         <!-- Spring Boot Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
@@ -119,9 +148,15 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- JUnit Jupiter — versiya BOM dan keladi -->
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-broker</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- Security -->
@@ -130,6 +165,10 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -154,6 +193,7 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+
         <!-- Jakarta Annotations -->
         <dependency>
             <groupId>jakarta.annotation</groupId>
@@ -166,42 +206,91 @@
             <artifactId>guava</artifactId>
             <version>33.3.1-jre</version>
         </dependency>
-        <!-- Spring Cloud Eureka Client -->
+
+        <!-- Spring Cloud -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-activemq</artifactId>
         </dependency>
+
         <dependency>
             <groupId>jakarta.jms</groupId>
             <artifactId>jakarta.jms-api</artifactId>
         </dependency>
-        <!-- Spring Cloud OpenFeign -->
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
-        <!-- Spring Cloud Circuit Breaker (Resilience4j) -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
         </dependency>
+
+        <!-- ============ Cucumber 7.20.1 (JUnit Platform 1.11.x bilan mos) ============ -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit-platform-engine</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-spring</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- JUnit Platform Suite — versiya BOM/Spring Boot dan keladi (1.11.4) -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>stg</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/*Test.java</include>
+                                <include>**/RunCucumberTest.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
@@ -248,6 +337,7 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -258,7 +348,6 @@
                     <argLine>-Xmx1024m</argLine>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 

@@ -4,23 +4,34 @@ spring:
       on-profile: stg
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:5432/gymdb_stg
-    username: ${DB_USER}
-    password: ${DB_PASS}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 20
+    url: jdbc:h2:mem:stgdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop
     show-sql: false
-    open-in-view: false
-    properties:
-      hibernate:
-        format_sql: false
+
+  # Use existing JMS config from main application
+  activemq:
+    broker-url: vm://localhost?broker.persistent=false
+    user: admin
+    password: admin
+    packages:
+      trust-all: true
+
+eureka:
+  client:
+    enabled: false
+
+workload:
+  service:
+    url: http://localhost:8082
 
 logging:
   level:
     root: WARN
     com.epam.gym: INFO
+    org.springframework.jms: INFO

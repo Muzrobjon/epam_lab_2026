@@ -14,6 +14,9 @@ spring:
       trust-all: false
       trusted: com.epam.gym
 
+workload:
+  service:
+    url: http://localhost:8082
   # JMS
   jms:
     template:

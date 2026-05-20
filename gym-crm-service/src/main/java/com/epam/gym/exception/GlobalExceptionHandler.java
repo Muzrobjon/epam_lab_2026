@@ -136,4 +136,22 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(
+            ConflictException ex,
+            HttpServletRequest request) {
+
+        String transactionId = (String) request.getAttribute("transactionId");
+        log.error("[TransactionId: {}] ConflictException: {}", transactionId, ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .transactionId(transactionId)
+                .message(ex.getMessage())
+                .status(HttpStatus.CONFLICT.value())
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 }

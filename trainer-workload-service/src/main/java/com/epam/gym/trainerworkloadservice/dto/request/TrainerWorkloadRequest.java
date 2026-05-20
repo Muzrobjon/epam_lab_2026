@@ -2,6 +2,7 @@ package com.epam.gym.trainerworkloadservice.dto.request;
 
 import com.epam.gym.trainerworkloadservice.enums.ActionType;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -36,6 +37,7 @@ public class TrainerWorkloadRequest {
 
     @NotNull(message = "Training duration is required")
     @Positive(message = "Training duration must be positive")
+    @Max(value = 44640, message = "Training duration cannot exceed one month (44640 minutes)")
     private Integer trainingDuration;
 
     @NotNull(message = "Action type is required")

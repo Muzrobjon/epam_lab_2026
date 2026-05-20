@@ -7,6 +7,7 @@ import com.epam.gym.entity.Trainer;
 import com.epam.gym.entity.Training;
 import com.epam.gym.entity.TrainingType;
 import com.epam.gym.enums.TrainingTypeName;
+import com.epam.gym.exception.ConflictException;
 import com.epam.gym.exception.ValidationException;
 import com.epam.gym.metrics.TrainingMetrics;
 import com.epam.gym.repository.TrainingRepository;
@@ -19,7 +20,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,6 +31,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TrainingService {
+
+    private static final int MAX_MINUTES_PER_MONTH = 44640; // 31 * 24 * 60
 
     private final WorkloadMessageProducer workloadMessageProducer;
     private final TrainingRepository trainingRepository;
@@ -50,9 +55,16 @@ public class TrainingService {
                 request.getTraineeUsername(),
                 request.getTrainerUsername());
 
+        validateTrainingDuration(request.getTrainingDuration());
+
         Trainee trainee = traineeService.getByUsername(request.getTraineeUsername());
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
         TrainingType trainingType = trainer.getSpecialization();
+
+        // ⭐ YANGI: Overlap check — trainerda shu sanaga allaqachon training bor-yo'qligini tekshirish
+        validateNoOverlappingSchedule(trainer, request.getTrainingDate());
+
+        validateTrainerMonthlyWorkload(trainer, request.getTrainingDate(), request.getTrainingDuration());
 
         Training training = Training.builder()
                 .trainee(trainee)
@@ -75,6 +87,60 @@ public class TrainingService {
                 request.getTrainingDuration(), TrainerWorkloadRequest.ActionType.ADD);
 
         log.info("Training created with ID: {}", saved.getId());
+    }
+
+    // ⭐ YANGI METHOD: Overlap check
+    private void validateNoOverlappingSchedule(Trainer trainer, LocalDate trainingDate) {
+        if (trainingRepository.existsByTrainerAndDate(trainer.getId(), trainingDate)) {
+            String trainerUsername = trainer.getUser().getUsername();
+            log.warn("Trainer '{}' already has a training scheduled on {}",
+                    trainerUsername, trainingDate);
+            throw new ConflictException(String.format(
+                    "Trainer '%s' already has a training scheduled on %s",
+                    trainerUsername, trainingDate
+            ));
+        }
+    }
+
+    private void validateTrainingDuration(Integer duration) {
+        if (duration == null || duration <= 0) {
+            throw new ValidationException("Training duration must be positive");
+        }
+        if (duration > MAX_MINUTES_PER_MONTH) {
+            throw new ValidationException(
+                    "Training duration cannot exceed one month (" + MAX_MINUTES_PER_MONTH +
+                            " minutes). Provided: " + duration
+            );
+        }
+    }
+
+    private void validateTrainerMonthlyWorkload(Trainer trainer, LocalDate trainingDate, Integer newDuration) {
+        YearMonth targetMonth = YearMonth.from(trainingDate);
+        LocalDate firstDay = targetMonth.atDay(1);
+        LocalDate lastDay = targetMonth.atEndOfMonth();
+
+        String trainerUsername = trainer.getUser().getUsername();
+
+        List<Training> monthTrainings = trainingRepository.findTrainingsWithAllUsers(
+                null, trainerUsername, firstDay, lastDay
+        );
+
+        int currentTotal = monthTrainings.stream()
+                .mapToInt(Training::getTrainingDurationMinutes)
+                .sum();
+
+        long newTotal = (long) currentTotal + newDuration;
+
+        if (newTotal > MAX_MINUTES_PER_MONTH) {
+            throw new ValidationException(String.format(
+                    "Trainer '%s' monthly workload limit exceeded for %s. " +
+                            "Current: %d min, New training: %d min, Total would be: %d min, Max allowed: %d min",
+                    trainerUsername, targetMonth, currentTotal, newDuration, newTotal, MAX_MINUTES_PER_MONTH
+            ));
+        }
+
+        log.debug("Trainer '{}' monthly workload check passed for {}: {}/{} minutes",
+                trainerUsername, targetMonth, newTotal, MAX_MINUTES_PER_MONTH);
     }
 
     @Timed(value = "gym_training_fetch_trainee_seconds")
