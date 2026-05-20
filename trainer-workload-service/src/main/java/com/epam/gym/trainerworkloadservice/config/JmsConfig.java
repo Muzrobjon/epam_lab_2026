@@ -37,7 +37,7 @@ public class JmsConfig {
         factory.setBrokerURL(brokerUrl);
         factory.setUserName(user);
         factory.setPassword(password);
-        factory.setTrustedPackages(java.util.List.of("com.epam.gym"));
+        factory.setTrustedPackages(java.util.List.of("com.epam.gym", "java.util", "java.lang"));
 
         RedeliveryPolicy redeliveryPolicy = new RedeliveryPolicy();
         redeliveryPolicy.setMaximumRedeliveries(3);
