@@ -1,25 +1,85 @@
 package com.epam.gym.config;
 
+import com.epam.gym.client.WorkloadServiceClient;
 import com.epam.gym.dto.request.TrainerWorkloadRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.jms.ConnectionFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListener;
+import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
+import org.springframework.jms.config.JmsListenerContainerFactory;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
+import org.springframework.jms.support.converter.MessageConverter;
+import org.springframework.jms.support.converter.MessageType;
 import org.springframework.stereotype.Component;
-import com.epam.gym.client.WorkloadServiceClient;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @TestConfiguration
 @Profile("stg")
+@EnableJms
 @Slf4j
 public class TestWorkloadServiceConfig {
 
     private static final Map<String, Long> trainerWorkloads = new ConcurrentHashMap<>();
+
+    @Bean
+    @Primary
+    public ConnectionFactory connectionFactory() {
+        ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory();
+        factory.setBrokerURL("vm://localhost?broker.persistent=false");
+        factory.setTrustAllPackages(true);
+        return factory;
+    }
+
+    @Bean
+    @Primary
+    public MessageConverter messageConverter() {
+        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+        converter.setTargetType(MessageType.TEXT);
+        converter.setTypeIdPropertyName("_type");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        converter.setObjectMapper(objectMapper);
+
+        return converter;
+    }
+
+    @Bean
+    @Primary
+    public JmsTemplate jmsTemplate(ConnectionFactory connectionFactory,
+                                   MessageConverter messageConverter) {
+        JmsTemplate template = new JmsTemplate(connectionFactory);
+        template.setMessageConverter(messageConverter);
+        return template;
+    }
+
+    @Bean
+    @Primary
+    public JmsListenerContainerFactory<?> jmsListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            MessageConverter messageConverter) {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(messageConverter);
+        factory.setConcurrency("1-1");
+        factory.setSessionTransacted(false);
+        return factory;
+    }
 
     @Bean
     @Primary
@@ -40,15 +100,14 @@ public class TestWorkloadServiceConfig {
                 response.put("totalDuration", totalDuration);
                 response.put("totalMinutes", totalDuration);
 
-                // Years structure
                 List<Map<String, Object>> years = new ArrayList<>();
                 if (totalDuration > 0) {
                     Map<String, Object> yearData = new HashMap<>();
-                    yearData.put("year", 2026);
+                    yearData.put("year", year != null ? year : 2026);
 
                     List<Map<String, Object>> months = new ArrayList<>();
                     Map<String, Object> monthData = new HashMap<>();
-                    monthData.put("month", 5);
+                    monthData.put("month", month != null ? month : 5);
                     monthData.put("trainingsSummaryDuration", totalDuration);
                     monthData.put("totalDuration", totalDuration);
                     months.add(monthData);
@@ -65,17 +124,16 @@ public class TestWorkloadServiceConfig {
 
     public static void addWorkload(String trainerUsername, long minutes) {
         trainerWorkloads.merge(trainerUsername, minutes, Long::sum);
-        log.info("TEST: Manually added {} minutes to trainer {}. New total: {}",
+        log.info("TEST: Added {} minutes to trainer {}. New total: {}",
                 minutes, trainerUsername, trainerWorkloads.get(trainerUsername));
     }
 
     public static void removeWorkload(String trainerUsername, long minutes) {
         trainerWorkloads.compute(trainerUsername, (k, v) -> {
             if (v == null) return 0L;
-            long result = v - minutes;
-            return Math.max(0L, result);
+            return Math.max(0L, v - minutes);
         });
-        log.info("TEST: Manually removed {} minutes from trainer {}. New total: {}",
+        log.info("TEST: Removed {} minutes from trainer {}. New total: {}",
                 minutes, trainerUsername, trainerWorkloads.get(trainerUsername));
     }
 
@@ -102,28 +160,47 @@ public class TestWorkloadServiceConfig {
         public void handleWorkloadMessage(TrainerWorkloadRequest request) {
             try {
                 log.info("JMS: Received workload message: trainer={}, action={}, duration={}",
-                        request.getTrainerUsername(), request.getActionType(), request.getTrainingDuration());
+                        request.getTrainerUsername(),
+                        request.getActionType(),
+                        request.getTrainingDuration());
 
                 String trainerUsername = request.getTrainerUsername();
                 TrainerWorkloadRequest.ActionType actionType = request.getActionType();
                 Integer duration = request.getTrainingDuration();
 
-                if (trainerUsername != null && actionType != null && duration != null) {
-                    switch (actionType) {
-                        case ADD:
-                            addWorkload(trainerUsername, duration.longValue());
-                            break;
-                        case DELETE:
-                            removeWorkload(trainerUsername, duration.longValue());
-                            break;
-                        default:
-                            log.warn("JMS: Unknown action type: {}", actionType);
-                            break;
-                    }
-                } else {
-                    log.warn("JMS: Invalid message - trainer: {}, action: {}, duration: {}",
-                            trainerUsername, actionType, duration);
+                if (trainerUsername == null || trainerUsername.trim().isEmpty()) {
+                    log.warn("JMS: Invalid message - trainerUsername is null or empty");
+                    return;
                 }
+
+                if (actionType == null) {
+                    log.warn("JMS: Invalid message - actionType is null");
+                    return;
+                }
+
+                if (duration == null || duration < 0) {
+                    log.warn("JMS: Invalid message - duration is null or negative: {}", duration);
+                    return;
+                }
+
+                switch (actionType) {
+                    case ADD:
+                        addWorkload(trainerUsername, duration.longValue());
+                        log.info("JMS: Successfully added {} minutes to trainer {}",
+                                duration, trainerUsername);
+                        break;
+
+                    case DELETE:
+                        removeWorkload(trainerUsername, duration.longValue());
+                        log.info("JMS: Successfully removed {} minutes from trainer {}",
+                                duration, trainerUsername);
+                        break;
+
+                    default:
+                        log.warn("JMS: Unknown action type: {}", actionType);
+                        break;
+                }
+
             } catch (Exception e) {
                 log.error("JMS: Error processing workload message: {}", request, e);
             }

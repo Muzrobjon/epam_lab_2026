@@ -74,3 +74,11 @@ Feature: Training workload integration
     When trainee creates training with trainer
     When trainee creates another training at the same time with the same trainer
     Then request should fail with status 409
+
+  @integration @workload
+  Scenario: Trainer adds new training session and workload service is updated
+    Given a trainer exists
+    And a trainee exists
+    And trainee is authenticated
+    When trainee creates training with trainer
+    Then workload service should have updated trainee hours

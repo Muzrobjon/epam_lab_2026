@@ -1,0 +1,235 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for com.epam:epam_lab_2026_hibernate:jar:1.0.0
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.springframework.cloud:spring-cloud-starter-openfeign:jar -> duplicate declaration of version (?) @ line 219, column 21
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: com.h2database:h2:jar -> duplicate declaration of version (?) @ line 261, column 21
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] 
+[INFO] ------------------< com.epam:epam_lab_2026_hibernate >------------------
+[INFO] Building Gym CRM System 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ epam_lab_2026_hibernate ---
+[INFO] Copying 5 resources from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ epam_lab_2026_hibernate ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ epam_lab_2026_hibernate ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ epam_lab_2026_hibernate ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ epam_lab_2026_hibernate ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.epam.gym.integration.InfraIntegrationTest
+16:16:47.045 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.epam.gym.integration.InfraIntegrationTest]: InfraIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+16:16:47.108 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.integration.InfraIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-05-21 16:16:47 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Starting InfraIntegrationTest using Java 21.0.1 with PID 18072 (started by Professional in C:\Users\Professional\Desktop\nosql\epam_lab_2026\gym-crm-service)
+2026-05-21 16:16:47 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- The following 1 profile is active: "stg"
+2026-05-21 16:16:51 [main] [] INFO  com.epam.gym.metrics.UserMetrics --- User metrics initialized
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.metrics.TrainingMetrics --- Training metrics initialized
+2026-05-21 16:16:51 [main] [] INFO  c.e.gym.metrics.GymStatisticsMetrics --- Gym statistics metrics initialized
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Initializing training types...
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FITNESS
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: YOGA
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CARDIO
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: STRENGTH
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: PILATES
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CROSSFIT
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: ZUMBA
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FLEXIBILITY
+2026-05-21 16:16:51 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Training types initialization completed
+2026-05-21 16:16:51 [main] [] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration --- spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-21 16:16:52 [main] [] WARN  o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger --- Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Loaded the Bouncy Castle security provider at position: 14
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Using Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Temp Data Store
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Job Scheduler Store
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Persistence Adapter successfully started
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:1) is starting
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:1) started
+2026-05-21 16:16:52 [main] [] INFO  o.a.activemq.broker.BrokerService --- For help or more information please see: http://activemq.apache.org
+2026-05-21 16:16:52 [main] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost started
+2026-05-21 16:16:52 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Started InfraIntegrationTest in 5.57 seconds (process running for 6.208)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (C:\Users\Professional\.m2\repository\net\bytebuddy\byte-buddy-agent\1.15.11\byte-buddy-agent-1.15.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+2026-05-21 16:16:53 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:16:53 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test setup completed. Base URL: http://localhost:7239
+2026-05-21 16:16:53 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 1: Registering trainer
+2026-05-21 16:16:53 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: bbce8b00-d336-4840-b40b-f730c9c2aaeb] Request: POST /api/trainers
+2026-05-21 16:16:53 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: John Trainer
+2026-05-21 16:16:53 [http-nio-auto-1-exec-2] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for John Trainer
+2026-05-21 16:16:53 [http-nio-auto-1-exec-2] [] INFO  com.epam.gym.service.UserService --- User created: John.Trainer
+2026-05-21 16:16:53 [http-nio-auto-1-exec-2] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 1 with username: John.Trainer
+2026-05-21 16:16:53 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: John.Trainer
+2026-05-21 16:16:53 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: bbce8b00-d336-4840-b40b-f730c9c2aaeb] Response: /api/trainers - Status: 201 - Duration: 470ms
+2026-05-21 16:16:53 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainer registered: username=John.Trainer, password=3GoP8qPg4L
+2026-05-21 16:16:53 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 2: Registering trainee
+2026-05-21 16:16:53 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: cd36fca0-2c46-45c6-8cbb-61bdf4cd1d0d] Request: POST /api/trainees
+2026-05-21 16:16:53 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mike Student
+2026-05-21 16:16:53 [http-nio-auto-1-exec-1] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mike Student
+2026-05-21 16:16:53 [http-nio-auto-1-exec-1] [] INFO  com.epam.gym.service.UserService --- User created: Mike.Student
+2026-05-21 16:16:54 [http-nio-auto-1-exec-1] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 2 with username: Mike.Student
+2026-05-21 16:16:54 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mike.Student
+2026-05-21 16:16:54 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: cd36fca0-2c46-45c6-8cbb-61bdf4cd1d0d] Response: /api/trainees - Status: 201 - Duration: 430ms
+2026-05-21 16:16:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainee registered: username=Mike.Student, password=$GKU4APUpP
+2026-05-21 16:16:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 3: Logging in as trainee
+2026-05-21 16:16:54 [http-nio-auto-1-exec-3] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: cf9f5ad6-6843-4fbb-b107-7ddf8d3d62c6] Request: POST /api/auth/login
+2026-05-21 16:16:54 [http-nio-auto-1-exec-3] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Mike.Student
+2026-05-21 16:16:54 [http-nio-auto-1-exec-3] [] INFO  c.epam.gym.controller.AuthController --- User Mike.Student logged in successfully
+2026-05-21 16:16:54 [http-nio-auto-1-exec-3] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: cf9f5ad6-6843-4fbb-b107-7ddf8d3d62c6] Response: /api/auth/login - Status: 200 - Duration: 467ms
+2026-05-21 16:16:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Login successful, JWT token obtained
+2026-05-21 16:16:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 4: Creating training session
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 613f9bf7-38b5-4650-8af8-3c9b9423ac9b] Request: POST /api/trainings
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  c.e.g.controller.TrainingController --- Adding training: Integration Training for trainee: Mike.Student and trainer: John.Trainer
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Integration Training for trainee: Mike.Student and trainer: John.Trainer
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: John.Trainer
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  c.e.g.s.WorkloadMessageProducer --- [TransactionId: 613f9bf7-38b5-4650-8af8-3c9b9423ac9b] Workload message sent to queue 'trainer.workload.queue': trainer=John.Trainer, action=ADD
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 1
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  c.e.g.controller.TrainingController --- Training created successfully: Integration Training
+2026-05-21 16:16:54 [http-nio-auto-1-exec-7] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 613f9bf7-38b5-4650-8af8-3c9b9423ac9b] Response: /api/trainings - Status: 200 - Duration: 70ms
+2026-05-21 16:16:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Training session created successfully
+2026-05-21 16:16:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 5: Waiting for JMS message processing
+2026-05-21 16:16:54 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Received workload message: trainer=John.Trainer, action=ADD, duration=60
+2026-05-21 16:16:54 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Added 60 minutes to trainer John.Trainer. New total: 60
+2026-05-21 16:16:54 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Successfully added 60 minutes to trainer John.Trainer
+2026-05-21 16:16:58 [awaitility-thread] [] INFO  c.e.g.i.InfraIntegrationTest --- Current workload for trainer John.Trainer: 60
+2026-05-21 16:16:58 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test completed successfully - workload updated to 60 minutes
+2026-05-21 16:16:58 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost stopped
+2026-05-21 16:16:58 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:1) is shutting down
+2026-05-21 16:16:58 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:1) uptime 6.257 seconds
+2026-05-21 16:16:58 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:1) is shutdown
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-05-21 16:16:58 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Starting InfraIntegrationTest using Java 21.0.1 with PID 18072 (started by Professional in C:\Users\Professional\Desktop\nosql\epam_lab_2026\gym-crm-service)
+2026-05-21 16:16:58 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- The following 1 profile is active: "stg"
+2026-05-21 16:16:59 [main] [] INFO  com.epam.gym.metrics.UserMetrics --- User metrics initialized
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.metrics.TrainingMetrics --- Training metrics initialized
+2026-05-21 16:16:59 [main] [] INFO  c.e.gym.metrics.GymStatisticsMetrics --- Gym statistics metrics initialized
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Initializing training types...
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FITNESS
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: YOGA
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CARDIO
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: STRENGTH
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: PILATES
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CROSSFIT
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: ZUMBA
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FLEXIBILITY
+2026-05-21 16:16:59 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Training types initialization completed
+2026-05-21 16:16:59 [main] [] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration --- spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-21 16:17:00 [main] [] WARN  o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger --- Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- Using Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Temp Data Store
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Job Scheduler Store
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- Persistence Adapter successfully started
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:2) is starting
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:2) started
+2026-05-21 16:17:00 [main] [] INFO  o.a.activemq.broker.BrokerService --- For help or more information please see: http://activemq.apache.org
+2026-05-21 16:17:00 [main] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost started
+2026-05-21 16:17:00 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Started InfraIntegrationTest in 1.496 seconds (process running for 13.755)
+2026-05-21 16:17:00 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:17:00 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test setup completed. Base URL: http://localhost:7244
+2026-05-21 16:17:00 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 1: Registering trainer
+2026-05-21 16:17:00 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 37f3b2c8-2a42-4299-8281-666d004835ff] Request: POST /api/trainers
+2026-05-21 16:17:00 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: Jane Coach
+2026-05-21 16:17:00 [http-nio-auto-2-exec-1] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for Jane Coach
+2026-05-21 16:17:00 [http-nio-auto-2-exec-1] [] INFO  com.epam.gym.service.UserService --- User created: Jane.Coach
+2026-05-21 16:17:00 [http-nio-auto-2-exec-1] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 1 with username: Jane.Coach
+2026-05-21 16:17:00 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: Jane.Coach
+2026-05-21 16:17:00 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 37f3b2c8-2a42-4299-8281-666d004835ff] Response: /api/trainers - Status: 201 - Duration: 408ms
+2026-05-21 16:17:00 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainer registered: Jane.Coach
+2026-05-21 16:17:00 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 2: Registering trainee
+2026-05-21 16:17:00 [http-nio-auto-2-exec-7] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 841eb4d7-5901-45ed-bf17-9f678394dad8] Request: POST /api/trainees
+2026-05-21 16:17:00 [http-nio-auto-2-exec-7] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Alex Runner
+2026-05-21 16:17:00 [http-nio-auto-2-exec-7] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Alex Runner
+2026-05-21 16:17:01 [http-nio-auto-2-exec-7] [] INFO  com.epam.gym.service.UserService --- User created: Alex.Runner
+2026-05-21 16:17:01 [http-nio-auto-2-exec-7] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 2 with username: Alex.Runner
+2026-05-21 16:17:01 [http-nio-auto-2-exec-7] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Alex.Runner
+2026-05-21 16:17:01 [http-nio-auto-2-exec-7] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 841eb4d7-5901-45ed-bf17-9f678394dad8] Response: /api/trainees - Status: 201 - Duration: 446ms
+2026-05-21 16:17:01 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainee registered: Alex.Runner
+2026-05-21 16:17:01 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 3: Logging in
+2026-05-21 16:17:01 [http-nio-auto-2-exec-3] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: aa74f364-9134-47e1-9827-acce49ebe504] Request: POST /api/auth/login
+2026-05-21 16:17:01 [http-nio-auto-2-exec-3] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Alex.Runner
+2026-05-21 16:17:01 [http-nio-auto-2-exec-3] [] INFO  c.epam.gym.controller.AuthController --- User Alex.Runner logged in successfully
+2026-05-21 16:17:01 [http-nio-auto-2-exec-3] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: aa74f364-9134-47e1-9827-acce49ebe504] Response: /api/auth/login - Status: 200 - Duration: 420ms
+2026-05-21 16:17:01 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 4: Creating first training
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 8d414d67-1c4d-46dd-9101-7e52e1bbeb1f] Request: POST /api/trainings
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  c.e.g.controller.TrainingController --- Adding training: Morning Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Morning Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: Jane.Coach
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  c.e.g.s.WorkloadMessageProducer --- [TransactionId: 8d414d67-1c4d-46dd-9101-7e52e1bbeb1f] Workload message sent to queue 'trainer.workload.queue': trainer=Jane.Coach, action=ADD
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 1
+2026-05-21 16:17:01 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Received workload message: trainer=Jane.Coach, action=ADD, duration=60
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  c.e.g.controller.TrainingController --- Training created successfully: Morning Session
+2026-05-21 16:17:01 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Added 60 minutes to trainer Jane.Coach. New total: 60
+2026-05-21 16:17:01 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Successfully added 60 minutes to trainer Jane.Coach
+2026-05-21 16:17:01 [http-nio-auto-2-exec-4] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 8d414d67-1c4d-46dd-9101-7e52e1bbeb1f] Response: /api/trainings - Status: 200 - Duration: 32ms
+2026-05-21 16:17:01 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- First training created
+2026-05-21 16:17:03 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 5: Creating second training
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: a0bed80a-1aa0-489e-81a2-4dbb46f38683] Request: POST /api/trainings
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  c.e.g.controller.TrainingController --- Adding training: Evening Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Evening Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: Jane.Coach
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  c.e.g.s.WorkloadMessageProducer --- [TransactionId: a0bed80a-1aa0-489e-81a2-4dbb46f38683] Workload message sent to queue 'trainer.workload.queue': trainer=Jane.Coach, action=ADD
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 2
+2026-05-21 16:17:03 [org.springframework.jms.JmsListenerEndpointContainer#0-2] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Received workload message: trainer=Jane.Coach, action=ADD, duration=60
+2026-05-21 16:17:03 [org.springframework.jms.JmsListenerEndpointContainer#0-2] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Added 60 minutes to trainer Jane.Coach. New total: 120
+2026-05-21 16:17:03 [org.springframework.jms.JmsListenerEndpointContainer#0-2] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Successfully added 60 minutes to trainer Jane.Coach
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  c.e.g.controller.TrainingController --- Training created successfully: Evening Session
+2026-05-21 16:17:03 [http-nio-auto-2-exec-5] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: a0bed80a-1aa0-489e-81a2-4dbb46f38683] Response: /api/trainings - Status: 200 - Duration: 12ms
+2026-05-21 16:17:03 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Second training created
+2026-05-21 16:17:06 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 6: Verifying workload
+2026-05-21 16:17:07 [awaitility-thread] [] INFO  c.e.g.i.InfraIntegrationTest --- Total workload for trainer Jane.Coach: 120
+2026-05-21 16:17:07 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Multiple trainings test completed - total workload: 120 minutes
+2026-05-21 16:17:07 [org.springframework.jms.JmsListenerEndpointContainer#0-2] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost stopped
+2026-05-21 16:17:07 [org.springframework.jms.JmsListenerEndpointContainer#0-2] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:2) is shutting down
+2026-05-21 16:17:07 [org.springframework.jms.JmsListenerEndpointContainer#0-2] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:2) uptime 7.371 seconds
+2026-05-21 16:17:07 [org.springframework.jms.JmsListenerEndpointContainer#0-2] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7240-1779362212742-0:2) is shutdown
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.85 s -- in com.epam.gym.integration.InfraIntegrationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  22.493 s
+[INFO] Finished at: 2026-05-21T16:17:07+05:00
+[INFO] ------------------------------------------------------------------------

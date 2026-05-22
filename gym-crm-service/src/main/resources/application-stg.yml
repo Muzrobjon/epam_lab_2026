@@ -3,6 +3,10 @@ spring:
     activate:
       on-profile: stg
 
+
+  main:
+    allow-bean-definition-overriding: true
+
   datasource:
     url: jdbc:h2:mem:stgdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
@@ -13,14 +17,35 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
 
-  # Use existing JMS config from main application
+  # JMS Configuration for testing
   activemq:
     broker-url: vm://localhost?broker.persistent=false
     user: admin
     password: admin
     packages:
       trust-all: true
+
+  jms:
+    listener:
+      auto-startup: true
+      acknowledge-mode: auto
+      concurrency: 1
+      max-concurrency: 1
+    template:
+      default-destination: trainer.workload.queue
+      delivery-mode: non_persistent
+      time-to-live: 36000
+
+  # H2 Console
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
 
 eureka:
   client:
@@ -30,8 +55,23 @@ workload:
   service:
     url: http://localhost:8082
 
+# Logging
 logging:
   level:
     root: WARN
     com.epam.gym: INFO
     org.springframework.jms: INFO
+    org.apache.activemq: INFO
+    org.springframework.test: INFO
+
+# Server configuration
+server:
+  port: 0
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Management
+management:
+  endpoints:
+    enabled-by-default: false
