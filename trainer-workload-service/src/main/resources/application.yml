@@ -2,9 +2,6 @@ spring:
   application:
     name: trainer-workload-service
 
-  profiles:
-    active: local
-
   activemq:
     broker-url: ${ACTIVEMQ_BROKER_URL:tcp://localhost:61616}
     user: ${ACTIVEMQ_USER:admin}

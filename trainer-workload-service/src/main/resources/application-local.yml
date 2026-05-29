@@ -8,12 +8,20 @@ spring:
     user: admin
     password: admin
 
+  #shu uchadi keyingisi yonadi
+  #data:
+   # mongodb:
+    #  host: 10.77.130.151
+     # port: 27017
+      #database: admin
+      #username: admin
+      #password: admin123
   data:
     mongodb:
-      host: localhost
-      port: 27017
-      database: workloaddb
-      auto-index-creation: true
+     host: localhost
+     port: 27017
+     database: workloaddb
+     auto-index-creation: true
 
 logging:
   level:

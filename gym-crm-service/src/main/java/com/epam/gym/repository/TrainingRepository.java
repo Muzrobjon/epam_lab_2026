@@ -33,4 +33,11 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate
     );
+    @Query("SELECT COUNT(t) > 0 FROM Training t " +
+            "WHERE t.trainer.id = :trainerId " +
+            "AND t.trainingDate = :date")
+    boolean existsByTrainerAndDate(
+            @Param("trainerId") Long trainerId,
+            @Param("date") LocalDate date
+    );
 }

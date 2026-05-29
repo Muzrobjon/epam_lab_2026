@@ -1,0 +1,1225 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for com.epam:epam_lab_2026_hibernate:jar:1.0.0
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.springframework.cloud:spring-cloud-starter-openfeign:jar -> duplicate declaration of version (?) @ line 219, column 21
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: com.h2database:h2:jar -> duplicate declaration of version (?) @ line 261, column 21
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] 
+[INFO] ------------------< com.epam:epam_lab_2026_hibernate >------------------
+[INFO] Building Gym CRM System 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ epam_lab_2026_hibernate ---
+[INFO] Copying 5 resources from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ epam_lab_2026_hibernate ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ epam_lab_2026_hibernate ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ epam_lab_2026_hibernate ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ epam_lab_2026_hibernate ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.epam.gym.integration.InfraIntegrationTest
+16:53:37.712 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.epam.gym.integration.InfraIntegrationTest]: InfraIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+16:53:37.770 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.integration.InfraIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-05-21 16:53:38 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Starting InfraIntegrationTest using Java 21.0.1 with PID 18884 (started by Professional in C:\Users\Professional\Desktop\nosql\epam_lab_2026\gym-crm-service)
+2026-05-21 16:53:38 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- The following 1 profile is active: "stg"
+2026-05-21 16:53:41 [main] [] INFO  com.epam.gym.metrics.UserMetrics --- User metrics initialized
+2026-05-21 16:53:41 [main] [] INFO  c.epam.gym.metrics.TrainingMetrics --- Training metrics initialized
+2026-05-21 16:53:41 [main] [] INFO  c.e.gym.metrics.GymStatisticsMetrics --- Gym statistics metrics initialized
+2026-05-21 16:53:41 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Initializing training types...
+2026-05-21 16:53:41 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FITNESS
+2026-05-21 16:53:41 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: YOGA
+2026-05-21 16:53:41 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CARDIO
+2026-05-21 16:53:42 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: STRENGTH
+2026-05-21 16:53:42 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: PILATES
+2026-05-21 16:53:42 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CROSSFIT
+2026-05-21 16:53:42 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: ZUMBA
+2026-05-21 16:53:42 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FLEXIBILITY
+2026-05-21 16:53:42 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Training types initialization completed
+2026-05-21 16:53:42 [main] [] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration --- spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-21 16:53:43 [main] [] WARN  o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger --- Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Loaded the Bouncy Castle security provider at position: 14
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Using Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Temp Data Store
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Job Scheduler Store
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Persistence Adapter successfully started
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:1) is starting
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:1) started
+2026-05-21 16:53:43 [main] [] INFO  o.a.activemq.broker.BrokerService --- For help or more information please see: http://activemq.apache.org
+2026-05-21 16:53:43 [main] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost started
+2026-05-21 16:53:43 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Started InfraIntegrationTest in 5.678 seconds (process running for 6.467)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (C:\Users\Professional\.m2\repository\net\bytebuddy\byte-buddy-agent\1.15.11\byte-buddy-agent-1.15.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+2026-05-21 16:53:43 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:53:43 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test setup completed. Base URL: http://localhost:7945
+2026-05-21 16:53:43 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 1: Registering trainer
+2026-05-21 16:53:44 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 0e785e68-67a8-4f82-a040-3eecbe8a9ef4] Request: POST /api/trainers
+2026-05-21 16:53:44 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: John Trainer
+2026-05-21 16:53:44 [http-nio-auto-1-exec-1] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for John Trainer
+2026-05-21 16:53:44 [http-nio-auto-1-exec-1] [] INFO  com.epam.gym.service.UserService --- User created: John.Trainer
+2026-05-21 16:53:44 [http-nio-auto-1-exec-1] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 1 with username: John.Trainer
+2026-05-21 16:53:44 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: John.Trainer
+2026-05-21 16:53:44 [http-nio-auto-1-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 0e785e68-67a8-4f82-a040-3eecbe8a9ef4] Response: /api/trainers - Status: 201 - Duration: 508ms
+2026-05-21 16:53:44 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainer registered: username=John.Trainer, password=ltyWE38uQj
+2026-05-21 16:53:44 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 2: Registering trainee
+2026-05-21 16:53:44 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: e488aea3-ac8e-4f11-bbff-f5c8beca108c] Request: POST /api/trainees
+2026-05-21 16:53:44 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mike Student
+2026-05-21 16:53:44 [http-nio-auto-1-exec-2] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mike Student
+2026-05-21 16:53:44 [http-nio-auto-1-exec-2] [] INFO  com.epam.gym.service.UserService --- User created: Mike.Student
+2026-05-21 16:53:44 [http-nio-auto-1-exec-2] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 2 with username: Mike.Student
+2026-05-21 16:53:44 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mike.Student
+2026-05-21 16:53:44 [http-nio-auto-1-exec-2] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: e488aea3-ac8e-4f11-bbff-f5c8beca108c] Response: /api/trainees - Status: 201 - Duration: 431ms
+2026-05-21 16:53:44 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainee registered: username=Mike.Student, password=5%mvHEam$Q
+2026-05-21 16:53:44 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 3: Logging in as trainee
+2026-05-21 16:53:45 [http-nio-auto-1-exec-3] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 8e3cb64c-f725-4ec3-a421-9500bb076a90] Request: POST /api/auth/login
+2026-05-21 16:53:45 [http-nio-auto-1-exec-3] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Mike.Student
+2026-05-21 16:53:45 [http-nio-auto-1-exec-3] [] INFO  c.epam.gym.controller.AuthController --- User Mike.Student logged in successfully
+2026-05-21 16:53:45 [http-nio-auto-1-exec-3] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 8e3cb64c-f725-4ec3-a421-9500bb076a90] Response: /api/auth/login - Status: 200 - Duration: 488ms
+2026-05-21 16:53:45 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Login successful, JWT token obtained
+2026-05-21 16:53:45 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 4: Creating training session
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 0fe26cf5-92eb-4e40-b07e-ca4604bdabcf] Request: POST /api/trainings
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  c.e.g.controller.TrainingController --- Adding training: Integration Training for trainee: Mike.Student and trainer: John.Trainer
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Integration Training for trainee: Mike.Student and trainer: John.Trainer
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: John.Trainer
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  c.e.g.s.WorkloadMessageProducer --- [TransactionId: 0fe26cf5-92eb-4e40-b07e-ca4604bdabcf] Workload message sent to queue 'trainer.workload.queue': trainer=John.Trainer, action=ADD
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 1
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  c.e.g.controller.TrainingController --- Training created successfully: Integration Training
+2026-05-21 16:53:45 [http-nio-auto-1-exec-5] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 0fe26cf5-92eb-4e40-b07e-ca4604bdabcf] Response: /api/trainings - Status: 200 - Duration: 50ms
+2026-05-21 16:53:45 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Training session created successfully
+2026-05-21 16:53:45 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Step 5: Waiting for JMS message processing
+2026-05-21 16:53:45 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Received workload message: trainer=John.Trainer, action=ADD, duration=60
+2026-05-21 16:53:45 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Added 60 minutes to trainer John.Trainer. New total: 60
+2026-05-21 16:53:45 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Successfully added 60 minutes to trainer John.Trainer
+2026-05-21 16:53:49 [awaitility-thread] [] INFO  c.e.g.i.InfraIntegrationTest --- Current workload for trainer John.Trainer: 60
+2026-05-21 16:53:49 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test completed successfully - workload updated to 60 minutes
+2026-05-21 16:53:49 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost stopped
+2026-05-21 16:53:49 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:1) is shutting down
+2026-05-21 16:53:49 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:1) uptime 6.241 seconds
+2026-05-21 16:53:49 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:1) is shutdown
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-05-21 16:53:49 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Starting InfraIntegrationTest using Java 21.0.1 with PID 18884 (started by Professional in C:\Users\Professional\Desktop\nosql\epam_lab_2026\gym-crm-service)
+2026-05-21 16:53:49 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- The following 1 profile is active: "stg"
+2026-05-21 16:53:50 [main] [] INFO  com.epam.gym.metrics.UserMetrics --- User metrics initialized
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.metrics.TrainingMetrics --- Training metrics initialized
+2026-05-21 16:53:50 [main] [] INFO  c.e.gym.metrics.GymStatisticsMetrics --- Gym statistics metrics initialized
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Initializing training types...
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FITNESS
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: YOGA
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CARDIO
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: STRENGTH
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: PILATES
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CROSSFIT
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: ZUMBA
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FLEXIBILITY
+2026-05-21 16:53:50 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Training types initialization completed
+2026-05-21 16:53:50 [main] [] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration --- spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-21 16:53:51 [main] [] WARN  o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger --- Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- Using Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Temp Data Store
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Job Scheduler Store
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- Persistence Adapter successfully started
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:2) is starting
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:2) started
+2026-05-21 16:53:51 [main] [] INFO  o.a.activemq.broker.BrokerService --- For help or more information please see: http://activemq.apache.org
+2026-05-21 16:53:51 [main] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost started
+2026-05-21 16:53:51 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Started InfraIntegrationTest in 1.442 seconds (process running for 13.961)
+2026-05-21 16:53:51 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:53:51 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test setup completed. Base URL: http://localhost:7952
+2026-05-21 16:53:51 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 1: Registering trainer
+2026-05-21 16:53:51 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: bc29f0ce-8d99-4f0a-8092-f36502ba94a1] Request: POST /api/trainers
+2026-05-21 16:53:51 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: Jane Coach
+2026-05-21 16:53:51 [http-nio-auto-2-exec-1] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for Jane Coach
+2026-05-21 16:53:51 [http-nio-auto-2-exec-1] [] INFO  com.epam.gym.service.UserService --- User created: Jane.Coach
+2026-05-21 16:53:51 [http-nio-auto-2-exec-1] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 1 with username: Jane.Coach
+2026-05-21 16:53:51 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: Jane.Coach
+2026-05-21 16:53:51 [http-nio-auto-2-exec-1] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: bc29f0ce-8d99-4f0a-8092-f36502ba94a1] Response: /api/trainers - Status: 201 - Duration: 435ms
+2026-05-21 16:53:51 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainer registered: Jane.Coach
+2026-05-21 16:53:51 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 2: Registering trainee
+2026-05-21 16:53:51 [http-nio-auto-2-exec-6] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: ed2d2c04-2b9c-4cec-9957-692964c4246e] Request: POST /api/trainees
+2026-05-21 16:53:51 [http-nio-auto-2-exec-6] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Alex Runner
+2026-05-21 16:53:51 [http-nio-auto-2-exec-6] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Alex Runner
+2026-05-21 16:53:51 [http-nio-auto-2-exec-6] [] INFO  com.epam.gym.service.UserService --- User created: Alex.Runner
+2026-05-21 16:53:52 [http-nio-auto-2-exec-6] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 2 with username: Alex.Runner
+2026-05-21 16:53:52 [http-nio-auto-2-exec-6] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Alex.Runner
+2026-05-21 16:53:52 [http-nio-auto-2-exec-6] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: ed2d2c04-2b9c-4cec-9957-692964c4246e] Response: /api/trainees - Status: 201 - Duration: 415ms
+2026-05-21 16:53:52 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Trainee registered: Alex.Runner
+2026-05-21 16:53:52 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 3: Logging in
+2026-05-21 16:53:52 [http-nio-auto-2-exec-4] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 176ff7f4-08f8-4979-b41c-c5e563670c92] Request: POST /api/auth/login
+2026-05-21 16:53:52 [http-nio-auto-2-exec-4] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Alex.Runner
+2026-05-21 16:53:52 [http-nio-auto-2-exec-4] [] INFO  c.epam.gym.controller.AuthController --- User Alex.Runner logged in successfully
+2026-05-21 16:53:52 [http-nio-auto-2-exec-4] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 176ff7f4-08f8-4979-b41c-c5e563670c92] Response: /api/auth/login - Status: 200 - Duration: 406ms
+2026-05-21 16:53:52 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 4: Creating first training
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 7cd87c13-d93d-4202-82de-714230d94aed] Request: POST /api/trainings
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  c.e.g.controller.TrainingController --- Adding training: Morning Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Morning Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: Jane.Coach
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  c.e.g.s.WorkloadMessageProducer --- [TransactionId: 7cd87c13-d93d-4202-82de-714230d94aed] Workload message sent to queue 'trainer.workload.queue': trainer=Jane.Coach, action=ADD
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 1
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  c.e.g.controller.TrainingController --- Training created successfully: Morning Session
+2026-05-21 16:53:52 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Received workload message: trainer=Jane.Coach, action=ADD, duration=60
+2026-05-21 16:53:52 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Added 60 minutes to trainer Jane.Coach. New total: 60
+2026-05-21 16:53:52 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Successfully added 60 minutes to trainer Jane.Coach
+2026-05-21 16:53:52 [http-nio-auto-2-exec-2] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 7cd87c13-d93d-4202-82de-714230d94aed] Response: /api/trainings - Status: 200 - Duration: 34ms
+2026-05-21 16:53:52 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- First training created
+2026-05-21 16:53:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 5: Creating second training
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: e8063d8b-dcfc-4603-aeca-b9761a6d6904] Request: POST /api/trainings
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  c.e.g.controller.TrainingController --- Adding training: Evening Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Evening Session for trainee: Alex.Runner and trainer: Jane.Coach
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: Jane.Coach
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  c.e.g.s.WorkloadMessageProducer --- [TransactionId: e8063d8b-dcfc-4603-aeca-b9761a6d6904] Workload message sent to queue 'trainer.workload.queue': trainer=Jane.Coach, action=ADD
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 2
+2026-05-21 16:53:54 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Received workload message: trainer=Jane.Coach, action=ADD, duration=60
+2026-05-21 16:53:54 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Added 60 minutes to trainer Jane.Coach. New total: 120
+2026-05-21 16:53:54 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Successfully added 60 minutes to trainer Jane.Coach
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  c.e.g.controller.TrainingController --- Training created successfully: Evening Session
+2026-05-21 16:53:54 [http-nio-auto-2-exec-10] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: e8063d8b-dcfc-4603-aeca-b9761a6d6904] Response: /api/trainings - Status: 200 - Duration: 14ms
+2026-05-21 16:53:54 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Second training created
+2026-05-21 16:53:57 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Test 2 - Step 6: Verifying workload
+2026-05-21 16:53:58 [awaitility-thread] [] INFO  c.e.g.i.InfraIntegrationTest --- Total workload for trainer Jane.Coach: 120
+2026-05-21 16:53:58 [main] [] INFO  c.e.g.i.InfraIntegrationTest --- Multiple trainings test completed - total workload: 120 minutes
+2026-05-21 16:53:58 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost stopped
+2026-05-21 16:53:58 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:2) is shutting down
+2026-05-21 16:53:58 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:2) uptime 7.356 seconds
+2026-05-21 16:53:58 [org.springframework.jms.JmsListenerEndpointContainer#0-3] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:2) is shutdown
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.89 s -- in com.epam.gym.integration.InfraIntegrationTest
+[INFO] Running com.epam.gym.repository.TraineeRepositoryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.epam.gym.repository.TraineeRepositoryTest
+[INFO] Running com.epam.gym.repository.TrainerRepositoryTest
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainerRepositoryTest]: TrainerRepositoryTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+[INFO] Running com.epam.gym.repository.TrainerRepositoryTest$JpaRepositoryStandardMethodsTests
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainerRepositoryTest$JpaRepositoryStandardMethodsTests]: JpaRepositoryStandardMethodsTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-05-21 16:53:58 [main] [] INFO  c.e.g.r.TrainerRepositoryTest --- Starting TrainerRepositoryTest using Java 21.0.1 with PID 18884 (started by Professional in C:\Users\Professional\Desktop\nosql\epam_lab_2026\gym-crm-service)
+2026-05-21 16:53:58 [main] [] INFO  c.e.g.r.TrainerRepositoryTest --- The following 1 profile is active: "test"
+2026-05-21 16:53:58 [main] [] INFO  o.s.d.r.c.RepositoryConfigurationDelegate --- Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-21 16:53:58 [main] [] INFO  o.s.d.r.c.RepositoryConfigurationDelegate --- Finished Spring Data repository scanning in 8 ms. Found 5 JPA repository interfaces.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.a.j.TestDatabaseAutoConfiguration$EmbeddedDataSourceBeanFactoryPostProcessor --- Replacing 'dataSource' DataSource bean with embedded version
+2026-05-21 16:53:58 [main] [] INFO  o.s.j.d.e.EmbeddedDatabaseFactory --- Starting embedded database: url='jdbc:h2:mem:42b9e540-53b5-4123-8d3a-348ce8535b89;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false', username='sa'
+2026-05-21 16:53:58 [main] [] INFO  o.h.jpa.internal.util.LogHelper --- HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-21 16:53:58 [main] [] INFO  o.h.c.i.RegionFactoryInitiator --- HHH000026: Second-level cache disabled
+2026-05-21 16:53:58 [main] [] INFO  o.s.o.j.p.SpringPersistenceUnitInfo --- No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-21 16:53:58 [main] [] INFO  o.hibernate.orm.connections.pooling --- HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory$EmbeddedDataSourceProxy@2b778ea8']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-21 16:53:58 [main] [] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator --- HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: drop table if exists trainee_trainer cascade 
+Hibernate: drop table if exists trainees cascade 
+Hibernate: drop table if exists trainers cascade 
+Hibernate: drop table if exists training_types cascade 
+Hibernate: drop table if exists trainings cascade 
+Hibernate: drop table if exists users cascade 
+Hibernate: create table trainee_trainer (trainee_id bigint not null, trainer_id bigint not null)
+Hibernate: create table trainees (date_of_birth date, id bigint not null, address varchar(255), primary key (id))
+Hibernate: create table trainers (id bigint not null, specialization_id bigint not null, primary key (id))
+Hibernate: create table training_types (id bigint generated by default as identity, training_type_name enum ('CARDIO','CROSSFIT','FITNESS','FLEXIBILITY','PILATES','STRENGTH','YOGA','ZUMBA') not null unique, primary key (id))
+Hibernate: create table trainings (training_date date not null, training_duration_minutes integer not null, id bigint generated by default as identity, trainee_id bigint not null, trainer_id bigint not null, training_type_id bigint not null, training_name varchar(255) not null, primary key (id))
+Hibernate: create table users (is_active boolean not null, id bigint generated by default as identity, first_name varchar(255) not null, last_name varchar(255) not null, password varchar(255) not null, username varchar(255) not null unique, primary key (id))
+Hibernate: alter table if exists trainee_trainer add constraint FKsis342w57b177o84peanydlrp foreign key (trainer_id) references trainers
+Hibernate: alter table if exists trainee_trainer add constraint FK27f1le516f824l8owvnc4mvs1 foreign key (trainee_id) references trainees
+Hibernate: alter table if exists trainees add constraint FKmmcvdm376irbqxxp23un1f1sb foreign key (id) references users
+Hibernate: alter table if exists trainers add constraint FK7cbp7k5ur2e10a5nj424nu1tv foreign key (specialization_id) references training_types
+Hibernate: alter table if exists trainers add constraint FKfuw99amb6fcrji1245ooioikb foreign key (id) references users
+Hibernate: alter table if exists trainings add constraint FK4btmw0yu4tbogiw8qi0ewba74 foreign key (trainee_id) references trainees
+Hibernate: alter table if exists trainings add constraint FKbqwj5wievnuonuxv60wg6rr48 foreign key (trainer_id) references trainers
+Hibernate: alter table if exists trainings add constraint FKovn6ewpej7cxhjx55tovddhnj foreign key (training_type_id) references training_types
+2026-05-21 16:53:58 [main] [] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean --- Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-21 16:53:58 [main] [] INFO  c.e.g.r.TrainerRepositoryTest --- Started TrainerRepositoryTest in 0.143 seconds (process running for 21.49)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select count(*) from trainers t1_0
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select count(*) from trainers t1_0 where t1_0.id=?
+Hibernate: select count(*) from trainers t1_0 where t1_0.id=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id from trainers t1_0 where t1_0.id=?
+Hibernate: select u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from users u1_0 where u1_0.id=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: delete from trainers where id=?
+Hibernate: delete from users where id=?
+Hibernate: select t1_0.id,t1_0.specialization_id from trainers t1_0 where t1_0.id=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id from trainers t1_0
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.201 s -- in com.epam.gym.repository.TrainerRepositoryTest$JpaRepositoryStandardMethodsTests
+[INFO] Running com.epam.gym.repository.TrainerRepositoryTest$FindAvailableTrainersTests
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainerRepositoryTest$FindAvailableTrainersTests]: FindAvailableTrainersTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.repository.TrainerRepositoryTest$FindAvailableTrainersTests
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainee_trainer (trainee_id,trainer_id) values (?,?)
+Hibernate: insert into trainee_trainer (trainee_id,trainer_id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainee_trainer (trainee_id,trainer_id) values (?,?)
+Hibernate: insert into trainee_trainer (trainee_id,trainer_id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainee_trainer (trainee_id,trainer_id) values (?,?)
+Hibernate: insert into trainee_trainer (trainee_id,trainer_id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username from trainers t1_0 join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u1_0 on u1_0.id=t1_0.id where t1_0.id not in (select t3_0.trainer_id from trainees t2_0 join trainee_trainer t3_0 on t2_0.id=t3_0.trainee_id join users u2_0 on u2_0.id=t2_0.id where u2_0.username=?) and u1_0.is_active=true
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.067 s -- in com.epam.gym.repository.TrainerRepositoryTest$FindAvailableTrainersTests
+[INFO] Running com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameInTests
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameInTests]: FindByUserUsernameInTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameInTests
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username in (?,?)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username in (?)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where 1=0
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username in (?,?)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username in (?,?)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username in (?,?)
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.032 s -- in com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameInTests
+[INFO] Running com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameTests
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameTests]: FindByUserUsernameTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameTests
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 left join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username=?
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 left join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 left join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 left join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: select t1_0.id,t1_0.specialization_id,s1_0.id,s1_0.training_type_name,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username from trainers t1_0 left join users u1_0 on u1_0.id=t1_0.id join training_types s1_0 on s1_0.id=t1_0.specialization_id join users u2_0 on u2_0.id=t1_0.id where u1_0.username=?
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s -- in com.epam.gym.repository.TrainerRepositoryTest$FindByUserUsernameTests
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.334 s -- in com.epam.gym.repository.TrainerRepositoryTest
+[INFO] Running com.epam.gym.repository.TrainingRepositoryTest
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainingRepositoryTest]: TrainingRepositoryTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.repository.TrainingRepositoryTest
+[INFO] Running com.epam.gym.repository.TrainingRepositoryTest$EdgeCasesTests
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainingRepositoryTest$EdgeCasesTests]: EdgeCasesTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.repository.TrainingRepositoryTest$EdgeCasesTests
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.043 s -- in com.epam.gym.repository.TrainingRepositoryTest$EdgeCasesTests
+[INFO] Running com.epam.gym.repository.TrainingRepositoryTest$JpaRepositoryStandardMethodsTests
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainingRepositoryTest$JpaRepositoryStandardMethodsTests]: JpaRepositoryStandardMethodsTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.repository.TrainingRepositoryTest$JpaRepositoryStandardMethodsTests
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: delete from trainings where id=?
+Hibernate: select t1_0.id,t1_0.trainee_id,t1_0.trainer_id,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id from trainings t1_0 where t1_0.id=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t1_0.trainer_id,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id from trainings t1_0
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t1_0.trainer_id,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id from trainings t1_0 where t1_0.id=?
+Hibernate: update trainings set trainee_id=?,trainer_id=?,training_date=?,training_duration_minutes=?,training_name=?,training_type_id=? where id=?
+Hibernate: select t1_0.id,t1_0.trainee_id,t1_0.trainer_id,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id from trainings t1_0 where t1_0.id=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t1_0.trainer_id,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id from trainings t1_0 where t1_0.id=?
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select count(*) from trainings t1_0
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select count(*) from trainings t1_0 where t1_0.id=?
+Hibernate: select count(*) from trainings t1_0 where t1_0.id=?
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.036 s -- in com.epam.gym.repository.TrainingRepositoryTest$JpaRepositoryStandardMethodsTests
+[INFO] Running com.epam.gym.repository.TrainingRepositoryTest$FindTrainingsWithAllUsersTests
+2026-05-21 16:53:58 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.repository.TrainingRepositoryTest$FindTrainingsWithAllUsersTests]: FindTrainingsWithAllUsersTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:53:58 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.repository.TrainingRepositoryTest$FindTrainingsWithAllUsersTests
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into training_types (training_type_name,id) values (?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into trainees (address,date_of_birth,id) values (?,?,?)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into users (first_name,is_active,last_name,password,username,id) values (?,?,?,?,?,default)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainers (specialization_id,id) values (?,?)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: insert into trainings (trainee_id,trainer_id,training_date,training_duration_minutes,training_name,training_type_id,id) values (?,?,?,?,?,?,default)
+Hibernate: select t1_0.id,t1_0.trainee_id,t2_0.id,t2_0.address,t2_0.date_of_birth,u1_0.id,u1_0.first_name,u1_0.is_active,u1_0.last_name,u1_0.password,u1_0.username,t1_0.trainer_id,t3_0.id,t3_0.specialization_id,u2_0.id,u2_0.first_name,u2_0.is_active,u2_0.last_name,u2_0.password,u2_0.username,t1_0.training_date,t1_0.training_duration_minutes,t1_0.training_name,t1_0.training_type_id,tt1_0.id,tt1_0.training_type_name from trainings t1_0 join trainees t2_0 on t2_0.id=t1_0.trainee_id join users u1_0 on u1_0.id=t2_0.id join trainers t3_0 on t3_0.id=t1_0.trainer_id join users u2_0 on u2_0.id=t3_0.id join training_types tt1_0 on tt1_0.id=t1_0.training_type_id where (? is null or u1_0.username=?) and (? is null or u2_0.username=?) and t1_0.training_date>=coalesce(?,t1_0.training_date) and t1_0.training_date<=coalesce(?,t1_0.training_date)
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.097 s -- in com.epam.gym.repository.TrainingRepositoryTest$FindTrainingsWithAllUsersTests
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.181 s -- in com.epam.gym.repository.TrainingRepositoryTest
+[INFO] Running com.epam.gym.repository.TrainingSpecificationTest
+[INFO] Tests run: 23, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.epam.gym.repository.TrainingSpecificationTest
+[INFO] Running com.epam.gym.repository.TrainingTypeRepositoryTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.epam.gym.repository.TrainingTypeRepositoryTest
+[INFO] Running com.epam.gym.repository.UserRepositoryTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.epam.gym.repository.UserRepositoryTest
+[INFO] Running com.epam.gym.service.PasswordGeneratorTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.epam.gym.service.PasswordGeneratorTest
+[INFO] Running com.epam.gym.service.TraineeServiceTest
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Deleting trainee profile: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee profile deleted: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for John Doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for John Doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 1 with username: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Updating trainers list for trainee: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainers list updated for trainee: john.doe with 0 trainers
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Updating trainers list for trainee: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainers list updated for trainee: john.doe with 2 trainers
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Updating trainee profile: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee profile updated: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Updating trainee profile: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Deleting trainee profile: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Updating trainee profile: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee profile updated: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Updating trainers list for trainee: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Deleting trainee profile: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee profile deleted: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TraineeService --- Updating trainers list for trainee: john.doe
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.506 s -- in com.epam.gym.service.TraineeServiceTest
+[INFO] Running com.epam.gym.service.TrainerServiceTest
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for Jane Smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching unassigned trainers for trainee: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for Jane Smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 1 with username: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching unassigned trainers for trainee: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Updating trainer profile: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Updating trainer profile: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Trainer profile updated: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: unknown
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for Jane Smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching unassigned trainers for trainee: john.doe
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Updating trainer profile: jane.smith
+2026-05-21 16:53:59 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: jane.smith
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.081 s -- in com.epam.gym.service.TrainerServiceTest
+[INFO] Running com.epam.gym.service.TrainingServiceTest
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 1 trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 1 trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 2 trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 1 trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 1 trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 1 trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 0 trainings for trainee: jane.doe
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 1 trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Found 1 trainings for trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Morning Workout for trainee: jane.doe and trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 100
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Morning Workout for trainee: jane.doe and trainer: john.trainer
+2026-05-21 16:53:59 [main] [] INFO  c.epam.gym.service.TrainingService --- Fetching all training types
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.312 s -- in com.epam.gym.service.TrainingServiceTest
+[INFO] Running com.epam.gym.service.UserServiceTest
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Changing password for user: john.doe
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Changing password for user: john.doe
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Setting active status for user: john.doe to false
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- User john.doe active status set to: false
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Setting active status for user: john.doe to true
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Changing password for user: john.doe
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Changing password for user: john.doe
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Password changed for user: john.doe
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- User created: john.doe
+2026-05-21 16:54:00 [main] [] INFO  com.epam.gym.service.UserService --- Setting active status for user: john.doe to true
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.210 s -- in com.epam.gym.service.UserServiceTest
+[INFO] Running com.epam.gym.RunCucumberTest
+2026-05-21 16:54:00 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.CucumberSpringConfiguration]: CucumberSpringConfiguration does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-21 16:54:00 [main] [] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper --- Found @SpringBootConfiguration com.epam.gym.GymCrmServiceApplication for test class com.epam.gym.CucumberSpringConfiguration
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-05-21 16:54:00 [main] [] INFO  c.e.gym.CucumberSpringConfiguration --- Starting CucumberSpringConfiguration using Java 21.0.1 with PID 18884 (started by Professional in C:\Users\Professional\Desktop\nosql\epam_lab_2026\gym-crm-service)
+2026-05-21 16:54:00 [main] [] INFO  c.e.gym.CucumberSpringConfiguration --- The following 1 profile is active: "stg"
+2026-05-21 16:54:01 [main] [] INFO  com.epam.gym.metrics.UserMetrics --- User metrics initialized
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.metrics.TrainingMetrics --- Training metrics initialized
+2026-05-21 16:54:01 [main] [] INFO  c.e.gym.metrics.GymStatisticsMetrics --- Gym statistics metrics initialized
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Initializing training types...
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FITNESS
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: YOGA
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CARDIO
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: STRENGTH
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: PILATES
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: CROSSFIT
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: ZUMBA
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Created training type: FLEXIBILITY
+2026-05-21 16:54:01 [main] [] INFO  c.epam.gym.storage.DataInitializer --- Training types initialization completed
+2026-05-21 16:54:01 [main] [] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration --- spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-21 16:54:02 [main] [] INFO  o.s.t.w.s.TestDispatcherServlet --- Initializing Servlet ''
+2026-05-21 16:54:02 [main] [] INFO  o.s.t.w.s.TestDispatcherServlet --- Completed initialization in 1 ms
+2026-05-21 16:54:02 [main] [] WARN  o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger --- Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- Using Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Persistence Adapter: MemoryPersistenceAdapter
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Temp Data Store
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- Starting Job Scheduler Store
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- Persistence Adapter successfully started
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:3) is starting
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- Apache ActiveMQ 6.1.6 (localhost, ID:User-PC-7946-1779364423499-0:3) started
+2026-05-21 16:54:02 [main] [] INFO  o.a.activemq.broker.BrokerService --- For help or more information please see: http://activemq.apache.org
+2026-05-21 16:54:02 [main] [] INFO  o.a.a.broker.TransportConnector --- Connector vm://localhost started
+2026-05-21 16:54:02 [main] [] INFO  c.e.gym.CucumberSpringConfiguration --- Started CucumberSpringConfiguration in 2.064 seconds (process running for 25.396)
+
+@training @positive @negative @workload
+Scenario: Creating training with non-existing trainer     # features/training_workload.feature:31
+2026-05-21 16:54:02 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:02 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads before scenario
+2026-05-21 16:54:02 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 47c57418-1cc9-48e0-bc3f-552f5ff6dda1] Request: POST /api/trainees
+2026-05-21 16:54:02 [main] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mike19046 Student
+2026-05-21 16:54:02 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mike19046 Student
+2026-05-21 16:54:02 [main] [] INFO  com.epam.gym.service.UserService --- User created: Mike19046.Student
+2026-05-21 16:54:03 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 1 with username: Mike19046.Student
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mike19046.Student
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 47c57418-1cc9-48e0-bc3f-552f5ff6dda1] Response: /api/trainees - Status: 201 - Duration: 421ms
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainee with username: Mike19046.Student
+  Given a trainee exists                                  # com.epam.gym.steps.TrainingIntegrationSteps.aTraineeExists()
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: d4205587-7448-4f90-842b-ccc794c3f9ed] Request: POST /api/auth/login
+2026-05-21 16:54:03 [main] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Mike19046.Student
+2026-05-21 16:54:03 [main] [] INFO  c.epam.gym.controller.AuthController --- User Mike19046.Student logged in successfully
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: d4205587-7448-4f90-842b-ccc794c3f9ed] Response: /api/auth/login - Status: 200 - Duration: 402ms
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Trainee Mike19046.Student authenticated successfully
+  And trainee is authenticated                            # com.epam.gym.steps.TrainingIntegrationSteps.traineeIsAuthenticated()
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 43a9e553-87c4-409b-b847-8d7cb5a8c963] Request: POST /api/trainings
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.controller.TrainingController --- Adding training: Integration Training for trainee: Mike19046.Student and trainer: non.existing.trainer
+2026-05-21 16:54:03 [main] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Integration Training for trainee: Mike19046.Student and trainer: non.existing.trainer
+2026-05-21 16:54:03 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: non.existing.trainer
+2026-05-21 16:54:03 [main] [] ERROR c.e.g.e.GlobalExceptionHandler --- [TransactionId: 43a9e553-87c4-409b-b847-8d7cb5a8c963] NotFoundException: Trainer not found: non.existing.trainer
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 43a9e553-87c4-409b-b847-8d7cb5a8c963] Response: /api/trainings - Status: 404 - Duration: 14ms
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation request completed with status: 404
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation with non-existing trainer completed with status: 404
+  When trainee creates training with non existing trainer # com.epam.gym.steps.TrainingIntegrationSteps.traineeCreatesTrainingWithNonExistingTrainer()
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Request failed as expected with status: 404
+  Then request should fail with status 404                # com.epam.gym.steps.TrainingIntegrationSteps.requestShouldFailWithStatus(int)
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads after scenario
+2026-05-21 16:54:03 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.CucumberSpringConfiguration]: CucumberSpringConfiguration does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+
+@training @positive @negative @workload
+Scenario: Training date cannot be in the past         # features/training_workload.feature:38
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads before scenario
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 82a1c611-5c6e-41a5-acd6-5e741590d649] Request: POST /api/trainers
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: John3e6cc Trainer
+2026-05-21 16:54:03 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for John3e6cc Trainer
+2026-05-21 16:54:03 [main] [] INFO  com.epam.gym.service.UserService --- User created: John3e6cc.Trainer
+2026-05-21 16:54:03 [main] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 2 with username: John3e6cc.Trainer
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: John3e6cc.Trainer
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 82a1c611-5c6e-41a5-acd6-5e741590d649] Response: /api/trainers - Status: 201 - Duration: 408ms
+2026-05-21 16:54:03 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainer with username: John3e6cc.Trainer
+  Given a trainer exists                              # com.epam.gym.steps.TrainingIntegrationSteps.aTrainerExists()
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 6535d7a6-16fd-473c-b0a6-9bd3549cc236] Request: POST /api/trainees
+2026-05-21 16:54:03 [main] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mikea3d8f Student
+2026-05-21 16:54:03 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mikea3d8f Student
+2026-05-21 16:54:04 [main] [] INFO  com.epam.gym.service.UserService --- User created: Mikea3d8f.Student
+2026-05-21 16:54:04 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 3 with username: Mikea3d8f.Student
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mikea3d8f.Student
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 6535d7a6-16fd-473c-b0a6-9bd3549cc236] Response: /api/trainees - Status: 201 - Duration: 407ms
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainee with username: Mikea3d8f.Student
+  And a trainee exists                                # com.epam.gym.steps.TrainingIntegrationSteps.aTraineeExists()
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: ae004b9e-96c7-427e-af38-20c8f725093b] Request: POST /api/auth/login
+2026-05-21 16:54:04 [main] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Mikea3d8f.Student
+2026-05-21 16:54:04 [main] [] INFO  c.epam.gym.controller.AuthController --- User Mikea3d8f.Student logged in successfully
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: ae004b9e-96c7-427e-af38-20c8f725093b] Response: /api/auth/login - Status: 200 - Duration: 205ms
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Trainee Mikea3d8f.Student authenticated successfully
+  And trainee is authenticated                        # com.epam.gym.steps.TrainingIntegrationSteps.traineeIsAuthenticated()
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 94e4143f-0e5c-48ef-96e7-1044e11202d2] Request: POST /api/trainings
+2026-05-21 16:54:04 [main] [] ERROR c.e.g.e.GlobalExceptionHandler --- [TransactionId: 94e4143f-0e5c-48ef-96e7-1044e11202d2] Validation failed: Training date must be today or in the future
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 94e4143f-0e5c-48ef-96e7-1044e11202d2] Response: /api/trainings - Status: 400 - Duration: 4ms
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation request completed with status: 400
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation with past date completed with status: 400
+  When trainee creates training with date in the past # com.epam.gym.steps.TrainingIntegrationSteps.traineeCreatesTrainingWithDateInThePast()
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Request failed as expected with status: 400
+  Then request should fail with status 400            # com.epam.gym.steps.TrainingIntegrationSteps.requestShouldFailWithStatus(int)
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads after scenario
+2026-05-21 16:54:04 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.CucumberSpringConfiguration]: CucumberSpringConfiguration does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+
+@training @positive @negative @nfr @auth @workload
+Scenario: Unauthenticated trainee cannot create training # features/training_workload.feature:46
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads before scenario
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 16beb030-52c8-4bde-aa1a-1dd6dadc9c7f] Request: POST /api/trainers
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: Johnef129 Trainer
+2026-05-21 16:54:04 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for Johnef129 Trainer
+2026-05-21 16:54:04 [main] [] INFO  com.epam.gym.service.UserService --- User created: Johnef129.Trainer
+2026-05-21 16:54:04 [main] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 4 with username: Johnef129.Trainer
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: Johnef129.Trainer
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 16beb030-52c8-4bde-aa1a-1dd6dadc9c7f] Response: /api/trainers - Status: 201 - Duration: 411ms
+2026-05-21 16:54:04 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainer with username: Johnef129.Trainer
+  Given a trainer exists                                 # com.epam.gym.steps.TrainingIntegrationSteps.aTrainerExists()
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: a335ef1f-4e4f-43be-b210-4e2e014808ff] Request: POST /api/trainees
+2026-05-21 16:54:04 [main] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mikebf390 Student
+2026-05-21 16:54:04 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mikebf390 Student
+2026-05-21 16:54:05 [main] [] INFO  com.epam.gym.service.UserService --- User created: Mikebf390.Student
+2026-05-21 16:54:05 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 5 with username: Mikebf390.Student
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mikebf390.Student
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: a335ef1f-4e4f-43be-b210-4e2e014808ff] Response: /api/trainees - Status: 201 - Duration: 403ms
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainee with username: Mikebf390.Student
+  And a trainee exists                                   # com.epam.gym.steps.TrainingIntegrationSteps.aTraineeExists()
+2026-05-21 16:54:05 [main] [] ERROR c.e.g.s.JwtAuthenticationEntryPoint --- Unauthorized error: Full authentication is required to access this resource
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation request completed with status: 401
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation without auth completed with status: 401
+  When trainee creates training without authentication   # com.epam.gym.steps.TrainingIntegrationSteps.traineeCreatesTrainingWithoutAuthentication()
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Request failed as expected with status: 401
+  Then request should fail with status 401               # com.epam.gym.steps.TrainingIntegrationSteps.requestShouldFailWithStatus(int)
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads after scenario
+2026-05-21 16:54:05 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.CucumberSpringConfiguration]: CucumberSpringConfiguration does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+
+@training @positive @negative @workload
+Scenario: Training with zero duration is rejected  # features/training_workload.feature:53
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads before scenario
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 698235bd-e6e3-41fd-9f14-8fd6f9cd724b] Request: POST /api/trainers
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: Johna01b8 Trainer
+2026-05-21 16:54:05 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for Johna01b8 Trainer
+2026-05-21 16:54:05 [main] [] INFO  com.epam.gym.service.UserService --- User created: Johna01b8.Trainer
+2026-05-21 16:54:05 [main] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 6 with username: Johna01b8.Trainer
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: Johna01b8.Trainer
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 698235bd-e6e3-41fd-9f14-8fd6f9cd724b] Response: /api/trainers - Status: 201 - Duration: 416ms
+2026-05-21 16:54:05 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainer with username: Johna01b8.Trainer
+  Given a trainer exists                           # com.epam.gym.steps.TrainingIntegrationSteps.aTrainerExists()
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 34e73e62-6057-46d0-bd87-aabcd3963d4d] Request: POST /api/trainees
+2026-05-21 16:54:05 [main] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mikef6e7b Student
+2026-05-21 16:54:05 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mikef6e7b Student
+2026-05-21 16:54:06 [main] [] INFO  com.epam.gym.service.UserService --- User created: Mikef6e7b.Student
+2026-05-21 16:54:06 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 7 with username: Mikef6e7b.Student
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mikef6e7b.Student
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 34e73e62-6057-46d0-bd87-aabcd3963d4d] Response: /api/trainees - Status: 201 - Duration: 408ms
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainee with username: Mikef6e7b.Student
+  And a trainee exists                             # com.epam.gym.steps.TrainingIntegrationSteps.aTraineeExists()
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 03abf8e7-73e2-4967-a4ed-c9637d7552cb] Request: POST /api/auth/login
+2026-05-21 16:54:06 [main] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Mikef6e7b.Student
+2026-05-21 16:54:06 [main] [] INFO  c.epam.gym.controller.AuthController --- User Mikef6e7b.Student logged in successfully
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 03abf8e7-73e2-4967-a4ed-c9637d7552cb] Response: /api/auth/login - Status: 200 - Duration: 209ms
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Trainee Mikef6e7b.Student authenticated successfully
+  And trainee is authenticated                     # com.epam.gym.steps.TrainingIntegrationSteps.traineeIsAuthenticated()
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: c0553e73-bb93-4963-ad61-d68f82a0ae95] Request: POST /api/trainings
+2026-05-21 16:54:06 [main] [] ERROR c.e.g.e.GlobalExceptionHandler --- [TransactionId: c0553e73-bb93-4963-ad61-d68f82a0ae95] Validation failed: Training duration must be positive
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: c0553e73-bb93-4963-ad61-d68f82a0ae95] Response: /api/trainings - Status: 400 - Duration: 2ms
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation request completed with status: 400
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation with zero duration completed with status: 400
+  When trainee creates training with zero duration # com.epam.gym.steps.TrainingIntegrationSteps.traineeCreatesTrainingWithZeroDuration()
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Request failed as expected with status: 400
+  Then request should fail with status 400         # com.epam.gym.steps.TrainingIntegrationSteps.requestShouldFailWithStatus(int)
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads after scenario
+2026-05-21 16:54:06 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.CucumberSpringConfiguration]: CucumberSpringConfiguration does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+
+@training @positive @negative @workload @auth
+Scenario: Trainee cannot create training for another trainee's session # features/training_workload.feature:61
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads before scenario
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 235f0bd7-653b-4e67-8436-402ae0a3f459] Request: POST /api/trainers
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: John3c95e Trainer
+2026-05-21 16:54:06 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for John3c95e Trainer
+2026-05-21 16:54:06 [main] [] INFO  com.epam.gym.service.UserService --- User created: John3c95e.Trainer
+2026-05-21 16:54:06 [main] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 8 with username: John3c95e.Trainer
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: John3c95e.Trainer
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 235f0bd7-653b-4e67-8436-402ae0a3f459] Response: /api/trainers - Status: 201 - Duration: 400ms
+2026-05-21 16:54:06 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainer with username: John3c95e.Trainer
+  Given a trainer exists                                               # com.epam.gym.steps.TrainingIntegrationSteps.aTrainerExists()
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: a8b5cca3-f66f-417d-8597-dd281933246b] Request: POST /api/trainees
+2026-05-21 16:54:06 [main] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mike7c92d Student
+2026-05-21 16:54:06 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mike7c92d Student
+2026-05-21 16:54:07 [main] [] INFO  com.epam.gym.service.UserService --- User created: Mike7c92d.Student
+2026-05-21 16:54:07 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 9 with username: Mike7c92d.Student
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mike7c92d.Student
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: a8b5cca3-f66f-417d-8597-dd281933246b] Response: /api/trainees - Status: 201 - Duration: 403ms
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainee with username: Mike7c92d.Student
+  And a trainee exists                                                 # com.epam.gym.steps.TrainingIntegrationSteps.aTraineeExists()
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 33aa72f4-b733-49fe-8877-3ae0732177f6] Request: POST /api/trainees
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Other31913 Trainee
+2026-05-21 16:54:07 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Other31913 Trainee
+2026-05-21 16:54:07 [main] [] INFO  com.epam.gym.service.UserService --- User created: Other31913.Trainee
+2026-05-21 16:54:07 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 10 with username: Other31913.Trainee
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Other31913.Trainee
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 33aa72f4-b733-49fe-8877-3ae0732177f6] Response: /api/trainees - Status: 201 - Duration: 404ms
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created another trainee with username: Other31913.Trainee
+  And another trainee exists                                           # com.epam.gym.steps.TrainingIntegrationSteps.anotherTraineeExists()
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 047bcb2d-9375-4aac-8448-06bbe7e116c1] Request: POST /api/auth/login
+2026-05-21 16:54:07 [main] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Mike7c92d.Student
+2026-05-21 16:54:07 [main] [] INFO  c.epam.gym.controller.AuthController --- User Mike7c92d.Student logged in successfully
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 047bcb2d-9375-4aac-8448-06bbe7e116c1] Response: /api/auth/login - Status: 200 - Duration: 200ms
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Trainee Mike7c92d.Student authenticated successfully
+  And trainee is authenticated                                         # com.epam.gym.steps.TrainingIntegrationSteps.traineeIsAuthenticated()
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 8053989c-60e2-490f-9e60-21ec455c7560] Request: POST /api/trainings
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.controller.TrainingController --- Adding training: Integration Training for trainee: Other31913.Trainee and trainer: John3c95e.Trainer
+2026-05-21 16:54:07 [main] [] ERROR c.e.g.e.GlobalExceptionHandler --- [TransactionId: 8053989c-60e2-490f-9e60-21ec455c7560] AuthenticationException: User is not authenticated: Other31913.Trainee
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 8053989c-60e2-490f-9e60-21ec455c7560] Response: /api/trainings - Status: 401 - Duration: 1ms
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation request completed with status: 401
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation using another trainee username completed with status: 401
+  When trainee creates training using another trainee username         # com.epam.gym.steps.TrainingIntegrationSteps.traineeCreatesTrainingUsingAnotherTraineeUsername()
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Request failed as expected with status: 401
+  Then request should fail with status 401                             # com.epam.gym.steps.TrainingIntegrationSteps.requestShouldFailWithStatus(int)
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads after scenario
+2026-05-21 16:54:07 [main] [] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils --- Could not detect default configuration classes for test class [com.epam.gym.CucumberSpringConfiguration]: CucumberSpringConfiguration does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+
+@training @positive @negative @workload
+Scenario: Trainee cannot create training when trainer has overlapping schedule # features/training_workload.feature:70
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:07 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads before scenario
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 711df7f2-c9b0-466d-8d04-fb7a76a9adc9] Request: POST /api/trainers
+2026-05-21 16:54:07 [main] [] INFO  c.e.gym.controller.TrainerController --- Registering trainer: John9ef0f Trainer
+2026-05-21 16:54:07 [main] [] INFO  com.epam.gym.service.TrainerService --- Creating trainer profile for John9ef0f Trainer
+2026-05-21 16:54:08 [main] [] INFO  com.epam.gym.service.UserService --- User created: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  com.epam.gym.service.TrainerService --- Trainer created: 11 with username: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.controller.TrainerController --- Trainer registered successfully: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 711df7f2-c9b0-466d-8d04-fb7a76a9adc9] Response: /api/trainers - Status: 201 - Duration: 404ms
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainer with username: John9ef0f.Trainer
+  Given a trainer exists                                                       # com.epam.gym.steps.TrainingIntegrationSteps.aTrainerExists()
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: d2bcab1f-40ee-485b-ba37-034d7b08d0fc] Request: POST /api/trainees
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.controller.TraineeController --- Registering trainee: Mike7cb95 Student
+2026-05-21 16:54:08 [main] [] INFO  com.epam.gym.service.TraineeService --- Creating trainee profile for Mike7cb95 Student
+2026-05-21 16:54:08 [main] [] INFO  com.epam.gym.service.UserService --- User created: Mike7cb95.Student
+2026-05-21 16:54:08 [main] [] INFO  com.epam.gym.service.TraineeService --- Trainee created: 12 with username: Mike7cb95.Student
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.controller.TraineeController --- Trainee registered successfully: Mike7cb95.Student
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: d2bcab1f-40ee-485b-ba37-034d7b08d0fc] Response: /api/trainees - Status: 201 - Duration: 394ms
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Created trainee with username: Mike7cb95.Student
+  And a trainee exists                                                         # com.epam.gym.steps.TrainingIntegrationSteps.aTraineeExists()
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 3d0faba0-a774-4606-8322-f5aa0e8eb504] Request: POST /api/auth/login
+2026-05-21 16:54:08 [main] [] INFO  c.epam.gym.controller.AuthController --- Login attempt for user: Mike7cb95.Student
+2026-05-21 16:54:08 [main] [] INFO  c.epam.gym.controller.AuthController --- User Mike7cb95.Student logged in successfully
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 3d0faba0-a774-4606-8322-f5aa0e8eb504] Response: /api/auth/login - Status: 200 - Duration: 196ms
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Trainee Mike7cb95.Student authenticated successfully
+  And trainee is authenticated                                                 # com.epam.gym.steps.TrainingIntegrationSteps.traineeIsAuthenticated()
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 364885de-ccc7-4407-a31f-b37b07f110e6] Request: POST /api/trainings
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.controller.TrainingController --- Adding training: Integration Training for trainee: Mike7cb95.Student and trainer: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Integration Training for trainee: Mike7cb95.Student and trainer: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.s.WorkloadMessageProducer --- [TransactionId: 364885de-ccc7-4407-a31f-b37b07f110e6] Workload message sent to queue 'trainer.workload.queue': trainer=John9ef0f.Trainer, action=ADD
+2026-05-21 16:54:08 [main] [] INFO  c.epam.gym.service.TrainingService --- Training created with ID: 1
+2026-05-21 16:54:08 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Received workload message: trainer=John9ef0f.Trainer, action=ADD, duration=60
+2026-05-21 16:54:08 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Added 60 minutes to trainer John9ef0f.Trainer. New total: 60
+2026-05-21 16:54:08 [org.springframework.jms.JmsListenerEndpointContainer#0-1] [] INFO  c.e.g.c.TestWorkloadServiceConfig$TestWorkloadMessageListener --- JMS: Successfully added 60 minutes to trainer John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.controller.TrainingController --- Training created successfully: Integration Training
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: 364885de-ccc7-4407-a31f-b37b07f110e6] Response: /api/trainings - Status: 200 - Duration: 23ms
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation request completed with status: 200
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training created, initial workload: 0, waiting for JMS processing...
+  When trainee creates training with trainer                                   # com.epam.gym.steps.TrainingIntegrationSteps.traineeCreatesTrainingWithTrainer()
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: f4c9c2ed-d6dc-4f4c-9c92-291e6b58cf2d] Request: POST /api/trainings
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.controller.TrainingController --- Adding training: Integration Training for trainee: Mike7cb95.Student and trainer: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  c.epam.gym.service.TrainingService --- Creating training: Integration Training for trainee: Mike7cb95.Student and trainer: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] INFO  com.epam.gym.service.TrainerService --- Fetching trainer by username: John9ef0f.Trainer
+2026-05-21 16:54:08 [main] [] WARN  c.epam.gym.service.TrainingService --- Trainer 'John9ef0f.Trainer' already has a training scheduled on 2026-05-23
+2026-05-21 16:54:08 [main] [] ERROR c.e.g.e.GlobalExceptionHandler --- [TransactionId: f4c9c2ed-d6dc-4f4c-9c92-291e6b58cf2d] ConflictException: Trainer 'John9ef0f.Trainer' already has a training scheduled on 2026-05-23
+2026-05-21 16:54:08 [main] [] INFO  c.e.gym.filter.TransactionIdFilter --- [TransactionId: f4c9c2ed-d6dc-4f4c-9c92-291e6b58cf2d] Response: /api/trainings - Status: 409 - Duration: 5ms
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Training creation request completed with status: 409
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Overlapping training attempt completed with status: 409, current workload: 60
+  When trainee creates another training at the same time with the same trainer # com.epam.gym.steps.TrainingIntegrationSteps.traineeCreatesAnotherTrainingSameTime()
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Request failed as expected with status: 409
+  Then request should fail with status 409                                     # com.epam.gym.steps.TrainingIntegrationSteps.requestShouldFailWithStatus(int)
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.c.TestWorkloadServiceConfig --- TEST: Cleared all workloads
+2026-05-21 16:54:08 [main] [] INFO  c.e.g.steps.TrainingIntegrationSteps --- TEST: Cleared workloads after scenario
+
+6 Scenarios (6 passed)
+30 Steps (30 passed)
+0m8,535s
+
+
+[WARNING] Tests run: 10, Failures: 0, Errors: 0, Skipped: 4, Time elapsed: 8.742 s -- in com.epam.gym.RunCucumberTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[WARNING] Tests run: 167, Failures: 0, Errors: 0, Skipped: 4
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  32.957 s
+[INFO] Finished at: 2026-05-21T16:54:09+05:00
+[INFO] ------------------------------------------------------------------------

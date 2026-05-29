@@ -1,5 +1,7 @@
 package com.epam.gym.dto.request;
 
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -26,9 +28,11 @@ public class AddTrainingRequest {
     private String trainingName;
 
     @NotNull(message = "Training date is required")
+    @FutureOrPresent(message = "Training date must be today or in the future")  // ⭐ QO'SHILDI
     private LocalDate trainingDate;
 
     @NotNull(message = "Training duration is required")
     @Positive(message = "Training duration must be positive")
+    @Max(value = 44640, message = "Training duration cannot exceed one month (44640 minutes)")
     private Integer trainingDuration;
 }

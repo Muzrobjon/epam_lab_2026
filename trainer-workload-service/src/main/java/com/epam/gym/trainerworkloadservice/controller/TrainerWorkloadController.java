@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/trainers/workload")
+@RequestMapping("/api/v1/trainer-workload")
 @RequiredArgsConstructor
 public class TrainerWorkloadController {
 
@@ -18,7 +18,7 @@ public class TrainerWorkloadController {
 
 
 
-    @GetMapping("/{trainerUsername}")
+    @GetMapping("/{trainerUsername:.+}")
     public ResponseEntity<TrainerWorkloadResponse> getTrainerWorkload(
             @PathVariable String trainerUsername,
             @RequestParam(required = false) Integer year,
