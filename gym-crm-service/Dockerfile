@@ -15,4 +15,4 @@ COPY --from=builder /build/target/epam_lab_2026_hibernate.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=stg", "--server.port=8080"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
