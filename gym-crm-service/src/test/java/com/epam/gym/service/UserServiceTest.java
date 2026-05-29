@@ -62,8 +62,6 @@ class UserServiceTest {
         SecurityContextHolder.setContext(context);
     }
 
-    // ============ createUser ============
-
     @Test
     @DisplayName("createUser: creates user with random password and returns raw password")
     @SuppressWarnings("unchecked")
@@ -93,8 +91,6 @@ class UserServiceTest {
         verify(userMetrics).incrementRegistrations();
     }
 
-    // ============ findByUsername ============
-
     @Test
     @DisplayName("findByUsername: returns user when found")
     void findByUsername_found() {
@@ -114,8 +110,6 @@ class UserServiceTest {
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("User not found: unknown");
     }
-
-    // ============ changePassword ============
 
     @Test
     @DisplayName("changePassword: success")
@@ -177,8 +171,6 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    // ============ setActiveStatus ============
-
     @Test
     @DisplayName("setActiveStatus: updates status when authenticated")
     void setActiveStatus_success() {
@@ -214,8 +206,6 @@ class UserServiceTest {
                 .isInstanceOf(AuthenticationException.class);
     }
 
-    // ============ updateUserBasicInfo ============
-
     @Test
     @DisplayName("updateUserBasicInfo: updates all fields when provided")
     void updateUserBasicInfo_allFields() {
@@ -245,8 +235,6 @@ class UserServiceTest {
         assertThat(user.getLastName()).isEqualTo("Doe");
         assertThat(user.getIsActive()).isTrue();
     }
-
-    // ============ isAuthenticated ============
 
     @Test
     @DisplayName("isAuthenticated: passes when username matches")

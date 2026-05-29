@@ -87,8 +87,6 @@ class TrainingServiceTest {
                 .build();
     }
 
-    // ================ createTraining ================
-
     @Test
     @DisplayName("createTraining: saves training and notifies workload service")
     void createTraining_success() {
@@ -166,8 +164,6 @@ class TrainingServiceTest {
         verify(trainingRepository, never()).save(any());
         verify(workloadMessageProducer, never()).sendNotification(any(), any(), any(), any());
     }
-
-    // ================ getTraineeTrainingsByCriteria ================
 
     @Test
     @DisplayName("getTraineeTrainingsByCriteria: returns all when no filters")
@@ -247,8 +243,6 @@ class TrainingServiceTest {
         assertThat(result).isEmpty();
     }
 
-    // ================ getTrainerTrainingsByCriteria ================
-
     @Test
     @DisplayName("getTrainerTrainingsByCriteria: returns all when no filters")
     void getTrainerTrainingsByCriteria_noFilters() {
@@ -307,8 +301,6 @@ class TrainingServiceTest {
         assertThat(result).hasSize(1);
     }
 
-    // ================ getAllTrainingTypes ================
-
     @Test
     @DisplayName("getAllTrainingTypes: returns all types")
     void getAllTrainingTypes_returnsList() {
@@ -322,8 +314,6 @@ class TrainingServiceTest {
         assertThat(result).hasSize(2);
         verify(trainingTypeRepository).findAll();
     }
-
-    // ================ helpers ================
 
     private Training buildTraining(Trainer trainer, Trainee trainee, TrainingTypeName typeName) {
         TrainingType type = new TrainingType();

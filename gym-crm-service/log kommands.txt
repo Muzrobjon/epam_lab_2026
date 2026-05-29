@@ -1,0 +1,6 @@
+
+powershelda
+mvn test "-Dcucumber.filter.tags=@negative"
+mvn test "-Dcucumber.filter.tags=@negative" > negative-tests.log 2>&1
+mvn test -Dtest=InfraIntegrationTest
+mvn test -Dtest=InfraIntegrationTest > infra-integration-test.log 2>&1

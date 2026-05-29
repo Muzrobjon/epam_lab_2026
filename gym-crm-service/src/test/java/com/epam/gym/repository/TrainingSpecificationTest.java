@@ -12,10 +12,6 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for {@link TrainingSpecification}.
- * Tests specification construction and predicate logic.
- */
 @DisplayName("TrainingSpecification Tests")
 class TrainingSpecificationTest {
 
@@ -27,7 +23,6 @@ class TrainingSpecificationTest {
     private static final LocalDate TO_DATE = LocalDate.of(2024, 12, 31);
     private static final TrainingTypeName TRAINING_TYPE = TrainingTypeName.FITNESS;
 
-    // ==================== Constructor Tests ====================
 
     @Test
     @DisplayName("Should have private constructor")
@@ -59,7 +54,6 @@ class TrainingSpecificationTest {
         assertTrue(true, "Private constructor prevents direct instantiation");
     }
 
-    // ==================== findTraineeTrainingsByCriteria Tests ====================
 
     @Test
     @DisplayName("Should create specification for trainee trainings with all criteria")
@@ -116,7 +110,6 @@ class TrainingSpecificationTest {
         assertNotNull(spec);
     }
 
-    // ==================== findTrainerTrainingsByCriteria Tests ====================
 
     @Test
     @DisplayName("Should create specification for trainer trainings with all criteria")
@@ -173,9 +166,7 @@ class TrainingSpecificationTest {
         assertNotNull(spec);
     }
 
-    // ==================== Specification Type Tests ====================
-
-    @Test
+        @Test
     @DisplayName("Should return Specification type for trainee method")
     void shouldReturnSpecificationTypeForTraineeMethod() {
         // When
@@ -199,7 +190,6 @@ class TrainingSpecificationTest {
         assertInstanceOf(Specification.class, result);
     }
 
-    // ==================== Different Criteria Combinations ====================
 
     @Test
     @DisplayName("Should handle partial criteria for trainee trainings")
@@ -245,7 +235,6 @@ class TrainingSpecificationTest {
         assertNotNull(spec);
     }
 
-    // ==================== Method Signature Tests ====================
 
     @Test
     @DisplayName("Should have correct method signature for trainee specification")
@@ -275,9 +264,7 @@ class TrainingSpecificationTest {
         assertEquals(Specification.class, method.getReturnType());
     }
 
-    // ==================== Null Safety Tests ====================
-
-    @Test
+       @Test
     @DisplayName("Should handle all null parameters for trainee trainings")
     void shouldHandleAllNullParametersForTraineeTrainings() {
         // When

@@ -3,39 +3,30 @@ spring:
     activate:
       on-profile: test
 
-  # H2 in-memory database
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+  data:
+    mongodb:
+      uri: mongodb://admin:admin123@10.75.139.151:27017/test-workload-db?authSource=admin
+      database: test-workload-db
 
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: false
-    database-platform: org.hibernate.dialect.H2Dialect
-    open-in-view: false
-
-  # Embedded ActiveMQ broker
   activemq:
-    broker-url: vm://localhost?broker.persistent=false
+    broker-url: tcp://10.75.139.151:61616
     user: admin
     password: admin
     packages:
       trust-all: true
 
   jms:
-    template:
-      default-destination: trainer.workload.queue
     pub-sub-domain: false
+    listener:
+      acknowledge-mode: auto
+      concurrency: 1
+      max-concurrency: 1
+      auto-startup: true
 
-  # Embedded MongoDB
-  data:
-    mongodb:
-      host: localhost
-      port: 0
-      database: testdb
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
 
   cloud:
     discovery:
@@ -48,8 +39,8 @@ eureka:
     fetch-registry: false
 
 jwt:
-  secret: testSecretKeyForJWTTokenGenerationWhichShouldBeLongEnough123456789
-  expiration: 3600000
+  secret: mySecretKeyForJWTTokenGenerationWhichShouldBeLongEnough123456789
+  expiration: 7200000
 
 app:
   jms:
@@ -60,4 +51,7 @@ app:
 logging:
   level:
     root: WARN
-    com.epam.gym: INFO
+    com.epam.gym: DEBUG
+    org.springframework.jms: DEBUG
+    org.springframework.data.mongodb: DEBUG
+    org.apache.activemq: WARN

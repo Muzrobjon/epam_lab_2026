@@ -21,8 +21,6 @@
 
     <properties>
         <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
@@ -35,19 +33,14 @@
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <spring-cloud.version>2024.0.1</spring-cloud.version>
 
-        <!-- JUnit versiyalari Spring Boot 3.4.5 ga moslangan -->
-        <junit-jupiter.version>5.11.4</junit-jupiter.version>
         <junit.jupiter.version>5.11.4</junit.jupiter.version>
-        <junit-platform.version>1.11.4</junit-platform.version>
         <junit.platform.version>1.11.4</junit.platform.version>
 
-        <!-- Cucumber versiyasi JUnit Platform 1.11.x bilan mos -->
         <cucumber.version>7.20.1</cucumber.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- JUnit BOM — barcha JUnit versiyalarini bir xil qiladi -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
@@ -93,13 +86,12 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-engine</artifactId>
+            <version>1.11.4</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -148,8 +140,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JUnit Jupiter — versiya BOM dan keladi -->
-        <dependency>
+       <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -173,7 +164,7 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.12.3</version>
+            <version>0.12.6</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -184,17 +175,15 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.5</version>
+            <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Apache Commons Lang -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
-        <!-- Jakarta Annotations -->
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
@@ -207,7 +196,6 @@
             <version>33.3.1-jre</version>
         </dependency>
 
-        <!-- Spring Cloud -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
@@ -225,15 +213,9 @@
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
         </dependency>
 
-        <!-- ============ Cucumber 7.20.1 (JUnit Platform 1.11.x bilan mos) ============ -->
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-junit-platform-engine</artifactId>
@@ -252,8 +234,10 @@
             <version>${cucumber.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- JUnit Platform Suite — versiya BOM/Spring Boot dan keladi (1.11.4) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>

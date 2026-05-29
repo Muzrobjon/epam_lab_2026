@@ -38,7 +38,7 @@ public class WorkloadMessageListener {
     )
     public void onMessage(@Payload TrainerWorkloadRequest request,
                           @Header(name = TRANSACTION_ID_KEY, required = false) String transactionId) {
-
+        log.info("=== JMS MESSAGE RECEIVED === trainer={}", request.getTrainerUsername());
         if (transactionId == null || transactionId.isBlank()) {
             transactionId = "gen-" + UUID.randomUUID();
         }

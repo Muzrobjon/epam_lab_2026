@@ -61,7 +61,6 @@ public class TrainingService {
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
         TrainingType trainingType = trainer.getSpecialization();
 
-        // ⭐ YANGI: Overlap check — trainerda shu sanaga allaqachon training bor-yo'qligini tekshirish
         validateNoOverlappingSchedule(trainer, request.getTrainingDate());
 
         validateTrainerMonthlyWorkload(trainer, request.getTrainingDate(), request.getTrainingDuration());

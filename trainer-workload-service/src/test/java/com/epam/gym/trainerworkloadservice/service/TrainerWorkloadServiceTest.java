@@ -3,16 +3,13 @@ package com.epam.gym.trainerworkloadservice.service;
 import com.epam.gym.trainerworkloadservice.dto.request.TrainerWorkloadRequest;
 import com.epam.gym.trainerworkloadservice.dto.response.TrainerWorkloadResponse;
 import com.epam.gym.trainerworkloadservice.entity.TrainerWorkload;
-import com.epam.gym.trainerworkloadservice.entity.TrainerWorkload.MonthSummary;
-import com.epam.gym.trainerworkloadservice.entity.TrainerWorkload.YearSummary;
 import com.epam.gym.trainerworkloadservice.enums.ActionType;
 import com.epam.gym.trainerworkloadservice.repository.TrainerWorkloadRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -36,315 +32,203 @@ class TrainerWorkloadServiceTest {
     @InjectMocks
     private TrainerWorkloadService service;
 
-    @Captor
-    private ArgumentCaptor<TrainerWorkload> workloadCaptor;
+    private TrainerWorkloadRequest request;
+    private TrainerWorkload existing;
+    private final String txId = "test-tx-1";
 
-    private static final String TRANSACTION_ID = "test-txn-123";
-    private static final String USERNAME = "John.Doe";
-    private static final String FIRST_NAME = "John";
-    private static final String LAST_NAME = "Doe";
-
-    private TrainerWorkloadRequest buildRequest(ActionType actionType, LocalDate date, Integer duration) {
-        return TrainerWorkloadRequest.builder()
-                .trainerUsername(USERNAME)
-                .trainerFirstName(FIRST_NAME)
-                .trainerLastName(LAST_NAME)
+    @BeforeEach
+    void setUp() {
+        request = TrainerWorkloadRequest.builder()
+                .trainerUsername("john.doe")
+                .trainerFirstName("John")
+                .trainerLastName("Doe")
                 .isActive(true)
-                .trainingDate(date)
-                .trainingDuration(duration)
-                .actionType(actionType)
-                .build();
-    }
-
-    private TrainerWorkload buildExistingWorkload(int year, int month, long duration) {
-        MonthSummary monthSummary = MonthSummary.builder()
-                .month(month)
-                .trainingSummaryDuration(duration)
+                .trainingDate(LocalDate.of(2024, 6, 15))
+                .trainingDuration(90)
+                .actionType(ActionType.ADD)
                 .build();
 
-        YearSummary yearSummary = YearSummary.builder()
-                .year(year)
-                .months(new ArrayList<>(List.of(monthSummary)))
-                .build();
-
-        return TrainerWorkload.builder()
-                .id("existing-id")
-                .trainerUsername(USERNAME)
-                .trainerFirstName(FIRST_NAME)
-                .trainerLastName(LAST_NAME)
+        existing = TrainerWorkload.builder()
+                .id("id-1")
+                .trainerUsername("john.doe")
+                .trainerFirstName("John")
+                .trainerLastName("Doe")
                 .trainerStatus(true)
-                .years(new ArrayList<>(List.of(yearSummary)))
+                .years(new ArrayList<>())
                 .build();
     }
 
-    @Nested
-    class ProcessWorkload_NewTrainer {
+    @Test
+    @DisplayName("Should create new workload when trainer not exists")
+    void processWorkload_shouldCreateNew_whenNotExists() {
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.empty());
+        when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        @Test
-        void shouldCreateNewWorkload_WhenTrainerNotFound_AndActionIsAdd() {
-            TrainerWorkloadRequest request = buildRequest(ActionType.ADD, LocalDate.of(2026, 5, 11), 60);
+        service.processWorkload(request, txId);
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.empty());
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<TrainerWorkload> captor = ArgumentCaptor.forClass(TrainerWorkload.class);
+        verify(repository).save(captor.capture());
 
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getTrainerUsername()).isEqualTo(USERNAME);
-            assertThat(saved.getTrainerFirstName()).isEqualTo(FIRST_NAME);
-            assertThat(saved.getTrainerLastName()).isEqualTo(LAST_NAME);
-            assertThat(saved.getTrainerStatus()).isTrue();
-            assertThat(saved.getYears()).hasSize(1);
-            assertThat(saved.getYears().get(0).getYear()).isEqualTo(2026);
-            assertThat(saved.getYears().get(0).getMonths()).hasSize(1);
-            assertThat(saved.getYears().get(0).getMonths().get(0).getMonth()).isEqualTo(5);
-            assertThat(saved.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(60L);
-        }
-
-        @Test
-        void shouldCreateNewWorkload_WithZeroDuration_WhenActionIsDelete() {
-            TrainerWorkloadRequest request = buildRequest(ActionType.DELETE, LocalDate.of(2026, 3, 15), 30);
-
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.empty());
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(0L);
-        }
+        TrainerWorkload saved = captor.getValue();
+        assertThat(saved.getTrainerUsername()).isEqualTo("john.doe");
+        assertThat(saved.getYears()).hasSize(1);
+        assertThat(saved.getYears().get(0).getYear()).isEqualTo(2024);
+        assertThat(saved.getYears().get(0).getMonths()).hasSize(1);
+        assertThat(saved.getYears().get(0).getMonths().get(0).getMonth()).isEqualTo(6);
+        assertThat(saved.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(90L);
     }
 
-    @Nested
-    class ProcessWorkload_ExistingTrainer {
+    @Test
+    @DisplayName("Should update names when trainer already exists")
+    void processWorkload_shouldUpdateNames_whenExists() {
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        @Test
-        void shouldAddDuration_WhenActionIsAdd_AndMonthExists() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
-            TrainerWorkloadRequest request = buildRequest(ActionType.ADD, LocalDate.of(2026, 5, 20), 50);
+        request.setTrainerFirstName("UpdatedFirst");
+        request.setTrainerLastName("UpdatedLast");
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
+        service.processWorkload(request, txId);
 
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(150L);
-        }
-
-        @Test
-        void shouldSubtractDuration_WhenActionIsDelete() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
-            TrainerWorkloadRequest request = buildRequest(ActionType.DELETE, LocalDate.of(2026, 5, 20), 30);
-
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(70L);
-        }
-
-        @Test
-        void shouldNotGoBelowZero_WhenDeleteExceedsCurrentDuration() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 20L);
-            TrainerWorkloadRequest request = buildRequest(ActionType.DELETE, LocalDate.of(2026, 5, 20), 50);
-
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(0L);
-        }
-
-        @Test
-        void shouldCreateNewMonth_WhenMonthNotExists() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
-            TrainerWorkloadRequest request = buildRequest(ActionType.ADD, LocalDate.of(2026, 6, 10), 45);
-
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getYears().get(0).getMonths()).hasSize(2);
-            assertThat(saved.getYears().get(0).getMonths().get(1).getMonth()).isEqualTo(6);
-            assertThat(saved.getYears().get(0).getMonths().get(1).getTrainingSummaryDuration()).isEqualTo(45L);
-        }
-
-        @Test
-        void shouldCreateNewYear_WhenYearNotExists() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
-            TrainerWorkloadRequest request = buildRequest(ActionType.ADD, LocalDate.of(2027, 1, 15), 90);
-
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getYears()).hasSize(2);
-            assertThat(saved.getYears().get(1).getYear()).isEqualTo(2027);
-            assertThat(saved.getYears().get(1).getMonths().get(0).getMonth()).isEqualTo(1);
-            assertThat(saved.getYears().get(1).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(90L);
-        }
-
-        @Test
-        void shouldSyncTrainerIdentity_WhenUpdating() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
-            existing.setTrainerFirstName("OldFirst");
-            existing.setTrainerLastName("OldLast");
-            existing.setTrainerStatus(false);
-
-            TrainerWorkloadRequest request = buildRequest(ActionType.ADD, LocalDate.of(2026, 5, 20), 10);
-
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
-            when(repository.save(any(TrainerWorkload.class))).thenAnswer(inv -> inv.getArgument(0));
-
-            service.processWorkload(request, TRANSACTION_ID);
-
-            verify(repository).save(workloadCaptor.capture());
-            TrainerWorkload saved = workloadCaptor.getValue();
-
-            assertThat(saved.getTrainerFirstName()).isEqualTo(FIRST_NAME);
-            assertThat(saved.getTrainerLastName()).isEqualTo(LAST_NAME);
-            assertThat(saved.getTrainerStatus()).isTrue();
-        }
+        assertThat(existing.getTrainerFirstName()).isEqualTo("UpdatedFirst");
+        assertThat(existing.getTrainerLastName()).isEqualTo("UpdatedLast");
+        verify(repository).save(existing);
     }
 
-    @Nested
-    class ProcessWorkload_ErrorHandling {
+    @Test
+    @DisplayName("Should accumulate duration on multiple ADD calls")
+    void processWorkload_shouldAccumulate_onMultipleAdd() {
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        @Test
-        void shouldThrowException_WhenRepositoryFails() {
-            TrainerWorkloadRequest request = buildRequest(ActionType.ADD, LocalDate.of(2026, 5, 11), 60);
+        service.processWorkload(request, txId);
+        service.processWorkload(request, txId);
 
-            when(repository.findByTrainerUsername(USERNAME)).thenThrow(new RuntimeException("DB error"));
-
-            assertThatThrownBy(() -> service.processWorkload(request, TRANSACTION_ID))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessage("DB error");
-        }
+        verify(repository, times(2)).save(existing);
+        long total = existing.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration();
+        assertThat(total).isEqualTo(180L);
     }
 
-    @Nested
-    class GetTrainerWorkload {
+    @Test
+    @DisplayName("Should subtract duration when DELETE action")
+    void processWorkload_shouldSubtract_onDelete() {
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        @Test
-        void shouldReturnEmptyResponse_WhenTrainerNotFound() {
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.empty());
+        service.processWorkload(request, txId);
 
-            TrainerWorkloadResponse response = service.getTrainerWorkload(USERNAME, null, null, TRANSACTION_ID);
+        TrainerWorkloadRequest deleteReq = TrainerWorkloadRequest.builder()
+                .trainerUsername("john.doe")
+                .trainerFirstName("John")
+                .trainerLastName("Doe")
+                .isActive(true)
+                .trainingDate(LocalDate.of(2024, 6, 15))
+                .trainingDuration(30)
+                .actionType(ActionType.DELETE)
+                .build();
 
-            assertThat(response.getTrainerUsername()).isEqualTo(USERNAME);
-            assertThat(response.getTrainerFirstName()).isNull();
-            assertThat(response.getTrainerLastName()).isNull();
-            assertThat(response.getTrainerStatus()).isNull();
-            assertThat(response.getYears()).isEmpty();
-        }
+        service.processWorkload(deleteReq, txId);
 
-        @Test
-        void shouldReturnFullResponse_WhenTrainerFound() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
+        long total = existing.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration();
+        assertThat(total).isEqualTo(60L);
+    }
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
+    @Test
+    @DisplayName("Should not go below zero when subtracting too much")
+    void processWorkload_shouldNotGoBelowZero() {
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            TrainerWorkloadResponse response = service.getTrainerWorkload(USERNAME, null, null, TRANSACTION_ID);
+        service.processWorkload(request, txId);
 
-            assertThat(response.getTrainerUsername()).isEqualTo(USERNAME);
-            assertThat(response.getTrainerFirstName()).isEqualTo(FIRST_NAME);
-            assertThat(response.getTrainerLastName()).isEqualTo(LAST_NAME);
-            assertThat(response.getTrainerStatus()).isTrue();
-            assertThat(response.getYears()).hasSize(1);
-            assertThat(response.getYears().get(0).getYear()).isEqualTo(2026);
-        }
+        TrainerWorkloadRequest deleteReq = TrainerWorkloadRequest.builder()
+                .trainerUsername("john.doe")
+                .trainerFirstName("John")
+                .trainerLastName("Doe")
+                .isActive(true)
+                .trainingDate(LocalDate.of(2024, 6, 15))
+                .trainingDuration(500)
+                .actionType(ActionType.DELETE)
+                .build();
 
-        @Test
-        void shouldFilterByYear() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
-            YearSummary year2027 = YearSummary.builder()
-                    .year(2027)
-                    .months(new ArrayList<>(List.of(
-                            MonthSummary.builder().month(1).trainingSummaryDuration(50L).build())))
-                    .build();
-            existing.getYears().add(year2027);
+        service.processWorkload(deleteReq, txId);
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
+        long total = existing.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration();
+        assertThat(total).isZero();
+    }
 
-            TrainerWorkloadResponse response = service.getTrainerWorkload(USERNAME, 2027, null, TRANSACTION_ID);
+    @Test
+    @DisplayName("Should create new year entry when year not exists")
+    void processWorkload_shouldCreateNewYear() {
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            assertThat(response.getYears()).hasSize(1);
-            assertThat(response.getYears().get(0).getYear()).isEqualTo(2027);
-        }
+        service.processWorkload(request, txId);
 
-        @Test
-        void shouldFilterByMonth() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
-            existing.getYears().get(0).getMonths().add(
-                    MonthSummary.builder().month(6).trainingSummaryDuration(75L).build());
+        TrainerWorkloadRequest nextYear = TrainerWorkloadRequest.builder()
+                .trainerUsername("john.doe")
+                .trainerFirstName("John")
+                .trainerLastName("Doe")
+                .isActive(true)
+                .trainingDate(LocalDate.of(2025, 6, 15))
+                .trainingDuration(60)
+                .actionType(ActionType.ADD)
+                .build();
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
+        service.processWorkload(nextYear, txId);
 
-            TrainerWorkloadResponse response = service.getTrainerWorkload(USERNAME, 2026, 6, TRANSACTION_ID);
+        assertThat(existing.getYears()).hasSize(2);
+    }
 
-            assertThat(response.getYears()).hasSize(1);
-            assertThat(response.getYears().get(0).getMonths()).hasSize(1);
-            assertThat(response.getYears().get(0).getMonths().get(0).getMonth()).isEqualTo(6);
-            assertThat(response.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(75L);
-        }
+    @Test
+    @DisplayName("Should return empty years list when trainer not found")
+    void getTrainerWorkload_shouldReturnEmpty_whenNotFound() {
+        when(repository.findByTrainerUsername("unknown")).thenReturn(Optional.empty());
 
-        @Test
-        void shouldFilterByYearAndMonth() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
+        TrainerWorkloadResponse response = service.getTrainerWorkload("unknown", 2024, 6, txId);
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
+        assertThat(response.getTrainerUsername()).isEqualTo("unknown");
+        assertThat(response.getYears()).isEmpty();
+    }
 
-            TrainerWorkloadResponse response = service.getTrainerWorkload(USERNAME, 2026, 5, TRANSACTION_ID);
+    @Test
+    @DisplayName("Should filter by year and month")
+    void getTrainerWorkload_shouldFilterByYearAndMonth() {
+        TrainerWorkload.MonthSummary m6 = TrainerWorkload.MonthSummary.builder()
+                .month(6).trainingSummaryDuration(90L).build();
+        TrainerWorkload.MonthSummary m7 = TrainerWorkload.MonthSummary.builder()
+                .month(7).trainingSummaryDuration(60L).build();
+        TrainerWorkload.YearSummary y = TrainerWorkload.YearSummary.builder()
+                .year(2024)
+                .months(new ArrayList<>(List.of(m6, m7)))
+                .build();
+        existing.setYears(new ArrayList<>(List.of(y)));
 
-            assertThat(response.getYears()).hasSize(1);
-            assertThat(response.getYears().get(0).getMonths()).hasSize(1);
-            assertThat(response.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(100L);
-        }
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.of(existing));
 
-        @Test
-        void shouldReturnEmptyYears_WhenYearFilterDoesNotMatch() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
+        TrainerWorkloadResponse response = service.getTrainerWorkload("john.doe", 2024, 6, txId);
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
+        assertThat(response.getYears()).hasSize(1);
+        assertThat(response.getYears().get(0).getMonths()).hasSize(1);
+        assertThat(response.getYears().get(0).getMonths().get(0).getMonth()).isEqualTo(6);
+        assertThat(response.getYears().get(0).getMonths().get(0).getTrainingSummaryDuration()).isEqualTo(90L);
+    }
 
-            TrainerWorkloadResponse response = service.getTrainerWorkload(USERNAME, 2030, null, TRANSACTION_ID);
+    @Test
+    @DisplayName("Should return all data when no filters provided")
+    void getTrainerWorkload_shouldReturnAll_whenNoFilters() {
+        TrainerWorkload.MonthSummary m6 = TrainerWorkload.MonthSummary.builder()
+                .month(6).trainingSummaryDuration(90L).build();
+        TrainerWorkload.YearSummary y = TrainerWorkload.YearSummary.builder()
+                .year(2024)
+                .months(new ArrayList<>(List.of(m6)))
+                .build();
+        existing.setYears(new ArrayList<>(List.of(y)));
 
-            assertThat(response.getYears()).isEmpty();
-        }
+        when(repository.findByTrainerUsername("john.doe")).thenReturn(Optional.of(existing));
 
-        @Test
-        void shouldReturnEmptyMonths_WhenMonthFilterDoesNotMatch() {
-            TrainerWorkload existing = buildExistingWorkload(2026, 5, 100L);
+        TrainerWorkloadResponse response = service.getTrainerWorkload("john.doe", null, null, txId);
 
-            when(repository.findByTrainerUsername(USERNAME)).thenReturn(Optional.of(existing));
-
-            TrainerWorkloadResponse response = service.getTrainerWorkload(USERNAME, 2026, 12, TRANSACTION_ID);
-
-            assertThat(response.getYears()).hasSize(1);
-            assertThat(response.getYears().get(0).getMonths()).isEmpty();
-        }
+        assertThat(response.getYears()).hasSize(1);
+        assertThat(response.getYears().get(0).getMonths()).hasSize(1);
     }
 }

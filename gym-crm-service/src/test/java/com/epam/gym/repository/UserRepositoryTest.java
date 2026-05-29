@@ -7,10 +7,6 @@ import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Simple verification tests for UserRepository interface.
- * No Spring context required - pure interface testing.
- */
 @DisplayName("UserRepository Interface Tests")
 class UserRepositoryTest {
 

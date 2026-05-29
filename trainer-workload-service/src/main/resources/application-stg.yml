@@ -5,12 +5,53 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}:27017/workloaddb_stg?authSource=admin
-      auto-index-creation: true
+      uri: mongodb://admin:admin123@localhost:27017/test-workload-db?authSource=admin
+      database: test-workload-db
+
+  activemq:
+    broker-url: tcp://localhost:61616
+    user: admin
+    password: admin
+    packages:
+      trust-all: true
+
+  jms:
+    pub-sub-domain: false
+    listener:
+      acknowledge-mode: auto
+      concurrency: 1
+      max-concurrency: 1
+      auto-startup: true
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
+
+  cloud:
+    discovery:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+jwt:
+  secret: mySecretKeyForJWTTokenGenerationWhichShouldBeLongEnough123456789
+  expiration: 7200000
+
+app:
+  jms:
+    queue:
+      trainer-workload: trainer.workload.queue
+      trainer-workload-dlq: trainer.workload.dlq
 
 logging:
   level:
     root: WARN
-    com.epam.gym.trainerworkloadservice: INFO
-    org.springframework.jms: WARN
+    com.epam.gym: DEBUG
+    org.springframework.jms: DEBUG
+    org.springframework.data.mongodb: DEBUG
     org.apache.activemq: WARN

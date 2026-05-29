@@ -87,8 +87,6 @@ class TrainerServiceTest {
                 .build();
     }
 
-    // ==================== createProfile ====================
-
     @Test
     void createProfile_ValidRequest_ShouldReturnRegistrationResponse() {
         TrainerRegistrationRequest request = new TrainerRegistrationRequest();
@@ -177,8 +175,6 @@ class TrainerServiceTest {
         verify(trainerRepository, never()).save(any());
     }
 
-    // ==================== getByUsername ====================
-
     @Test
     void getByUsername_ExistingUsername_ShouldReturnTrainer() {
         when(trainerRepository.findByUser_Username(USERNAME))
@@ -203,8 +199,6 @@ class TrainerServiceTest {
 
         verify(trainerRepository).findByUser_Username("unknown");
     }
-
-    // ==================== updateProfile ====================
 
     @Test
     void updateProfile_ValidRequest_ShouldReturnUpdatedTrainer() {
@@ -274,8 +268,6 @@ class TrainerServiceTest {
 
         verify(trainerRepository, never()).save(any());
     }
-
-    // ==================== getUnassignedTrainers ====================
 
     @Test
     void getUnassignedTrainers_ValidTrainee_ShouldReturnList() {

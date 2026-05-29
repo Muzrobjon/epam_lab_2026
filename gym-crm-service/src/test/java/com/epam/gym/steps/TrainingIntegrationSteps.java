@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @Slf4j
+
 public class TrainingIntegrationSteps {
 
     private final MockMvc mockMvc;
@@ -183,7 +184,6 @@ public class TrainingIntegrationSteps {
         log.info("TEST: Training created, initial workload: {}, waiting for JMS processing...",
                 initialWorkload);
     }
-
     @When("trainee creates another training at the same time with the same trainer")
     public void traineeCreatesAnotherTrainingSameTime() throws Exception {
         long currentWorkload = TestWorkloadServiceConfig.getWorkload(ctx.getTrainerUsername());
@@ -191,7 +191,7 @@ public class TrainingIntegrationSteps {
         AddTrainingRequest req = buildValidTrainingRequest(
                 ctx.getTraineeUsername(),
                 ctx.getTrainerUsername(),
-                LocalDate.now().plusDays(2), //(overlap!)
+                LocalDate.now().plusDays(2), // (overlap!)
                 60);
 
         performAddTraining(req, ctx.getTraineeToken());
@@ -275,7 +275,8 @@ public class TrainingIntegrationSteps {
 
     @When("trainee creates {int} trainings with {int} minutes each")
     public void traineeCreatesNTrainings(int count, int minutes) throws Exception {
-        long initialWorkload = TestWorkloadServiceConfig.getWorkload(ctx.getTrainerUsername());
+        long initialWorkload = TestWorkloadServiceConfig.getWorkload
+                (ctx.getTrainerUsername());
         int successfulTrainings = 0;
 
         for (int i = 0; i < count; i++) {
@@ -398,6 +399,36 @@ public class TrainingIntegrationSteps {
                 });
     }
 
+    @Then("workload service should have updated trainee hours")
+    public void workload_service_should_have_updated_trainee_hours() throws Exception {
+        final String trainerUsername = ctx.getTrainerUsername();
+        final String token = ctx.getTraineeToken();
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    MvcResult result = mockMvc.perform(
+                                    get("/api/trainers/workload/" + trainerUsername)
+                                            .header("Authorization", token))
+                            .andReturn();
+
+                    int status = result.getResponse().getStatus();
+                    String json = result.getResponse().getContentAsString();
+
+                    assertThat(status).isEqualTo(200);
+
+                    JsonNode node = objectMapper.readTree(json);
+                    long totalDuration = 0;
+                    if (node.has("totalDuration")) {
+                        totalDuration = node.get("totalDuration").asLong();
+                    } else if (node.has("totalMinutes")) {
+                        totalDuration = node.get("totalMinutes").asLong();
+                    }
+                    assertThat(totalDuration).isEqualTo(60);
+                });
+    }
+
     //  HELPER METHODS
 
     private AddTrainingRequest buildValidTrainingRequest(
@@ -440,6 +471,7 @@ public class TrainingIntegrationSteps {
                     .andReturn();
 
             int status = result.getResponse().getStatus();
+
             String json = result.getResponse().getContentAsString();
 
             if (status != 200 || json == null || json.isBlank()) {
