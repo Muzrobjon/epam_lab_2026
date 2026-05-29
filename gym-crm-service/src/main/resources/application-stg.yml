@@ -3,7 +3,6 @@ spring:
     activate:
       on-profile: stg
 
-
   main:
     allow-bean-definition-overriding: true
 
@@ -66,7 +65,7 @@ logging:
 
 # Server configuration
 server:
-  port: 0
+  port: 8080
   error:
     include-message: always
     include-binding-errors: always

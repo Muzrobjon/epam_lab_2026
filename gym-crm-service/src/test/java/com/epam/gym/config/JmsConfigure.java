@@ -20,7 +20,7 @@ import org.springframework.jms.support.converter.MessageType;
 @Configuration
 @EnableJms
 @Profile("!stg")
-public class JmsConfig {
+public class JmsConfigure {
 
     @Value("${spring.activemq.broker-url}")
     private String brokerUrl;
@@ -39,7 +39,6 @@ public class JmsConfig {
         converter.setTargetType(MessageType.TEXT);
         converter.setTypeIdPropertyName("_type");
 
-        // Configure ObjectMapper to handle Java 8 date/time types
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);

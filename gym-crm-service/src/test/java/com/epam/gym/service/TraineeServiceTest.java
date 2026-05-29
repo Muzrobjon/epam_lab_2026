@@ -89,7 +89,6 @@ class TraineeServiceTest {
                 .build();
     }
 
-    // ==================== createProfile ====================
 
     @Test
     void createProfile_ValidRequest_ShouldReturnRegistrationResponse() {
@@ -136,7 +135,6 @@ class TraineeServiceTest {
         verify(traineeRepository, never()).save(any());
     }
 
-    // ==================== getByUsername ====================
 
     @Test
     void getByUsername_ExistingUsername_ShouldReturnTrainee() {
@@ -163,7 +161,6 @@ class TraineeServiceTest {
         verify(traineeRepository).findByUser_Username("unknown");
     }
 
-    // ==================== updateProfile ====================
 
     @Test
     void updateProfile_ValidRequest_ShouldReturnUpdatedTrainee() {
@@ -233,8 +230,6 @@ class TraineeServiceTest {
         verify(traineeRepository, never()).save(any());
     }
 
-    // ==================== deleteByUsername ====================
-
     @Test
     void deleteByUsername_ExistingTrainee_ShouldDeleteSuccessfully() {
         // Build training with trainer info for workload notification
@@ -293,8 +288,6 @@ class TraineeServiceTest {
         verify(traineeRepository, never()).delete(any());
         verifyNoInteractions(workloadMessageProducer);
     }
-
-    // ==================== updateTrainersList ====================
 
     @Test
     void updateTrainersList_ValidUsernames_ShouldReturnUpdatedTrainers() {

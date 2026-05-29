@@ -126,7 +126,6 @@ class InfraIntegrationTest {
         assertThat(trainingResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         log.info("Training session created successfully");
 
-        // 5. Wait for JMS message to be processed and verify workload
         log.info("Step 5: Waiting for JMS message processing");
         Thread.sleep(3000);
 
@@ -144,7 +143,7 @@ class InfraIntegrationTest {
 
     @Test
     void multipleTrainings_increaseWorkload() throws InterruptedException {
-        // 1. Register trainer
+
         log.info("Test 2 - Step 1: Registering trainer");
         TrainerRegistrationRequest trainerReq = new TrainerRegistrationRequest();
         trainerReq.setFirstName("Jane");

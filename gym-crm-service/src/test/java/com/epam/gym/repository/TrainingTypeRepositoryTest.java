@@ -9,10 +9,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Simple verification tests for TrainingTypeRepository interface.
- * No Spring context required - pure interface testing.
- */
 @DisplayName("TrainingTypeRepository Interface Tests")
 class TrainingTypeRepositoryTest {
 

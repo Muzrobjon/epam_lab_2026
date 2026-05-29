@@ -7,10 +7,6 @@ import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Simple verification tests for TraineeRepository interface.
- * No Spring context required.
- */
 @DisplayName("TraineeRepository Interface Tests")
 class TraineeRepositoryTest {
 

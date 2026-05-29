@@ -2,9 +2,6 @@ spring:
   application:
     name: gym-crm-service
 
-  profiles:
-    active: local
-
   # ActiveMQ
   activemq:
     broker-url: ${ACTIVEMQ_BROKER_URL:tcp://localhost:61616}

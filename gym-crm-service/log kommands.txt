@@ -4,15 +4,3 @@ mvn test "-Dcucumber.filter.tags=@negative"
 mvn test "-Dcucumber.filter.tags=@negative" > negative-tests.log 2>&1
 mvn test -Dtest=InfraIntegrationTest
 mvn test -Dtest=InfraIntegrationTest > infra-integration-test.log 2>&1
-docker run -d --name mongodb -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin123 mongo:7.0
-
-
-INSERT INTO public.users (id, first_name, last_name, is_active, username, password)
-VALUES (
-    (SELECT COALESCE(MAX(id), 0) + 1 FROM public.users),
-    'Admin',
-    'User',
-    true,
-    'Admin.User',
-    '$2a$12$LQv3c1yqBo9SkvXS5/Gm3e1NhYGfRkGxttLb0IYgAgP1jO1jdOqZi'
-);

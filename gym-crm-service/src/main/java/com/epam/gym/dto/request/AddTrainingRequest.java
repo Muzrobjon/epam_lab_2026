@@ -28,7 +28,7 @@ public class AddTrainingRequest {
     private String trainingName;
 
     @NotNull(message = "Training date is required")
-    @FutureOrPresent(message = "Training date must be today or in the future")  // ⭐ QO'SHILDI
+    @FutureOrPresent(message = "Training date must be today or in the future")
     private LocalDate trainingDate;
 
     @NotNull(message = "Training duration is required")
